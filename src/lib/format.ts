@@ -32,3 +32,13 @@ export function formatDate(valueIso: string) {
 export function clampPercent(value: number) {
   return `${Math.max(0, Math.min(100, value)).toFixed(0)}%`;
 }
+
+export function formatAge(birthDateIso: string | Date) {
+  const birthDate = typeof birthDateIso === "string" ? new Date(birthDateIso) : birthDateIso;
+  const now = new Date();
+  const years = now.getUTCFullYear() - birthDate.getUTCFullYear();
+  const hadBirthday =
+    now.getUTCMonth() > birthDate.getUTCMonth() ||
+    (now.getUTCMonth() === birthDate.getUTCMonth() && now.getUTCDate() >= birthDate.getUTCDate());
+  return hadBirthday ? years : years - 1;
+}

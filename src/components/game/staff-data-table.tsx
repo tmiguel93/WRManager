@@ -17,40 +17,39 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCompactMoney } from "@/lib/format";
 
-export interface DriverRow {
+export interface StaffRow {
   id: string;
   name: string;
+  role: string;
+  specialty: string;
   countryCode: string;
   category: string;
   team: string;
-  overall: number;
-  potential: number;
   reputation: number;
-  marketValue: number;
-  primaryTrait: string;
+  salary: number;
   imageUrl?: string | null;
 }
 
-const columns: ColumnDef<DriverRow>[] = [
+const columns: ColumnDef<StaffRow>[] = [
   {
     accessorKey: "name",
-    header: "Driver",
+    header: "Staff Member",
     cell: ({ row }) => (
-      <Link href={`/game/drivers/${row.original.id}`} className="group flex items-center gap-3">
+      <Link href={`/game/staff/${row.original.id}`} className="group flex items-center gap-3">
         <EntityAvatar
-          entityType="DRIVER"
+          entityType="STAFF"
           name={row.original.name}
           countryCode={row.original.countryCode}
           imageUrl={row.original.imageUrl}
-          className="shrink-0"
         />
         <div>
           <p className="text-sm font-medium group-hover:text-cyan-100">{row.original.name}</p>
-          <p className="text-xs text-muted-foreground">{row.original.primaryTrait}</p>
+          <p className="text-xs text-muted-foreground">{row.original.role}</p>
         </div>
       </Link>
     ),
   },
+  { accessorKey: "team", header: "Team" },
   {
     accessorKey: "category",
     header: "Category",
@@ -58,29 +57,27 @@ const columns: ColumnDef<DriverRow>[] = [
       <Badge className="rounded-full border border-white/15 bg-white/10 text-xs">{row.original.category}</Badge>
     ),
   },
-  { accessorKey: "team", header: "Team" },
-  { accessorKey: "overall", header: "OVR" },
-  { accessorKey: "potential", header: "POT" },
+  { accessorKey: "specialty", header: "Specialty" },
   { accessorKey: "reputation", header: "REP" },
   {
-    accessorKey: "marketValue",
-    header: "Value",
-    cell: ({ row }) => <span className="text-xs text-cyan-100">{formatCompactMoney(row.original.marketValue)}</span>,
+    accessorKey: "salary",
+    header: "Salary",
+    cell: ({ row }) => <span className="text-xs text-cyan-100">{formatCompactMoney(row.original.salary)}</span>,
   },
 ];
 
-export function DriversDataTable({ data }: { data: DriverRow[] }) {
-  const [sorting, setSorting] = React.useState<SortingState>([{ id: "overall", desc: true }]);
+export function StaffDataTable({ data }: { data: StaffRow[] }) {
+  const [sorting, setSorting] = React.useState<SortingState>([{ id: "reputation", desc: true }]);
   const [search, setSearch] = React.useState("");
 
   const filteredData = React.useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return data;
-    return data.filter((driver) => {
+    return data.filter((member) => {
       return (
-        driver.name.toLowerCase().includes(term) ||
-        driver.team.toLowerCase().includes(term) ||
-        driver.category.toLowerCase().includes(term)
+        member.name.toLowerCase().includes(term) ||
+        member.team.toLowerCase().includes(term) ||
+        member.role.toLowerCase().includes(term)
       );
     });
   }, [data, search]);
@@ -100,11 +97,11 @@ export function DriversDataTable({ data }: { data: DriverRow[] }) {
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search driver, team or category"
+          placeholder="Search staff, role or team"
           className="h-10 max-w-md border-white/20 bg-background/40"
         />
         <Badge className="rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
-          {filteredData.length} listed
+          {filteredData.length} staff listed
         </Badge>
       </div>
 

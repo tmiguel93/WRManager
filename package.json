@@ -13,7 +13,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
-    "assets:import": "tsx scripts/import-asset-pack.ts"
+    "assets:import": "tsx scripts/import-asset-pack.ts",
+    "assets:sync-portraits": "tsx scripts/sync-real-portraits.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",

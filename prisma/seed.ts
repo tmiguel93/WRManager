@@ -1,5 +1,15 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
+
 import { PrismaClient, type Discipline, type SupplierType, type TrackType } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import {
+  realDriverSeeds,
+  realStaffSeeds,
+  realTeamsSeed,
+  type RealDriverSeed,
+  type RealStaffSeed,
+} from "./seed-data/real-world";
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
@@ -17,6 +27,136 @@ type CategorySeed = {
   fantasyModeAllowed: boolean;
   isFeeder: boolean;
 };
+
+type PortraitManifest = {
+  drivers?: Record<string, string>;
+  staff?: Record<string, string>;
+};
+
+function clamp(value: number, min = 45, max = 99) {
+  return Math.max(min, Math.min(max, Math.round(value)));
+}
+
+function buildDriverAttributes(driver: RealDriverSeed) {
+  const base = driver.overall;
+  const categoryBias: Record<string, Partial<Record<string, number>>> = {
+    F1: { qualifying: 2, technicalFeedback: 2, strategyIQ: 2 },
+    F2: { qualifying: 1, overtaking: 2, emotionalControl: -1 },
+    INDYCAR: { ovalAdaptation: 6, fuelSaving: 3, trafficAdaptation: 2 },
+    NASCAR_CUP: { ovalAdaptation: 8, defense: 3, aggression: 4 },
+    NASCAR_XFINITY: { ovalAdaptation: 7, aggression: 3, overtaking: 2 },
+    NASCAR_TRUCK: { ovalAdaptation: 8, aggression: 4, consistency: -1 },
+    WEC_HYPERCAR: { enduranceAdaptation: 8, consistency: 4, tireManagement: 3, fuelSaving: 3 },
+    LMGT3: { enduranceAdaptation: 7, consistency: 3, wetWeather: 2 },
+  };
+
+  const traitBias: Record<string, Partial<Record<string, number>>> = {
+    QUALI_BEAST: { qualifying: 6 },
+    TIRE_WHISPERER: { tireManagement: 6, consistency: 2 },
+    RAIN_MASTER: { wetWeather: 8 },
+    OVAL_SPECIALIST: { ovalAdaptation: 10 },
+    ENDURANCE_BRAIN: { enduranceAdaptation: 8, fuelSaving: 4 },
+    AGGRESSIVE_CLOSER: { overtaking: 6, aggression: 6 },
+    CALM_UNDER_PRESSURE: { emotionalControl: 7, consistency: 3 },
+    TEAM_LEADER: { strategyIQ: 5, technicalFeedback: 4 },
+    TECHNICAL_GENIUS: { technicalFeedback: 7 },
+    SPONSOR_MAGNET: { emotionalControl: 3, consistency: 2 },
+  };
+
+  const cBias = categoryBias[driver.categoryCode] ?? {};
+  const tBias = traitBias[driver.primaryTraitCode] ?? {};
+
+  function score(key: string, delta: number) {
+    return clamp(base + delta + (cBias[key] ?? 0) + (tBias[key] ?? 0));
+  }
+
+  return {
+    purePace: score("purePace", 0),
+    consistency: score("consistency", -3),
+    qualifying: score("qualifying", 1),
+    launch: score("launch", -4),
+    defense: score("defense", -2),
+    overtaking: score("overtaking", -1),
+    aggression: score("aggression", -6),
+    emotionalControl: score("emotionalControl", -3),
+    wetWeather: score("wetWeather", -4),
+    technicalFeedback: score("technicalFeedback", -1),
+    tireManagement: score("tireManagement", -2),
+    fuelSaving: score("fuelSaving", -3),
+    strategyIQ: score("strategyIQ", -2),
+    trafficAdaptation: score("trafficAdaptation", -2),
+    ovalAdaptation: score("ovalAdaptation", -8),
+    streetAdaptation: score("streetAdaptation", -2),
+    roadCourseAdaptation: score("roadCourseAdaptation", -1),
+    enduranceAdaptation: score("enduranceAdaptation", -6),
+  };
+}
+
+function buildStaffAttributes(staff: RealStaffSeed) {
+  const base = staff.reputation;
+  const roleBoost: Record<string, Partial<Record<string, number>>> = {
+    "Technical Director": { upgradeEfficiency: 8, setupQuality: 5 },
+    "Head of Strategy": { setupQuality: 6, scoutingDepth: 2, pitStopExecution: 3 },
+    "Pit Crew Chief": { pitStopExecution: 9, degradationControl: 2 },
+    "Academy Director": { scoutingDepth: 8, talentRetention: 7 },
+    "Sporting Director": { talentRetention: 8, setupQuality: 4 },
+  };
+
+  const specialtyBoost: Partial<Record<string, Partial<Record<string, number>>>> = {
+    Aero: { upgradeEfficiency: 7 },
+    Leadership: { talentRetention: 6 },
+    Strategy: { setupQuality: 5, pitStopExecution: 3 },
+    Operations: { pitStopExecution: 4, talentRetention: 3 },
+    "Driver Development": { scoutingDepth: 6, talentRetention: 6 },
+    "Junior Program": { scoutingDepth: 7, talentRetention: 5 },
+    "Race Strategy": { setupQuality: 4, pitStopExecution: 4 },
+    "Program Management": { upgradeEfficiency: 3, talentRetention: 4 },
+    "Endurance Engineering": { degradationControl: 7, setupQuality: 4 },
+  };
+
+  const role = roleBoost[staff.role] ?? {};
+  const specialty = specialtyBoost[staff.specialty] ?? {};
+
+  function score(key: string, delta: number) {
+    return clamp(base + delta + (role[key] ?? 0) + (specialty[key] ?? 0));
+  }
+
+  return {
+    pitStopExecution: score("pitStopExecution", -14),
+    setupQuality: score("setupQuality", -12),
+    degradationControl: score("degradationControl", -13),
+    scoutingDepth: score("scoutingDepth", -15),
+    upgradeEfficiency: score("upgradeEfficiency", -11),
+    talentRetention: score("talentRetention", -10),
+  };
+}
+
+function staffTraitCodeFromProfile(staff: RealStaffSeed) {
+  if (staff.role === "Pit Crew Chief") return "PIT_WALL_GURU";
+  if (staff.specialty.includes("Aero") || staff.name === "Adrian Newey") return "AERO_VISIONARY";
+  if (staff.role === "Academy Director") return "TALENT_DEVELOPER";
+  if (staff.role === "Head of Strategy") return "DATA_STRATEGIST";
+  if (staff.specialty.includes("Finance") || staff.specialty.includes("Program")) return "COST_CONTROLLER";
+  return "LOCKER_ROOM_LEADER";
+}
+
+function teamSlug(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+async function loadPortraitManifest(): Promise<PortraitManifest | null> {
+  const manifestPath = path.resolve(process.cwd(), "prisma", "seed-data", "portrait-manifest.json");
+
+  try {
+    const raw = await fs.readFile(manifestPath, "utf8");
+    return JSON.parse(raw) as PortraitManifest;
+  } catch {
+    return null;
+  }
+}
 
 const categorySeeds: CategorySeed[] = [
   {
@@ -256,59 +396,7 @@ const ruleSets = [
   },
 ];
 
-const teamsSeed = [
-  ["F1", "Scuderia Aurora", "AUR", "IT", "Maranello", 220_000_000, 91, "red", "gold"],
-  ["F1", "Nordstern GP", "NST", "DE", "Stuttgart", 205_000_000, 88, "silver", "cyan"],
-  ["F2", "Atlas Junior Racing", "ATJ", "FR", "Le Castellet", 52_000_000, 67, "blue", "white"],
-  ["F2", "Pinnacle Driver Academy", "PDA", "GB", "Silverstone", 49_000_000, 65, "orange", "navy"],
-  ["INDYCAR", "Arrow Coastline Racing", "ACR", "US", "Indianapolis", 98_000_000, 79, "teal", "white"],
-  ["INDYCAR", "Velocity Plains Motorsport", "VPM", "US", "Charlotte", 92_000_000, 75, "yellow", "black"],
-  ["NASCAR_CUP", "Falcon Ford Performance", "FFP", "US", "Concord", 110_000_000, 83, "blue", "red"],
-  ["NASCAR_CUP", "Bowline Chevrolet Racing", "BCR", "US", "Mooresville", 106_000_000, 82, "orange", "black"],
-  ["NASCAR_XFINITY", "Frontline Xfinity Team", "FXT", "US", "Charlotte", 62_000_000, 71, "cyan", "gray"],
-  ["NASCAR_XFINITY", "Ridgeway O'Reilly Squad", "ROS", "US", "Nashville", 59_000_000, 69, "green", "white"],
-  ["NASCAR_TRUCK", "Granite Truck Motorsports", "GTM", "US", "Atlanta", 46_000_000, 63, "red", "white"],
-  ["NASCAR_TRUCK", "Delta Haulers Racing", "DHR", "US", "Bristol", 44_000_000, 60, "lime", "black"],
-  ["WEC_HYPERCAR", "Apex Endurance Factory", "AEF", "JP", "Cologne", 160_000_000, 86, "white", "red"],
-  ["WEC_HYPERCAR", "Iron Lion Hypercar", "ILH", "IT", "Modena", 154_000_000, 84, "rosso", "black"],
-  ["LMGT3", "Silverline GT Works", "SGW", "GB", "Banbury", 78_000_000, 73, "silver", "lime"],
-  ["LMGT3", "Vertex LMGT Program", "VLP", "DE", "Munich", 72_000_000, 70, "purple", "yellow"],
-] as const;
-
-const driverNames = [
-  "Luca Bianchi",
-  "Noah Schneider",
-  "Theo Lambert",
-  "Kieran Walsh",
-  "Colton Hayes",
-  "Evan McBride",
-  "Tyler Watson",
-  "Mason Burke",
-  "Aiden Ross",
-  "Parker Bell",
-  "Dylan Brooks",
-  "Jace Turner",
-  "Ryo Nakamura",
-  "Matteo Vieri",
-  "Oliver Finch",
-  "Felix Hartmann",
-  "Gabriel Costa",
-  "Rafael Mendes",
-  "Yuto Sato",
-  "Enzo Moretti",
-  "Alex Romanov",
-  "Victor Duval",
-  "Liam Cooper",
-  "Jules Perrin",
-  "Marcus Reed",
-  "Ethan Blake",
-  "Andre Keller",
-  "Marco De Luca",
-  "Nico Weber",
-  "Tyson Grant",
-  "Shawn Ellis",
-  "Connor Hale",
-];
+const teamsSeed = realTeamsSeed;
 
 const driverTraitsSeed = [
   ["QUALI_BEAST", "Qualifying Beast"],
@@ -321,6 +409,15 @@ const driverTraitsSeed = [
   ["TEAM_LEADER", "Team Leader"],
   ["TECHNICAL_GENIUS", "Technical Genius"],
   ["SPONSOR_MAGNET", "Sponsor Magnet"],
+] as const;
+
+const staffTraitsSeed = [
+  ["PIT_WALL_GURU", "Pit Wall Guru"],
+  ["AERO_VISIONARY", "Aero Visionary"],
+  ["DATA_STRATEGIST", "Data Strategist"],
+  ["TALENT_DEVELOPER", "Talent Developer"],
+  ["COST_CONTROLLER", "Cost Controller"],
+  ["LOCKER_ROOM_LEADER", "Locker Room Leader"],
 ] as const;
 
 const supplierSeed = [
@@ -406,14 +503,8 @@ const eventsPerCategory: Record<string, { name: string; circuit: string; country
     ],
   };
 
-function birthDateFromIndex(index: number) {
-  const year = 1990 + (index % 12);
-  const month = (index % 11) + 1;
-  const day = ((index * 3) % 27) + 1;
-  return new Date(Date.UTC(year, month - 1, day));
-}
-
 async function seed() {
+  const portraitManifest = await loadPortraitManifest();
   await prisma.qualifyingResult.deleteMany();
   await prisma.raceResult.deleteMany();
   await prisma.session.deleteMany();
@@ -545,6 +636,7 @@ async function seed() {
   }
 
   const teamMap = new Map<string, string>();
+  const teamNames = teamsSeed.map((team) => team[1]);
   for (const [categoryCode, name, shortName, countryCode, headquarters, budget, reputation, primaryColor, secondaryColor] of teamsSeed) {
     const categoryId = categoryMap.get(categoryCode)?.id;
     if (!categoryId) continue;
@@ -554,19 +646,31 @@ async function seed() {
         categoryId,
         name,
         shortName,
-        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        slug: teamSlug(name),
         countryCode,
         headquarters,
         budget,
         reputation,
-        fanbase: 50 + Math.round(reputation / 2),
-        history: `${name} enters season 2026 with growing ambitions.`,
+        fanbase: clamp(44 + Math.round(reputation / 1.25), 30, 99),
+        history: `${name} enters 2026 with real-world operations baseline and long-term ambitions.`,
         primaryColor,
         secondaryColor,
-        philosophy: "High performance with sustainable long-term growth.",
+        philosophy: "Performance-first program with sustainable growth and elite talent development.",
       },
     });
     teamMap.set(name, created.id);
+
+    await prisma.teamHistory.create({
+      data: {
+        teamId: created.id,
+        seasonYear: 2025,
+        wins: Math.max(0, Math.floor((reputation - 75) / 3)),
+        podiums: Math.max(0, Math.floor((reputation - 65) / 2)),
+        poles: Math.max(0, Math.floor((reputation - 72) / 3)),
+        points: Math.max(15, reputation * 4),
+        summary: `${name} closed 2025 with competitive momentum and stable operations.`,
+      },
+    });
   }
 
   for (const [code, name] of driverTraitsSeed) {
@@ -580,119 +684,110 @@ async function seed() {
     });
   }
 
-  const traits = await prisma.driverTrait.findMany();
-  const driverMap = new Map<string, string>();
-  const teamNames = teamsSeed.map((team) => team[1]);
-  for (let i = 0; i < driverNames.length; i += 1) {
-    const driverName = driverNames[i];
-    const teamName = teamNames[i % teamNames.length];
-    const teamId = teamMap.get(teamName);
-    if (!teamId) continue;
+  for (const [code, name] of staffTraitsSeed) {
+    await prisma.staffTrait.create({
+      data: {
+        code,
+        name,
+        description: `${name} increases operational efficiency and long-term execution quality.`,
+        impact: { baseModifier: 4 },
+      },
+    });
+  }
 
-    const teamCategoryCode = teamsSeed.find((team) => team[1] === teamName)?.[0];
-    const categoryId = teamCategoryCode ? categoryMap.get(teamCategoryCode)?.id : undefined;
+  const driverTraitMap = new Map((await prisma.driverTrait.findMany()).map((trait) => [trait.code, trait.id]));
+  const staffTraitMap = new Map((await prisma.staffTrait.findMany()).map((trait) => [trait.code, trait.id]));
+  const driversByTeam = new Map<string, { id: string; overall: number; salary: number }[]>();
+  const staffByTeam = new Map<string, { id: string; salary: number; reputation: number; role: string }[]>();
+
+  for (const driverSeed of realDriverSeeds) {
+    const categoryId = categoryMap.get(driverSeed.categoryCode)?.id;
     if (!categoryId) continue;
 
-    const [firstName, lastName] = driverName.split(" ");
-    const overall = 68 + ((i * 3) % 29);
+    const teamId = driverSeed.teamName ? teamMap.get(driverSeed.teamName) ?? null : null;
+    const imageUrl = portraitManifest?.drivers?.[driverSeed.portraitSlug] ?? null;
+
     const created = await prisma.driver.create({
       data: {
-        firstName,
-        lastName,
-        displayName: driverName,
-        countryCode: ["IT", "DE", "FR", "GB", "US", "JP", "BR", "AR"][i % 8],
-        birthDate: birthDateFromIndex(i),
-        overall,
-        potential: Math.min(99, overall + 8),
-        reputation: Math.min(95, overall + 4),
-        marketValue: 4_000_000 + overall * 180_000,
-        salary: 600_000 + overall * 60_000,
-        morale: 55 + (i % 35),
-        personality: ["Calm", "Aggressive", "Analytical", "Leader"][i % 4],
-        primaryTraitCode: traits[i % traits.length]?.code,
-        preferredDisciplines: teamCategoryCode ? [teamCategoryCode] : [],
-        attributes: {
-          purePace: overall,
-          consistency: 62 + (i % 28),
-          qualifying: overall + 2,
-          launch: 58 + (i % 30),
-          defense: 60 + (i % 24),
-          overtaking: 61 + (i % 27),
-          aggression: 48 + (i % 35),
-          emotionalControl: 56 + (i % 26),
-          wetWeather: 54 + (i % 31),
-          technicalFeedback: 57 + (i % 25),
-          tireManagement: 60 + (i % 24),
-          fuelSaving: 58 + (i % 23),
-          strategyIQ: 59 + (i % 29),
-          trafficAdaptation: 60 + (i % 24),
-          ovalAdaptation: 50 + (i % 42),
-          streetAdaptation: 55 + (i % 33),
-          roadCourseAdaptation: 58 + (i % 30),
-          enduranceAdaptation: 52 + (i % 37),
-        },
+        firstName: driverSeed.firstName,
+        lastName: driverSeed.lastName,
+        displayName: driverSeed.displayName,
+        countryCode: driverSeed.countryCode,
+        birthDate: new Date(`${driverSeed.birthDateIso}T00:00:00.000Z`),
+        imageUrl,
+        overall: driverSeed.overall,
+        potential: driverSeed.potential,
+        reputation: driverSeed.reputation,
+        marketValue: driverSeed.marketValue,
+        salary: driverSeed.salary,
+        morale: driverSeed.morale,
+        personality: driverSeed.personality,
+        primaryTraitCode: driverSeed.primaryTraitCode,
+        preferredDisciplines: [driverSeed.categoryCode],
+        attributes: buildDriverAttributes(driverSeed),
         currentCategoryId: categoryId,
         currentTeamId: teamId,
       },
     });
 
-    driverMap.set(driverName, created.id);
-
-    if (traits[i % traits.length]) {
+    const primaryTraitId = driverTraitMap.get(driverSeed.primaryTraitCode);
+    if (primaryTraitId) {
       await prisma.driverTraitLink.create({
         data: {
           driverId: created.id,
-          traitId: traits[i % traits.length].id,
+          traitId: primaryTraitId,
           isPrimary: true,
         },
       });
     }
+
+    if (teamId) {
+      const list = driversByTeam.get(teamId) ?? [];
+      list.push({ id: created.id, overall: created.overall, salary: created.salary });
+      driversByTeam.set(teamId, list);
+    }
   }
 
-  const staffRoles = [
-    "Technical Director",
-    "Chief Engineer",
-    "Race Engineer",
-    "Head of Strategy",
-    "Sporting Director",
-    "Scouting Director",
-    "Finance Director",
-    "Head of Aerodynamics",
-  ];
+  for (const staffSeed of realStaffSeeds) {
+    const categoryId = categoryMap.get(staffSeed.categoryCode)?.id;
+    if (!categoryId) continue;
 
-  const staffMap = new Map<string, string>();
-  for (const [index, teamName] of teamNames.entries()) {
-    const teamId = teamMap.get(teamName);
-    const categoryCode = teamsSeed.find((team) => team[1] === teamName)?.[0];
-    const categoryId = categoryCode ? categoryMap.get(categoryCode)?.id : undefined;
-    if (!teamId || !categoryId) continue;
-    const safeCategoryCode = categoryCode ?? "F1";
+    const teamId = staffSeed.teamName ? teamMap.get(staffSeed.teamName) ?? null : null;
+    const imageUrl = portraitManifest?.staff?.[staffSeed.portraitSlug] ?? null;
 
-    const name = `Staff ${index + 1} ${teamName.split(" ")[0]}`;
     const created = await prisma.staff.create({
       data: {
-        name,
-        role: staffRoles[index % staffRoles.length],
-        countryCode: ["US", "GB", "DE", "IT", "JP"][index % 5],
-        reputation: 58 + ((index * 4) % 32),
-        salary: 450_000 + index * 35_000,
-        specialty: ["Pit Wall", "Aero", "Powertrain", "Scouting", "Finance"][index % 5],
-        compatibility: { categories: [safeCategoryCode] },
-        personality: ["Calm", "Driven", "Aggressive"][index % 3],
-        attributes: {
-          pitStopExecution: 60 + (index % 30),
-          setupQuality: 59 + (index % 27),
-          degradationControl: 57 + (index % 25),
-          scoutingDepth: 55 + (index % 26),
-          upgradeEfficiency: 58 + (index % 28),
-          talentRetention: 56 + (index % 30),
-        },
+        name: staffSeed.name,
+        role: staffSeed.role,
+        countryCode: staffSeed.countryCode,
+        imageUrl,
+        reputation: staffSeed.reputation,
+        salary: staffSeed.salary,
+        specialty: staffSeed.specialty,
+        compatibility: { categories: [staffSeed.categoryCode] },
+        personality: staffSeed.personality,
+        attributes: buildStaffAttributes(staffSeed),
         currentTeamId: teamId,
         currentCategoryId: categoryId,
       },
     });
 
-    staffMap.set(name, created.id);
+    const traitCode = staffTraitCodeFromProfile(staffSeed);
+    const traitId = staffTraitMap.get(traitCode);
+    if (traitId) {
+      await prisma.staffTraitLink.create({
+        data: {
+          staffId: created.id,
+          traitId,
+        },
+      });
+    }
+
+    if (teamId) {
+      const list = staffByTeam.get(teamId) ?? [];
+      list.push({ id: created.id, salary: created.salary, reputation: created.reputation, role: created.role });
+      staffByTeam.set(teamId, list);
+    }
   }
 
   const supplierMap = new Map<string, string>();
@@ -945,42 +1040,47 @@ async function seed() {
     });
   }
 
-  const drivers = await prisma.driver.findMany();
-  for (const [index, driver] of drivers.entries()) {
-    if (!driver.currentTeamId) continue;
-    await prisma.driverContract.create({
-      data: {
-        driverId: driver.id,
-        teamId: driver.currentTeamId,
-        role: index % 3 === 0 ? "Lead Driver" : "Race Driver",
-        annualSalary: driver.salary,
-        buyoutClause: driver.salary * 4,
-        bonusWin: 220_000,
-        bonusPodium: 120_000,
-        bonusPole: 90_000,
-        bonusTopTen: 40_000,
-        bonusStageWin: 55_000,
-        startDate: new Date(Date.UTC(2026, 0, 1)),
-        endDate: new Date(Date.UTC(2027, 0, 1)),
-        clauses: { optionYear: true, releaseNoticeDays: 30 },
-      },
-    });
+  for (const [teamId, teamDrivers] of driversByTeam.entries()) {
+    const sorted = [...teamDrivers].sort((a, b) => b.overall - a.overall);
+
+    for (let index = 0; index < sorted.length; index += 1) {
+      const driver = sorted[index];
+      await prisma.driverContract.create({
+        data: {
+          driverId: driver.id,
+          teamId,
+          role: index === 0 ? "Lead Driver" : index === 1 ? "Race Driver" : "Reserve Driver",
+          annualSalary: driver.salary,
+          buyoutClause: driver.salary * 4,
+          bonusWin: 220_000,
+          bonusPodium: 120_000,
+          bonusPole: 90_000,
+          bonusTopTen: 40_000,
+          bonusStageWin: 55_000,
+          startDate: new Date(Date.UTC(2026, 0, 1)),
+          endDate: new Date(Date.UTC(2027, 0, 1)),
+          clauses: { optionYear: true, releaseNoticeDays: 30 },
+        },
+      });
+    }
   }
 
-  const staff = await prisma.staff.findMany();
-  for (const member of staff) {
-    if (!member.currentTeamId) continue;
-    await prisma.staffContract.create({
-      data: {
-        staffId: member.id,
-        teamId: member.currentTeamId,
-        role: member.role,
-        annualSalary: member.salary,
-        startDate: new Date(Date.UTC(2026, 0, 1)),
-        endDate: new Date(Date.UTC(2028, 0, 1)),
-        bonusObjectives: { championshipTop3: 300_000 },
-      },
-    });
+  for (const [teamId, teamStaff] of staffByTeam.entries()) {
+    const sorted = [...teamStaff].sort((a, b) => b.reputation - a.reputation);
+
+    for (const member of sorted) {
+      await prisma.staffContract.create({
+        data: {
+          staffId: member.id,
+          teamId,
+          role: member.role,
+          annualSalary: member.salary,
+          startDate: new Date(Date.UTC(2026, 0, 1)),
+          endDate: new Date(Date.UTC(2028, 0, 1)),
+          bonusObjectives: { championshipTop3: 300_000 },
+        },
+      });
+    }
   }
 
   await prisma.newsItem.createMany({
@@ -1038,17 +1138,32 @@ async function seed() {
     });
   }
 
-  for (const driver of await prisma.driver.findMany({ take: 20 })) {
+  for (const driver of await prisma.driver.findMany()) {
     await prisma.assetRegistry.create({
       data: {
         entityType: "DRIVER",
         entityId: driver.id,
         assetType: "DRIVER_PHOTO",
-        packSource: "builtin-seed",
-        sourcePath: null,
-        resolvedPath: null,
-        isPlaceholder: true,
-        approved: true,
+        packSource: "wikimedia-portrait-pack",
+        sourcePath: driver.imageUrl,
+        resolvedPath: driver.imageUrl,
+        isPlaceholder: !driver.imageUrl,
+        approved: Boolean(driver.imageUrl),
+      },
+    });
+  }
+
+  for (const staff of await prisma.staff.findMany()) {
+    await prisma.assetRegistry.create({
+      data: {
+        entityType: "STAFF",
+        entityId: staff.id,
+        assetType: "GENERIC",
+        packSource: "wikimedia-portrait-pack",
+        sourcePath: staff.imageUrl,
+        resolvedPath: staff.imageUrl,
+        isPlaceholder: !staff.imageUrl,
+        approved: Boolean(staff.imageUrl),
       },
     });
   }

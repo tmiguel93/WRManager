@@ -1,9 +1,11 @@
+import { DriverComparePanel } from "@/components/game/driver-compare-panel";
 import { DriversDataTable } from "@/components/game/drivers-data-table";
 import { PageHeader } from "@/components/common/page-header";
-import { getDriversView } from "@/server/queries/world";
+import { getDriversDirectory } from "@/server/queries/roster";
 
 export default async function DriversPage() {
-  const drivers = await getDriversView().catch(() => []);
+  const drivers = await getDriversDirectory().catch(() => []);
+
   const tableRows = drivers.map((driver) => ({
     id: driver.id,
     name: driver.displayName,
@@ -13,6 +15,21 @@ export default async function DriversPage() {
     overall: driver.overall,
     potential: driver.potential,
     reputation: driver.reputation,
+    marketValue: driver.marketValue,
+    primaryTrait: driver.traits[0]?.trait.name ?? "No primary trait",
+    imageUrl: driver.imageUrl,
+  }));
+
+  const compareRows = drivers.slice(0, 24).map((driver) => ({
+    id: driver.id,
+    name: driver.displayName,
+    countryCode: driver.countryCode,
+    imageUrl: driver.imageUrl,
+    overall: driver.overall,
+    potential: driver.potential,
+    reputation: driver.reputation,
+    team: driver.currentTeam?.name ?? "Free Agent",
+    category: driver.currentCategory?.code ?? "N/A",
   }));
 
   return (
@@ -20,8 +37,9 @@ export default async function DriversPage() {
       <PageHeader
         eyebrow="Talent Database"
         title="Global Drivers"
-        description="Banco multi-série com atributos, reputação e base de progressão para transferências de carreira."
+        description="Real multi-series roster with contracts, attributes and quick compare for transfer planning."
       />
+      <DriverComparePanel drivers={compareRows} />
       <DriversDataTable data={tableRows} />
     </div>
   );

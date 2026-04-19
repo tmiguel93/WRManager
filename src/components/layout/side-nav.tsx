@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BriefcaseBusiness,
   CalendarRange,
   Factory,
   Image,
   LayoutDashboard,
   Newspaper,
+  Radar,
   Shield,
   Trophy,
   UsersRound,
@@ -22,7 +24,9 @@ const iconMap = {
   CalendarRange,
   Trophy,
   UsersRound,
+  BriefcaseBusiness,
   Shield,
+  Radar,
   Factory,
   Newspaper,
   Image,
@@ -76,10 +80,10 @@ export function SideNav() {
       </div>
 
       <div className="mt-auto rounded-3xl border border-emerald-300/20 bg-emerald-400/5 p-4">
-        <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Module 1</p>
-        <p className="mt-2 text-sm font-medium text-emerald-50">Foundation online</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Module 4</p>
+        <p className="mt-2 text-sm font-medium text-emerald-50">Roster operations live</p>
         <p className="mt-1 text-xs text-emerald-100/70">
-          Design system, shell, prisma, seeds and asset pipeline active.
+          Real drivers, staff, team detail pages, contracts and scouting board active.
         </p>
       </div>
     </aside>

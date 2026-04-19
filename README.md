@@ -49,6 +49,18 @@ Base do manager global de automobilismo construída com foco em:
 - Gráficos de evolução financeira e técnica com Recharts
 - Camada de regras de negócio do HQ desacoplada em `domain/rules`
 
+## Módulo 4 (entregue)
+
+- Base real de pilotos, equipes e staff multi-série (F1, F2, INDYCAR, NASCAR, WEC, LMGT3)
+- Seed atualizado para usar dados reais e contratos reais de roster
+- Pipeline de retratos reais via Wikimedia com manifesto local
+- Páginas de listagem + detalhe para:
+  - Drivers (`/game/drivers` e `/game/drivers/[driverId]`)
+  - Staff (`/game/staff` e `/game/staff/[staffId]`)
+  - Teams (`/game/teams` e `/game/teams/[teamId]`)
+- Quick compare de pilotos e scouting board com score de avaliação desacoplado (`domain/rules`)
+- Navegação expandida com `Staff` e `Scouting`
+
 ## Estrutura de pastas (resumo)
 
 ```txt
@@ -87,6 +99,7 @@ npm run db:push
 
 4. Popular dados iniciais:
 ```bash
+npm run assets:sync-portraits
 npm run db:seed
 ```
 
