@@ -89,6 +89,18 @@ Base do manager global de automobilismo construída com foco em:
 - Upgrades de facilities impactam eficiência de desenvolvimento e confiabilidade
 - Movimentações financeiras registradas em `transactions` para projetos e upgrades de infraestrutura
 
+## Módulo 7 (entregue)
+
+- Calendário completo de temporada por categoria em `/game/calendar`
+- Visão global multi-série com radar de próximos eventos e status por campeonato
+- Standings completos em `/game/standings` com:
+  - classificação de pilotos
+  - classificação de equipes
+  - classificação de fabricantes
+- Histórico da temporada anterior por categoria (campeões de pilotos/equipes/fabricantes)
+- Seed expandida com duas temporadas (`2025` finalizada + `2026` preseason) e tabelas populadas
+- Regras de desempate desacopladas para standings em `domain/rules/championship-standings.ts`
+
 ## Estrutura de pastas (resumo)
 
 ```txt
@@ -154,4 +166,4 @@ npm run assets:import -- assets/packs/sample-pack/asset-pack.json
 
 ## Próximo módulo
 
-Módulo 7: calendário de temporada e standings completos (pilotos, equipes, fabricantes e histórico).
+Módulo 8: engine de weekend rules (abstração de formatos de fim de semana por série).

@@ -1,40 +1,171 @@
-import { CountryFlag } from "@/components/common/country-flag";
-import { PageHeader } from "@/components/common/page-header";
-import { Card, CardContent } from "@/components/ui/card";
-import { getCalendarView } from "@/server/queries/world";
+import Link from "next/link";
+import { CalendarClock, Flag, Globe2, Route } from "lucide-react";
 
-export default async function CalendarPage() {
-  const events = await getCalendarView().catch(() => []);
+import { CountryFlag } from "@/components/common/country-flag";
+import { KpiCard } from "@/components/common/kpi-card";
+import { PageHeader } from "@/components/common/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { getChampionshipCalendarView } from "@/server/queries/championship";
+
+interface CalendarPageProps {
+  searchParams: Promise<{ category?: string }>;
+}
+
+export default async function CalendarPage({ searchParams }: CalendarPageProps) {
+  const { category } = await searchParams;
+  const view = await getChampionshipCalendarView(category);
+
+  if (!view) {
+    return (
+      <div className="space-y-8">
+        <PageHeader
+          eyebrow="Season Flow"
+          title="Global Calendar"
+          description="No championship calendar data available for the current save context."
+        />
+      </div>
+    );
+  }
+
+  const upcoming = view.events.filter((event) => event.daysUntil >= 0);
+  const completed = view.events.filter((event) => event.daysUntil < 0);
+  const nextEvent = upcoming[0] ?? null;
+  const seasonProgress =
+    view.totalRounds > 0
+      ? ((Math.max(0, Math.min(view.currentRound - 1, view.totalRounds)) / view.totalRounds) * 100)
+      : 0;
 
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow="Season Flow"
-        title="Global Calendar"
-        description="Calendário unificado multi-série com rounds preparados para as próximas fases de simulação."
+        title="Championship Calendar"
+        description="Track full-season progression with category-specific rounds, track types and global motorsport schedule context."
+        badge={`${view.selectedCategory.code} · ${view.seasonYear}`}
       />
 
-      <div className="grid gap-3">
-        {events.map((event) => (
-          <Card key={event.id} className="premium-card">
-            <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
-              <div className="min-w-[160px]">
-                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                  Round {event.round} • {event.category.code}
+      <section className="flex flex-wrap gap-2">
+        {view.categories.map((option) => {
+          const isActive = option.code === view.selectedCategory.code;
+          return (
+            <Link
+              key={option.code}
+              href={`/game/calendar?category=${option.code}`}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                isActive
+                  ? "border-cyan-300/45 bg-cyan-500/10 text-cyan-100"
+                  : "border-white/15 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground",
+              )}
+            >
+              {option.code}
+            </Link>
+          );
+        })}
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          label="Season Progress"
+          value={`${seasonProgress.toFixed(0)}%`}
+          delta={seasonProgress - 50}
+          icon={<Route className="size-4" />}
+        />
+        <KpiCard
+          label="Total Rounds"
+          value={`${view.totalRounds}`}
+          delta={0}
+          icon={<CalendarClock className="size-4" />}
+        />
+        <KpiCard
+          label="Upcoming Events"
+          value={`${upcoming.length}`}
+          delta={upcoming.length - completed.length}
+          icon={<Flag className="size-4" />}
+        />
+        <KpiCard
+          label="Completed"
+          value={`${completed.length}`}
+          delta={completed.length - upcoming.length}
+          icon={<Globe2 className="size-4" />}
+        />
+      </section>
+
+      <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card className="premium-card">
+          <CardHeader>
+            <CardTitle className="font-heading text-xl">Season Timeline · {view.selectedCategory.name}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {view.events.map((event) => (
+              <div
+                key={event.id}
+                className="rounded-2xl border border-white/10 bg-white/5 p-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                      Round {event.round} · {event.trackType}
+                    </p>
+                    <p className="text-base font-semibold">{event.name}</p>
+                  </div>
+                  <Badge
+                    className={
+                      event.daysUntil < 0
+                        ? "rounded-full border border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
+                        : "rounded-full border border-amber-300/30 bg-amber-500/10 text-amber-100"
+                    }
+                  >
+                    {event.daysUntil < 0 ? "Completed" : `${event.daysUntil}d`}
+                  </Badge>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-2">
+                    <CountryFlag countryCode={event.countryCode} className="h-4 w-6" />
+                    {event.circuitName}
+                  </span>
+                  <span>{formatDate(event.startDateIso)}</span>
+                  <span>{event.weatherProfile}</span>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="premium-card">
+          <CardHeader>
+            <CardTitle className="font-heading text-xl">Global Category Radar</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {view.globalOverview.map((row) => (
+              <div key={row.categoryCode} className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">{row.categoryName}</p>
+                  <Badge className="rounded-full border border-white/15 bg-white/10 text-xs">{row.categoryCode}</Badge>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {row.currentRound}/{Math.max(1, row.totalRounds)} rounds · {row.status}
                 </p>
-                <p className="font-heading text-lg text-foreground">{event.name}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Next:{" "}
+                  <span className="text-foreground">
+                    {row.nextEvent ? `${row.nextEvent.name} (${formatDate(row.nextEvent.startDateIso)})` : "TBA"}
+                  </span>
+                </p>
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CountryFlag countryCode={event.countryCode} className="h-4 w-6" />
-                {event.circuitName}
+            ))}
+
+            {nextEvent ? (
+              <div className="rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-3 text-sm text-cyan-100">
+                Next in focus: {nextEvent.name} at {nextEvent.circuitName} on {formatDate(nextEvent.startDateIso)}.
               </div>
-              <div className="text-sm font-medium text-foreground">
-                {event.startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }

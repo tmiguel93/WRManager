@@ -86,10 +86,10 @@ export function SideNav() {
       </div>
 
       <div className="mt-auto rounded-3xl border border-emerald-300/20 bg-emerald-400/5 p-4">
-        <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Module 6</p>
-        <p className="mt-2 text-sm font-medium text-emerald-50">Engineering ops live</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Module 7</p>
+        <p className="mt-2 text-sm font-medium text-emerald-50">Championship ops live</p>
         <p className="mt-1 text-xs text-emerald-100/70">
-          Car upgrades, project pipeline, facility progression and supplier performance coupling active.
+          Season calendar, standings tables and historical champions are now active by category.
         </p>
       </div>
     </aside>

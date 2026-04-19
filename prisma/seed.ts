@@ -593,24 +593,35 @@ async function seed() {
     ruleSetMap.set(ruleSet.code, created.id);
   }
 
-  const seasonMap = new Map<string, string>();
+  const previousSeasonMap = new Map<string, string>();
+  const currentSeasonMap = new Map<string, string>();
   for (const category of categorySeeds) {
     const categoryId = categoryMap.get(category.code)?.id;
     if (!categoryId) continue;
 
-    const season = await prisma.season.create({
+    const previousSeason = await prisma.season.create({
+      data: {
+        categoryId,
+        year: 2025,
+        status: "FINISHED",
+        currentRound: 3,
+      },
+    });
+
+    const currentSeason = await prisma.season.create({
       data: {
         categoryId,
         year: 2026,
         status: "PRESEASON",
       },
     });
-    seasonMap.set(category.code, season.id);
+    previousSeasonMap.set(category.code, previousSeason.id);
+    currentSeasonMap.set(category.code, currentSeason.id);
   }
 
   for (const [categoryCode, events] of Object.entries(eventsPerCategory)) {
     const categoryId = categoryMap.get(categoryCode)?.id;
-    const seasonId = seasonMap.get(categoryCode);
+    const seasonId = currentSeasonMap.get(categoryCode);
     if (!categoryId || !seasonId) continue;
 
     for (let index = 0; index < events.length; index += 1) {
@@ -1125,6 +1136,175 @@ async function seed() {
           endDate: new Date(Date.UTC(2026, 11, 31)),
           annualCost: 6_000_000 + index * 180_000,
           clauses: { scope: "tires" },
+        },
+      });
+    }
+  }
+
+  const teamsForStandings = await prisma.team.findMany({
+    include: {
+      category: { select: { id: true, code: true } },
+      drivers: {
+        orderBy: [{ overall: "desc" }, { potential: "desc" }],
+        select: {
+          id: true,
+          overall: true,
+          countryCode: true,
+          displayName: true,
+        },
+      },
+      teamHistories: {
+        where: { seasonYear: 2025 },
+        take: 1,
+        select: {
+          points: true,
+          wins: true,
+          podiums: true,
+        },
+      },
+      supplierContracts: {
+        where: {
+          status: "ACTIVE",
+          supplier: { type: "ENGINE" },
+        },
+        include: {
+          supplier: { select: { name: true } },
+        },
+        take: 1,
+      },
+    },
+  });
+
+  for (const category of categorySeeds) {
+    const previousSeasonId = previousSeasonMap.get(category.code);
+    const currentSeasonId = currentSeasonMap.get(category.code);
+    const categoryId = categoryMap.get(category.code)?.id;
+    if (!previousSeasonId || !currentSeasonId || !categoryId) continue;
+
+    const categoryTeams = teamsForStandings.filter((team) => team.category.code === category.code);
+    const manufacturerPreviousMap = new Map<string, { points: number; wins: number }>();
+    const manufacturerCurrentMap = new Map<string, { points: number; wins: number }>();
+
+    for (const [teamIndex, team] of categoryTeams.entries()) {
+      const history = team.teamHistories[0];
+      const previousPoints =
+        history?.points ?? Math.max(12, Math.round((team.reputation - 54) * 3.9));
+      const previousWins =
+        history?.wins ?? Math.max(0, Math.floor((team.reputation - 72) / 5));
+      const previousPodiums =
+        history?.podiums ?? Math.max(previousWins, Math.floor((team.reputation - 64) / 3));
+
+      await prisma.standingsTeam.create({
+        data: {
+          seasonId: previousSeasonId,
+          categoryId,
+          teamId: team.id,
+          points: previousPoints,
+          wins: previousWins,
+          podiums: previousPodiums,
+        },
+      });
+
+      await prisma.standingsTeam.create({
+        data: {
+          seasonId: currentSeasonId,
+          categoryId,
+          teamId: team.id,
+          points: 0,
+          wins: 0,
+          podiums: 0,
+        },
+      });
+
+      const rankedDrivers = team.drivers;
+      for (const [driverIndex, driver] of rankedDrivers.entries()) {
+        const share = driverIndex === 0 ? 0.57 : driverIndex === 1 ? 0.43 : 0.24 / (driverIndex + 1);
+        const previousDriverPoints = Math.max(
+          0,
+          Math.round(previousPoints * share + (driver.overall - 70) * 0.6),
+        );
+        const previousDriverWins = Math.max(0, Math.round(previousWins * share * 1.2));
+        const previousDriverPodiums = Math.max(
+          previousDriverWins,
+          Math.round(previousPodiums * share * 1.1),
+        );
+        const previousPoles = Math.max(0, Math.round(previousDriverWins * 1.25 + (driverIndex === 0 ? 1 : 0)));
+
+        await prisma.standingsDriver.create({
+          data: {
+            seasonId: previousSeasonId,
+            categoryId,
+            driverId: driver.id,
+            points: previousDriverPoints,
+            wins: previousDriverWins,
+            podiums: previousDriverPodiums,
+            poles: previousPoles,
+          },
+        });
+
+        await prisma.standingsDriver.create({
+          data: {
+            seasonId: currentSeasonId,
+            categoryId,
+            driverId: driver.id,
+            points: 0,
+            wins: 0,
+            podiums: 0,
+            poles: 0,
+          },
+        });
+      }
+
+      const manufacturerName =
+        team.manufacturerName ??
+        team.supplierContracts[0]?.supplier.name ??
+        team.shortName;
+      const previousManufacturer = manufacturerPreviousMap.get(manufacturerName) ?? {
+        points: 0,
+        wins: 0,
+      };
+      previousManufacturer.points += previousPoints;
+      previousManufacturer.wins += previousWins;
+      manufacturerPreviousMap.set(manufacturerName, previousManufacturer);
+
+      const currentManufacturer = manufacturerCurrentMap.get(manufacturerName) ?? {
+        points: 0,
+        wins: 0,
+      };
+      currentManufacturer.points += 0;
+      currentManufacturer.wins += 0;
+      manufacturerCurrentMap.set(manufacturerName, currentManufacturer);
+
+      if (teamIndex === 0) {
+        await prisma.season.update({
+          where: { id: previousSeasonId },
+          data: {
+            currentRound: 3,
+          },
+        });
+      }
+    }
+
+    for (const [manufacturerName, values] of manufacturerPreviousMap.entries()) {
+      await prisma.standingsManufacturer.create({
+        data: {
+          seasonId: previousSeasonId,
+          categoryId,
+          manufacturerName,
+          points: values.points,
+          wins: values.wins,
+        },
+      });
+    }
+
+    for (const [manufacturerName, values] of manufacturerCurrentMap.entries()) {
+      await prisma.standingsManufacturer.create({
+        data: {
+          seasonId: currentSeasonId,
+          categoryId,
+          manufacturerName,
+          points: values.points,
+          wins: values.wins,
         },
       });
     }
