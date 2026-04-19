@@ -259,6 +259,7 @@ model Team {
   cars              Car[]
   transactions      Transaction[]
   standings         StandingsTeam[]
+  sessionStates     SessionTeamState[]
   selectedCareers   Career[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
@@ -606,8 +607,25 @@ model Session {
   startedAt       DateTime?
   finishedAt      DateTime?
   raceWeekend     RaceWeekend  @relation(fields: [raceWeekendId], references: [id], onDelete: Cascade)
+  teamStates      SessionTeamState[]
   qualifyingRows  QualifyingResult[]
   raceRows        RaceResult[]
+}
+
+model SessionTeamState {
+  id               String   @id @default(cuid())
+  sessionId        String
+  teamId           String
+  setupConfidence  Int      @default(50)
+  trackKnowledge   Int      @default(40)
+  practiceDelta    Int      @default(0)
+  notes            Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  session          Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  team             Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, teamId])
 }
 
 model QualifyingResult {

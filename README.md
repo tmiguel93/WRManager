@@ -120,6 +120,19 @@ Base do manager global de automobilismo construída com foco em:
   - ação em `app/(game)/game/weekend-rules/actions.ts`
 - Registry de simulação expandido para todas as séries seedadas em `simulation/rulesets/registry.ts`
 
+## Módulo 9 (entregue)
+
+- Tela de treino completa em `/game/practice`
+- Sistema de aprendizado de setup por sessão com persistência em `SessionTeamState`
+- Ganho de `setupConfidence` e `trackKnowledge` influencia diretamente a classificação
+- Tela de classificação em `/game/qualifying` com dois modos:
+  - `QUICK`
+  - `DETAILED` (risco, timing de saída e composto)
+- Simulação de grid com resultados persistidos em `qualifying_results`
+- Conclusão de sessão atualiza progresso do fim de semana (`session.completed`)
+- Regras puras desacopladas da UI:
+  - `domain/rules/weekend-session-sim.ts`
+
 ## Estrutura de pastas (resumo)
 
 ```txt
@@ -185,4 +198,4 @@ npm run assets:import -- assets/packs/sample-pack/asset-pack.json
 
 ## Próximo módulo
 
-Módulo 9: Practice e Qualifying (setup learning + classificação rápida/detalhada).
+Módulo 10: Race Control (corrida, decisões em tempo real, event feed e resultado final).

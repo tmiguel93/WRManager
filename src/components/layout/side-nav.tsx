@@ -7,6 +7,7 @@ import {
   BriefcaseBusiness,
   CalendarRange,
   Factory,
+  FlaskConical,
   Handshake,
   Image,
   LayoutDashboard,
@@ -14,6 +15,7 @@ import {
   Newspaper,
   Radar,
   Shield,
+  Timer,
   Trophy,
   UsersRound,
   Wrench,
@@ -36,6 +38,8 @@ const iconMap = {
   Wrench,
   Building2,
   ListChecks,
+  FlaskConical,
+  Timer,
   Newspaper,
   Image,
 };
@@ -88,10 +92,10 @@ export function SideNav() {
       </div>
 
       <div className="mt-auto rounded-3xl border border-emerald-300/20 bg-emerald-400/5 p-4">
-        <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Module 8</p>
-        <p className="mt-2 text-sm font-medium text-emerald-50">Weekend rules engine live</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Module 9</p>
+        <p className="mt-2 text-sm font-medium text-emerald-50">Practice + qualifying live</p>
         <p className="mt-1 text-xs text-emerald-100/70">
-          Multi-series rulesets, session formats and race weekend skeleton generation are active.
+          Setup learning, qualifying modes and session-based weekend progression are now active.
         </p>
       </div>
     </aside>

@@ -507,6 +507,7 @@ async function seed() {
   const portraitManifest = await loadPortraitManifest();
   await prisma.qualifyingResult.deleteMany();
   await prisma.raceResult.deleteMany();
+  await prisma.sessionTeamState.deleteMany();
   await prisma.session.deleteMany();
   await prisma.raceWeekend.deleteMany();
   await prisma.standingsDriver.deleteMany();
