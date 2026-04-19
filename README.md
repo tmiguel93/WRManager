@@ -73,6 +73,22 @@ Base do manager global de automobilismo construída com foco em:
   - `/game/sponsors` (portfólio ativo + negociação)
 - Regras de negócio desacopladas em `domain/rules/commercial-deals.ts`
 
+## Módulo 6 (entregue)
+
+- Centro de engenharia com pipeline de upgrades reais em `/game/car-development`
+- Tela de infraestrutura em `/game/facilities` com evolução por nível e custo progressivo
+- Sistema de projetos com:
+  - custo
+  - duração
+  - risco
+  - delta esperado
+  - variância oculta
+  - estados `AVAILABLE`, `IN_PROGRESS` e `COMPLETED`
+- Conclusão de projeto aplica delta diretamente no carro (`basePerformance`, `reliability`, `weight`, `downforce`, `drag`)
+- Efeito de fornecedores no desempenho integrado ao cálculo de pace/reliability/development velocity
+- Upgrades de facilities impactam eficiência de desenvolvimento e confiabilidade
+- Movimentações financeiras registradas em `transactions` para projetos e upgrades de infraestrutura
+
 ## Estrutura de pastas (resumo)
 
 ```txt
@@ -138,4 +154,4 @@ npm run assets:import -- assets/packs/sample-pack/asset-pack.json
 
 ## Próximo módulo
 
-Módulo 4: dados detalhados de pilotos, staff e equipes com comparação e scouting base.
+Módulo 7: calendário de temporada e standings completos (pilotos, equipes, fabricantes e histórico).

@@ -909,6 +909,78 @@ async function seed() {
     ["YOUTH_ACADEMY", "Youth Academy", "Prospect development and scouting value", 3_600_000, 5],
   ] as const;
 
+  const developmentSeedTemplates: Array<{
+    templateCode: string;
+    name: string;
+    area: string;
+    cost: number;
+    durationWeeks: number;
+    risk: number;
+    expectedDelta: number;
+    compatibleCategoryCodes: string[];
+  }> = [
+    {
+      templateCode: "FRONT_WING_V2",
+      name: "Front Wing Evolution",
+      area: "FRONT_WING",
+      cost: 6_400_000,
+      durationWeeks: 6,
+      risk: 26,
+      expectedDelta: 3,
+      compatibleCategoryCodes: ["F1", "F2", "INDYCAR", "WEC_HYPERCAR", "LMGT3"],
+    },
+    {
+      templateCode: "REAR_WING_EFF",
+      name: "Rear Wing Efficiency",
+      area: "REAR_WING",
+      cost: 6_100_000,
+      durationWeeks: 6,
+      risk: 24,
+      expectedDelta: 3,
+      compatibleCategoryCodes: ["F1", "F2", "INDYCAR", "WEC_HYPERCAR", "LMGT3"],
+    },
+    {
+      templateCode: "UNDERFLOOR_LOAD",
+      name: "Underfloor Load Package",
+      area: "UNDERFLOOR",
+      cost: 8_300_000,
+      durationWeeks: 8,
+      risk: 31,
+      expectedDelta: 4,
+      compatibleCategoryCodes: ["F1", "F2", "INDYCAR", "WEC_HYPERCAR", "LMGT3"],
+    },
+    {
+      templateCode: "OVAL_SPECIALIST",
+      name: "Oval Package",
+      area: "OVAL_PACKAGE",
+      cost: 6_300_000,
+      durationWeeks: 6,
+      risk: 27,
+      expectedDelta: 3,
+      compatibleCategoryCodes: ["INDYCAR", "NASCAR_CUP", "NASCAR_XFINITY", "NASCAR_TRUCK"],
+    },
+    {
+      templateCode: "TIRE_USAGE_LONGRUN",
+      name: "Tire Usage Package",
+      area: "TIRE_USAGE_PACKAGE",
+      cost: 5_200_000,
+      durationWeeks: 5,
+      risk: 21,
+      expectedDelta: 2,
+      compatibleCategoryCodes: ["F1", "F2", "INDYCAR", "NASCAR_CUP", "NASCAR_XFINITY", "NASCAR_TRUCK", "WEC_HYPERCAR", "LMGT3"],
+    },
+    {
+      templateCode: "ENDURANCE_RELIABILITY",
+      name: "Endurance Reliability Package",
+      area: "ENDURANCE_RELIABILITY_PACKAGE",
+      cost: 8_400_000,
+      durationWeeks: 9,
+      risk: 33,
+      expectedDelta: 5,
+      compatibleCategoryCodes: ["WEC_HYPERCAR", "LMGT3"],
+    },
+  ];
+
   const facilityMap = new Map<string, string>();
   for (const [code, name, description, baseCost, maxLevel] of facilityCodes) {
     const facility = await prisma.facility.create({
@@ -959,6 +1031,43 @@ async function seed() {
         { carId: car.id, key: "underfloor", value: 1 + ((index + 3) % 10), unit: "tier", source: "seed" },
       ],
     });
+
+    const compatibleTemplates = developmentSeedTemplates.filter((template) =>
+      template.compatibleCategoryCodes.includes(team[0]),
+    );
+
+    for (const [templateIndex, template] of compatibleTemplates.slice(0, 3).entries()) {
+      const status = templateIndex === 0 ? "COMPLETED" : templateIndex === 1 ? "IN_PROGRESS" : "AVAILABLE";
+      const startedAt =
+        status === "IN_PROGRESS" || status === "COMPLETED"
+          ? new Date(Date.UTC(2026, 0, 7 + (index % 18)))
+          : null;
+      const completedAt =
+        status === "COMPLETED"
+          ? new Date(Date.UTC(2026, 1, 6 + (index % 12)))
+          : null;
+
+      await prisma.developmentProject.create({
+        data: {
+          carId: car.id,
+          categoryId,
+          name: template.name,
+          area: template.area,
+          cost: template.cost + index * 55_000,
+          durationWeeks: template.durationWeeks,
+          risk: template.risk,
+          expectedDelta: template.expectedDelta,
+          hiddenVariance: ((index + templateIndex) % 5) - 2,
+          status,
+          startedAt,
+          completedAt,
+          compatibility: {
+            templateCode: template.templateCode,
+            compatibleCategoryCodes: template.compatibleCategoryCodes,
+          },
+        },
+      });
+    }
   }
 
   const engineByCategory: Record<string, string[]> = {

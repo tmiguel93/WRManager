@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Building2,
   BriefcaseBusiness,
   CalendarRange,
   Factory,
@@ -14,6 +15,7 @@ import {
   Shield,
   Trophy,
   UsersRound,
+  Wrench,
 } from "lucide-react";
 
 import { PRIMARY_NAV, SECONDARY_NAV } from "@/config/navigation";
@@ -30,6 +32,8 @@ const iconMap = {
   Radar,
   Factory,
   Handshake,
+  Wrench,
+  Building2,
   Newspaper,
   Image,
 };
@@ -82,10 +86,10 @@ export function SideNav() {
       </div>
 
       <div className="mt-auto rounded-3xl border border-emerald-300/20 bg-emerald-400/5 p-4">
-        <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Module 5</p>
-        <p className="mt-2 text-sm font-medium text-emerald-50">Commercial ops live</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Module 6</p>
+        <p className="mt-2 text-sm font-medium text-emerald-50">Engineering ops live</p>
         <p className="mt-1 text-xs text-emerald-100/70">
-          Supplier marketplace, sponsor deals, objectives and contract negotiations active.
+          Car upgrades, project pipeline, facility progression and supplier performance coupling active.
         </p>
       </div>
     </aside>
