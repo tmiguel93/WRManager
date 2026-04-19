@@ -1,0 +1,721 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum CareerMode {
+  TEAM_PRINCIPAL
+  MY_TEAM
+  GLOBAL
+}
+
+enum Discipline {
+  OPEN_WHEEL
+  STOCK_CAR
+  ENDURANCE
+  GT
+  FEEDER
+}
+
+enum SeasonStatus {
+  PRESEASON
+  ACTIVE
+  FINISHED
+}
+
+enum SessionType {
+  PRACTICE
+  QUALIFYING
+  SPRINT
+  FEATURE
+  STAGE
+  RACE
+  HYPERPOLE
+}
+
+enum TrackType {
+  STREET
+  ROAD
+  OVAL_SHORT
+  OVAL_INTERMEDIATE
+  SUPERSPEEDWAY
+  TECHNICAL
+  HIGH_SPEED
+  ENDURANCE
+  MIXED
+}
+
+enum SupplierType {
+  ENGINE
+  TIRE
+  BRAKE
+  SUSPENSION
+  TRANSMISSION
+  FUEL
+  ELECTRONICS
+  AERO
+  CHASSIS
+  PIT_EQUIPMENT
+  TELEMETRY
+}
+
+enum ContractStatus {
+  ACTIVE
+  EXPIRED
+  TERMINATED
+  PENDING
+}
+
+enum AssetType {
+  DRIVER_PHOTO
+  TEAM_LOGO
+  SUPPLIER_LOGO
+  SPONSOR_BANNER
+  CIRCUIT_BANNER
+  GENERIC
+}
+
+enum EntityType {
+  DRIVER
+  TEAM
+  STAFF
+  SUPPLIER
+  SPONSOR
+  CIRCUIT
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  profiles  Profile[]
+}
+
+model Profile {
+  id          String     @id @default(cuid())
+  userId      String?
+  displayName String
+  locale      String     @default("en-US")
+  currency    String     @default("USD")
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  careers     Career[]
+  saveSlots   SaveSlot[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model SaveSlot {
+  id         String   @id @default(cuid())
+  profileId  String
+  careerId   String?
+  name       String
+  manual     Boolean  @default(true)
+  snapshot   Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  profile    Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  career     Career?  @relation(fields: [careerId], references: [id], onDelete: SetNull)
+}
+
+model Career {
+  id                  String      @id @default(cuid())
+  profileId           String
+  name                String
+  mode                CareerMode
+  managerProfileCode  String
+  currentSeasonYear   Int
+  selectedCategoryId  String?
+  selectedTeamId      String?
+  cashBalance         Int         @default(25000000)
+  reputation          Int         @default(50)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  profile             Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  selectedCategory    Category?   @relation(fields: [selectedCategoryId], references: [id], onDelete: SetNull)
+  selectedTeam        Team?       @relation(fields: [selectedTeamId], references: [id], onDelete: SetNull)
+  transactions        Transaction[]
+  saveSlots           SaveSlot[]
+}
+
+model Category {
+  id                  String             @id @default(cuid())
+  code                String             @unique
+  name                String
+  discipline          Discipline
+  tier                Int
+  region              String
+  defaultRuleSetCode  String
+  fantasyModeAllowed  Boolean            @default(false)
+  isFeeder            Boolean            @default(false)
+  metadata            Json?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  ruleSets            RuleSet[]
+  seasons             Season[]
+  calendarEvents      CalendarEvent[]
+  teams               Team[]
+  drivers             Driver[]           @relation("DriverCurrentCategory")
+  staff               Staff[]            @relation("StaffCurrentCategory")
+  supplierLinks       SupplierCategory[]
+  standingsDrivers    StandingsDriver[]
+  standingsTeams      StandingsTeam[]
+  standingsMakers     StandingsManufacturer[]
+  selectedCareers     Career[]
+  cars                Car[]
+}
+
+model RuleSet {
+  id                        String      @id @default(cuid())
+  categoryId                String
+  code                      String      @unique
+  name                      String
+  sessionOrder              Json
+  pointSystem               Json
+  tireRules                 Json
+  fuelRules                 Json
+  parcFerme                 Boolean     @default(false)
+  safetyCarBehavior         String
+  weatherSensitivity        Int
+  qualifyingFormat          String
+  hasSprint                 Boolean     @default(false)
+  hasFeature                Boolean     @default(false)
+  hasStages                 Boolean     @default(false)
+  enduranceFlags            Boolean     @default(false)
+  requiredPitRules          Json?
+  manufacturerRules         Json?
+  createdAt                 DateTime    @default(now())
+  updatedAt                 DateTime    @updatedAt
+  category                  Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  raceWeekends              RaceWeekend[]
+}
+
+model Season {
+  id             String               @id @default(cuid())
+  categoryId     String
+  year           Int
+  status         SeasonStatus         @default(PRESEASON)
+  currentRound   Int                  @default(1)
+  category       Category             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  events         CalendarEvent[]
+  raceWeekends   RaceWeekend[]
+  standingsDriver StandingsDriver[]
+  standingsTeam  StandingsTeam[]
+  standingsMaker StandingsManufacturer[]
+
+  @@unique([categoryId, year])
+}
+
+model CalendarEvent {
+  id             String     @id @default(cuid())
+  categoryId     String
+  seasonId       String
+  round          Int
+  name           String
+  circuitName    String
+  countryCode    String
+  startDate      DateTime
+  endDate        DateTime
+  trackType      TrackType
+  weatherProfile String
+  ruleSetCode    String
+  category       Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  season         Season     @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  raceWeekends   RaceWeekend[]
+}
+
+model Team {
+  id                String             @id @default(cuid())
+  categoryId        String
+  name              String
+  shortName         String
+  slug              String             @unique
+  countryCode       String
+  headquarters      String
+  budget            Int
+  reputation        Int
+  fanbase           Int
+  history           String
+  primaryColor      String
+  secondaryColor    String
+  logoUrl           String?
+  imageUrl          String?
+  philosophy        String
+  manufacturerName  String?
+  category          Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  teamHistories     TeamHistory[]
+  drivers           Driver[]           @relation("TeamDrivers")
+  staff             Staff[]            @relation("TeamStaff")
+  driverContracts   DriverContract[]
+  staffContracts    StaffContract[]
+  supplierContracts SupplierContract[]
+  sponsorContracts  SponsorContract[]
+  teamContracts     TeamContract[]
+  facilities        TeamFacility[]
+  cars              Car[]
+  transactions      Transaction[]
+  standings         StandingsTeam[]
+  selectedCareers   Career[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model TeamHistory {
+  id          String   @id @default(cuid())
+  teamId      String
+  seasonYear  Int
+  wins        Int      @default(0)
+  podiums     Int      @default(0)
+  poles       Int      @default(0)
+  points      Int      @default(0)
+  summary     String?
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model Driver {
+  id                   String             @id @default(cuid())
+  firstName            String
+  lastName             String
+  displayName          String
+  countryCode          String
+  birthDate            DateTime
+  imageUrl             String?
+  overall              Int
+  potential            Int
+  reputation           Int
+  marketValue          Int
+  salary               Int
+  morale               Int
+  personality          String
+  primaryTraitCode     String?
+  preferredDisciplines Json?
+  attributes           Json
+  currentCategoryId    String?
+  currentTeamId        String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  currentCategory      Category?          @relation("DriverCurrentCategory", fields: [currentCategoryId], references: [id], onDelete: SetNull)
+  currentTeam          Team?              @relation("TeamDrivers", fields: [currentTeamId], references: [id], onDelete: SetNull)
+  traits               DriverTraitLink[]
+  contracts            DriverContract[]
+  qualifyingResults    QualifyingResult[]
+  raceResults          RaceResult[]
+  standings            StandingsDriver[]
+}
+
+model DriverTrait {
+  id          String            @id @default(cuid())
+  code        String            @unique
+  name        String
+  description String
+  impact      Json
+  links       DriverTraitLink[]
+}
+
+model DriverTraitLink {
+  id            String      @id @default(cuid())
+  driverId      String
+  traitId       String
+  isPrimary     Boolean     @default(false)
+  driver        Driver      @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  trait         DriverTrait @relation(fields: [traitId], references: [id], onDelete: Cascade)
+
+  @@unique([driverId, traitId])
+}
+
+model Staff {
+  id                   String            @id @default(cuid())
+  name                 String
+  role                 String
+  countryCode          String
+  imageUrl             String?
+  reputation           Int
+  salary               Int
+  specialty            String
+  compatibility        Json?
+  personality          String
+  attributes           Json
+  currentTeamId        String?
+  currentCategoryId    String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  currentTeam          Team?             @relation("TeamStaff", fields: [currentTeamId], references: [id], onDelete: SetNull)
+  currentCategory      Category?         @relation("StaffCurrentCategory", fields: [currentCategoryId], references: [id], onDelete: SetNull)
+  traits               StaffTraitLink[]
+  contracts            StaffContract[]
+}
+
+model StaffTrait {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  name        String
+  description String
+  impact      Json
+  links       StaffTraitLink[]
+}
+
+model StaffTraitLink {
+  id        String      @id @default(cuid())
+  staffId   String
+  traitId   String
+  staff     Staff       @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  trait     StaffTrait  @relation(fields: [traitId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, traitId])
+}
+
+model TeamContract {
+  id          String         @id @default(cuid())
+  teamId       String
+  title       String
+  details     String
+  annualValue Int
+  startDate   DateTime
+  endDate     DateTime
+  status      ContractStatus @default(ACTIVE)
+  clauses     Json?
+  team        Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model DriverContract {
+  id               String         @id @default(cuid())
+  driverId          String
+  teamId            String
+  role              String
+  annualSalary      Int
+  buyoutClause      Int?
+  bonusWin          Int?
+  bonusPodium       Int?
+  bonusPole         Int?
+  bonusTopTen       Int?
+  bonusStageWin     Int?
+  startDate         DateTime
+  endDate           DateTime
+  status            ContractStatus @default(ACTIVE)
+  clauses           Json?
+  driver            Driver         @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  team              Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model StaffContract {
+  id               String         @id @default(cuid())
+  staffId           String
+  teamId            String
+  role              String
+  annualSalary      Int
+  bonusObjectives   Json?
+  startDate         DateTime
+  endDate           DateTime
+  status            ContractStatus @default(ACTIVE)
+  staff             Staff          @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  team              Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model Supplier {
+  id                  String             @id @default(cuid())
+  type                SupplierType
+  name                String             @unique
+  countryCode         String
+  baseCost            Int
+  performance         Int
+  reliability         Int
+  efficiency          Int
+  drivability         Int
+  developmentCeiling  Int
+  maintenanceCost     Int
+  prestigeImpact      Int
+  sponsorSynergy      Int
+  tags                Json?
+  categories          SupplierCategory[]
+  contracts           SupplierContract[]
+  engineProfile       EngineSupplier?
+  tireProfile         TireSupplier?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model SupplierCategory {
+  id          String   @id @default(cuid())
+  supplierId  String
+  categoryId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierId, categoryId])
+}
+
+model EngineSupplier {
+  id                String   @id @default(cuid())
+  supplierId        String   @unique
+  power             Int
+  torque            Int
+  thermalEfficiency Int
+  hybridDeployment  Int
+  weight            Int
+  supplier          Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+}
+
+model TireSupplier {
+  id                String   @id @default(cuid())
+  supplierId        String   @unique
+  peakGrip          Int
+  durability        Int
+  thermalWindow     Int
+  wetPerformance    Int
+  degradationCurve  Int
+  consistency       Int
+  supplier          Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+}
+
+model SupplierContract {
+  id          String         @id @default(cuid())
+  teamId      String
+  supplierId  String
+  startDate   DateTime
+  endDate     DateTime
+  annualCost  Int
+  status      ContractStatus @default(ACTIVE)
+  clauses     Json?
+  team        Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  supplier    Supplier       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+}
+
+model Sponsor {
+  id                 String             @id @default(cuid())
+  name               String             @unique
+  countryCode        String
+  industry           String
+  baseValue          Int
+  confidence         Int
+  reputationRisk     Int
+  brandColor         String
+  logoUrl            String?
+  contracts          SponsorContract[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model SponsorContract {
+  id              String         @id @default(cuid())
+  sponsorId       String
+  teamId          String
+  startDate       DateTime
+  endDate         DateTime
+  fixedValue      Int
+  bonusTargets    Json?
+  confidence      Int
+  clauses         Json?
+  status          ContractStatus @default(ACTIVE)
+  sponsor         Sponsor        @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  team            Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model Facility {
+  id             String         @id @default(cuid())
+  code           String         @unique
+  name           String
+  description    String
+  baseCost       Int
+  maxLevel       Int
+  teams          TeamFacility[]
+}
+
+model TeamFacility {
+  id             String   @id @default(cuid())
+  teamId         String
+  facilityId     String
+  level          Int      @default(1)
+  condition      Int      @default(80)
+  team           Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  facility       Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, facilityId])
+}
+
+model Car {
+  id               String               @id @default(cuid())
+  teamId           String
+  categoryId       String
+  modelName        String
+  seasonYear       Int
+  basePerformance  Int
+  reliability      Int
+  weight           Int
+  downforce        Int
+  drag             Int
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  team             Team                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  category         Category             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  specs            CarSpec[]
+  projects         DevelopmentProject[]
+}
+
+model CarSpec {
+  id                 String   @id @default(cuid())
+  carId              String
+  key                String
+  value              Float
+  unit               String
+  source             String
+  car                Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+}
+
+model DevelopmentProject {
+  id                 String   @id @default(cuid())
+  carId              String
+  categoryId         String
+  name               String
+  area               String
+  cost               Int
+  durationWeeks      Int
+  risk               Int
+  expectedDelta      Int
+  hiddenVariance     Int
+  status             String
+  startedAt          DateTime?
+  completedAt        DateTime?
+  compatibility      Json?
+  car                Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+}
+
+model RaceWeekend {
+  id                String      @id @default(cuid())
+  seasonId          String
+  eventId           String
+  ruleSetId         String
+  weatherSeed       Int
+  generatedAt       DateTime    @default(now())
+  season            Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  event             CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ruleSet           RuleSet     @relation(fields: [ruleSetId], references: [id], onDelete: Restrict)
+  sessions          Session[]
+}
+
+model Session {
+  id              String       @id @default(cuid())
+  raceWeekendId   String
+  sessionType     SessionType
+  orderIndex      Int
+  weatherState    String
+  completed       Boolean      @default(false)
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  raceWeekend     RaceWeekend  @relation(fields: [raceWeekendId], references: [id], onDelete: Cascade)
+  qualifyingRows  QualifyingResult[]
+  raceRows        RaceResult[]
+}
+
+model QualifyingResult {
+  id              String    @id @default(cuid())
+  sessionId       String
+  driverId        String
+  position        Int
+  bestLapMs       Int
+  gapMs           Int?
+  tyreCompound    String?
+  session         Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  driver          Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
+}
+
+model RaceResult {
+  id              String    @id @default(cuid())
+  sessionId       String
+  driverId        String
+  position        Int
+  points          Int
+  lapsCompleted   Int
+  totalTimeMs     Int?
+  status          String
+  pitStops        Int
+  incidents       Json?
+  session         Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  driver          Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
+}
+
+model StandingsDriver {
+  id              String   @id @default(cuid())
+  seasonId        String
+  categoryId      String
+  driverId        String
+  points          Int      @default(0)
+  wins            Int      @default(0)
+  podiums         Int      @default(0)
+  poles           Int      @default(0)
+  season          Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  driver          Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+}
+
+model StandingsTeam {
+  id              String   @id @default(cuid())
+  seasonId        String
+  categoryId      String
+  teamId          String
+  points          Int      @default(0)
+  wins            Int      @default(0)
+  podiums         Int      @default(0)
+  season          Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  team            Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model StandingsManufacturer {
+  id               String   @id @default(cuid())
+  seasonId         String
+  categoryId       String
+  manufacturerName String
+  points           Int      @default(0)
+  wins             Int      @default(0)
+  season           Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  category         Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id             String   @id @default(cuid())
+  careerId       String?
+  teamId         String?
+  kind           String
+  amount         Int
+  description    String
+  occurredAt     DateTime @default(now())
+  career         Career?  @relation(fields: [careerId], references: [id], onDelete: SetNull)
+  team           Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
+}
+
+model NewsItem {
+  id            String   @id @default(cuid())
+  title         String
+  body          String
+  categoryCode  String
+  importance    Int      @default(50)
+  publishedAt   DateTime @default(now())
+}
+
+model Rumor {
+  id             String   @id @default(cuid())
+  headline       String
+  body           String
+  categoryCode   String
+  credibility    Int
+  createdAt      DateTime @default(now())
+}
+
+model AssetRegistry {
+  id             String     @id @default(cuid())
+  entityType     EntityType
+  entityId       String
+  assetType      AssetType
+  packSource     String
+  sourcePath     String?
+  resolvedPath   String?
+  isPlaceholder  Boolean    @default(true)
+  approved       Boolean    @default(false)
+  meta           Json?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}

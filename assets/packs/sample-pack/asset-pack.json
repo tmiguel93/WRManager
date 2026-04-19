@@ -1,0 +1,12 @@
+{
+  "packSource": "sample-licensed-pack",
+  "entries": [
+    {
+      "entityType": "TEAM",
+      "entityId": "replace-with-team-id",
+      "assetType": "TEAM_LOGO",
+      "sourcePath": "logos/team-logo.png",
+      "approved": false
+    }
+  ]
+}
