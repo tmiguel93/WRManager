@@ -10,17 +10,28 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PRIMARY_NAV } from "@/config/navigation";
 import { formatDate } from "@/lib/format";
-import { useShellStore } from "@/store/ui-store";
 
-export function TopBar() {
-  const { selectedCategoryCode, selectedTeamName, cashBalance, currentDateIso } = useShellStore();
+interface TopBarProps {
+  teamName: string;
+  categoryCode: string;
+  cashBalance: number;
+  currentDateIso: string;
+  careerName: string;
+}
 
+export function TopBar({
+  teamName,
+  categoryCode,
+  cashBalance,
+  currentDateIso,
+  careerName,
+}: TopBarProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-[#04070f]/80 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-[1680px] items-center justify-between gap-4 px-4 py-3 md:px-6">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-foreground">{selectedTeamName}</p>
-          <p className="truncate text-xs text-muted-foreground">Team Principal Command Feed</p>
+          <p className="truncate text-sm font-medium text-foreground">{teamName}</p>
+          <p className="truncate text-xs text-muted-foreground">{careerName}</p>
         </div>
 
         <Sheet>
@@ -50,7 +61,7 @@ export function TopBar() {
         <div className="hidden items-center gap-2 md:flex">
           <Badge className="rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
             <Flag className="mr-1 size-3" />
-            {selectedCategoryCode}
+            {categoryCode}
           </Badge>
           <Badge className="rounded-full border border-white/15 bg-white/5 text-white">
             <CalendarClock className="mr-1 size-3" />

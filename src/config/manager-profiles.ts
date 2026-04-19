@@ -1,5 +1,16 @@
 import type { ManagerProfileDefinition } from "@/domain/models/core";
 
+export const MANAGER_PROFILE_CODES = [
+  "NEGOCIADOR",
+  "ESTRATEGISTA",
+  "ENGENHEIRO",
+  "VISIONARIO",
+  "FORMADOR",
+  "COMERCIAL",
+  "MOTIVADOR",
+  "DIRETOR_GLOBAL",
+] as const;
+
 export const MANAGER_PROFILES: ManagerProfileDefinition[] = [
   {
     code: "NEGOCIADOR",

@@ -7,23 +7,27 @@ import { CountryFlag } from "@/components/common/country-flag";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCompactMoney } from "@/lib/format";
+import { getActiveCareerContext } from "@/server/queries/career";
 import { getDashboardSnapshot } from "@/server/queries/dashboard";
 
 export default async function HqPage() {
-  const snapshot = await getDashboardSnapshot().catch(() => ({
-    teams: [],
-    drivers: [],
-    nextEvent: null,
-    supplierContracts: [],
-  }));
+  const [snapshot, activeCareer] = await Promise.all([
+    getDashboardSnapshot().catch(() => ({
+      teams: [],
+      drivers: [],
+      nextEvent: null,
+      supplierContracts: [],
+    })),
+    getActiveCareerContext(),
+  ]);
 
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow="Race Command"
         title="Dashboard HQ"
-        description="Central de decisão do campeonato com visão financeira, técnica e esportiva em tempo real."
-        badge="Foundation Online"
+        description={`Central de decisão da carreira ${activeCareer.careerName} com visão financeira, técnica e esportiva em tempo real.`}
+        badge={`${activeCareer.categoryCode} • ${activeCareer.teamName}`}
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

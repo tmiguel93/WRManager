@@ -42,6 +42,11 @@ export default async function Home() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
+              <Link href="/career/new">
+                <Button variant="premium" className="rounded-2xl px-6 py-6 text-base font-semibold">
+                  Start New Career
+                </Button>
+              </Link>
               <Link href="/game/hq">
                 <Button className="premium-button-glow rounded-2xl bg-cyan-300 px-6 py-6 text-base font-semibold text-slate-900 hover:bg-cyan-200">
                   Enter Command Center <ArrowRight className="ml-2 size-4" />

@@ -1,11 +1,11 @@
-# WORLD MOTORSPORT MANAGER
+ï»¿# WORLD MOTORSPORT MANAGER
 
-Base do manager global de automobilismo construída com foco em:
+Base do manager global de automobilismo construÃ­da com foco em:
 
 - Next.js App Router + TypeScript + Tailwind + shadcn/ui
-- Prisma ORM com SQLite (pronto para migração PostgreSQL)
-- Engine de simulação desacoplada da UI
-- Arquitetura modular para evolução em múltiplos módulos
+- Prisma ORM com SQLite (pronto para migraÃ§Ã£o PostgreSQL)
+- Engine de simulaÃ§Ã£o desacoplada da UI
+- Arquitetura modular para evoluÃ§Ã£o em mÃºltiplos mÃ³dulos
 - Visual premium desktop-first com fallback assets seguro
 
 ## Stack
@@ -18,30 +18,38 @@ Base do manager global de automobilismo construída com foco em:
 - Tables: `TanStack Table`
 - Testes: `Vitest` + `Playwright`
 
-## Módulo 1 (entregue)
+## MÃ³dulo 1 (entregue)
 
 - Scaffold completo e estrutura modular
 - Tema visual premium base + shell layout (side nav/top bar)
-- Navegação para páginas centrais do jogo
+- NavegaÃ§Ã£o para pÃ¡ginas centrais do jogo
 - Helpers de bandeira e placeholders premium de assets
 - Prisma schema inicial com entidades do ecossistema global
-- Seed inicial coerente de categorias, regras, equipes, pilotos, fornecedores, patrocinadores e calendário
+- Seed inicial coerente de categorias, regras, equipes, pilotos, fornecedores, patrocinadores e calendÃ¡rio
 - Import layer para asset packs autorizados
-- Base da simulation engine desacoplada e testável
-- Smoke tests (Playwright) e testes de lógica (Vitest)
+- Base da simulation engine desacoplada e testÃ¡vel
+- Smoke tests (Playwright) e testes de lÃ³gica (Vitest)
+
+## MÃ³dulo 2 (entregue)
+
+- Fluxo completo de `New Career` em `/career/new`
+- Category Selection, Team Selection e My Team Creator em wizard de 4 etapas
+- Perfis de manager com impacto no orÃ§amento inicial
+- PersistÃªncia real da carreira com Prisma (inclui `save slot` inicial)
+- CriaÃ§Ã£o de equipe customizada com lineup inicial, carro, facilities e contratos base
+- Contexto de carreira ativa via cookie no shell do jogo
 
 ## Estrutura de pastas (resumo)
 
 ```txt
 src/
   app/                 -> rotas Next.js
-  components/          -> UI reutilizável e layout
-  config/              -> navegação, perfis e constantes
+  components/          -> UI reutilizÃ¡vel e layout
+  config/              -> navegaÃ§Ã£o, perfis e constantes
   domain/              -> regras e value objects
-  persistence/         -> Prisma client, repositórios, assets
+  persistence/         -> Prisma client, repositÃ³rios, assets
   server/queries/      -> consultas para server components
   simulation/          -> engine desacoplada
-  store/               -> estado global UI
 prisma/
   schema.prisma
   seed.ts
@@ -52,7 +60,7 @@ tests/
 
 ## Como rodar
 
-1. Instalar dependências:
+1. Instalar dependÃªncias:
 ```bash
 npm install
 ```
@@ -72,7 +80,7 @@ npm run db:push
 npm run db:seed
 ```
 
-5. Rodar aplicação:
+5. Rodar aplicaÃ§Ã£o:
 ```bash
 npm run dev
 ```
@@ -88,11 +96,11 @@ npm run test:e2e
 Manifesto exemplo:
 `assets/packs/sample-pack/asset-pack.json`
 
-Execução:
+ExecuÃ§Ã£o:
 ```bash
 npm run assets:import -- assets/packs/sample-pack/asset-pack.json
 ```
 
-## Próximo módulo
+## PrÃ³ximo mÃ³dulo
 
-Módulo 2: Nova carreira e escolha de mundo.
+MÃ³dulo 3: Dashboard HQ orientado por carreira ativa.
