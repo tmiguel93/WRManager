@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ArrowRight, GaugeCircle, Globe2, Orbit, Radar } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,7 @@ export default async function Home() {
           </Badge>
           <Link href="/game/hq">
             <Button variant="secondary" className="rounded-full border border-white/20 bg-white/10 text-white">
-              Continue Prototype
+              Continue Career
             </Button>
           </Link>
         </header>
@@ -37,8 +37,7 @@ export default async function Home() {
                 Build a global racing empire across Formula, Indy, NASCAR and Endurance.
               </h1>
               <p className="max-w-2xl text-lg text-slate-200/85">
-                A premium manager foundation is online: multi-series data model, modular simulation core and a
-                scalable game shell built for long-form career mode.
+                Manage drivers, staff, suppliers, sponsors, race weekends and long-term progression through a living motorsport ecosystem.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -52,16 +51,13 @@ export default async function Home() {
                   Enter Command Center <ArrowRight className="ml-2 size-4" />
                 </Button>
               </Link>
-              <Button variant="ghost" className="rounded-2xl border border-white/20 px-6 py-6 text-base text-white">
-                Module 1 Foundation Active
-              </Button>
             </div>
           </div>
 
           <Card className="premium-card border-white/15 bg-slate-950/55">
             <CardHeader>
-              <CardTitle className="font-heading text-xl text-white">World Bootstrap Snapshot</CardTitle>
-              <CardDescription>Loaded directly from initial SQLite seed data.</CardDescription>
+              <CardTitle className="font-heading text-xl text-white">World Snapshot</CardTitle>
+              <CardDescription>Current game database overview for your save universe.</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-4 text-sm">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -81,7 +77,7 @@ export default async function Home() {
                 <p className="text-2xl font-semibold text-white">{snapshot.supplierCount}</p>
               </div>
               <div className="col-span-2 rounded-2xl border border-amber-300/30 bg-amber-400/10 p-4">
-                <p className="text-muted-foreground">Sponsors Seeded</p>
+                <p className="text-muted-foreground">Sponsors</p>
                 <p className="text-2xl font-semibold text-amber-100">{snapshot.sponsorCount}</p>
               </div>
             </CardContent>
@@ -92,21 +88,21 @@ export default async function Home() {
           <Card className="premium-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <Orbit className="size-4 text-cyan-300" /> Multi-Category Core
+                <Orbit className="size-4 text-cyan-300" /> Multi-Category Career
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              F1, F2, INDYCAR, NASCAR tiers, WEC and GT prepared with independent rulesets.
+              Multiple motorsport disciplines with category-specific weekend formats and progression tiers.
             </CardContent>
           </Card>
           <Card className="premium-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <GaugeCircle className="size-4 text-emerald-300" /> Decoupled Simulation
+                <GaugeCircle className="size-4 text-emerald-300" /> Live Simulation
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Score-based deterministic-ready engine separated from visual rendering and routing.
+              Session-by-session simulation with strategy inputs, reliability dynamics and standings impact.
             </CardContent>
           </Card>
           <Card className="premium-card">
@@ -116,17 +112,17 @@ export default async function Home() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Database entities and contracts modeled for long careers and cross-series movement.
+              Drivers, staff, suppliers and sponsors evolve with contracts, reputation and market movement.
             </CardContent>
           </Card>
           <Card className="premium-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <Radar className="size-4 text-violet-200" /> Premium UI Kit
+                <Radar className="size-4 text-violet-200" /> Premium UI Experience
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Motion-ready shell, shadcn components and resilient fallback assets from day one.
+              Refined visuals, team themes and responsive management flows for long campaign sessions.
             </CardContent>
           </Card>
         </section>

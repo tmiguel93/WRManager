@@ -50,7 +50,6 @@ function safeRecord(value: unknown): Record<string, unknown> | null {
 async function resolveWeekendContext(requestedCategoryCode?: string) {
   const active = await getActiveCareerContext();
   const seasonYear = Number.parseInt(active.currentDateIso.slice(0, 4), 10);
-  const now = new Date(`${active.currentDateIso}T00:00:00.000Z`);
 
   const categories = await prisma.category.findMany({
     orderBy: [{ tier: "asc" }, { name: "asc" }],
@@ -145,7 +144,14 @@ async function resolveWeekendContext(requestedCategoryCode?: string) {
       },
     }));
 
-  const nextEvent = season?.events.find((event) => event.startDate >= now) ?? season?.events[0] ?? null;
+  const nextEvent =
+    season?.status === "PRESEASON"
+      ? season.events[0] ?? null
+      : season?.status === "ACTIVE"
+        ? season.events.find((event) => event.round >= season.currentRound) ??
+          season.events[season.events.length - 1] ??
+          null
+        : season?.events[season.events.length - 1] ?? null;
   const weekend = nextEvent?.raceWeekends[0] ?? null;
 
   return {

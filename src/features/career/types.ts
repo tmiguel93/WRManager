@@ -9,6 +9,8 @@ export interface CareerSetupCategory {
   region: string;
   fantasyModeAllowed: boolean;
   teamsCount: number;
+  isStartEligible: boolean;
+  lockReason: string | null;
 }
 
 export interface CareerSetupTeam {
@@ -22,6 +24,7 @@ export interface CareerSetupTeam {
   reputation: number;
   primaryColor: string;
   secondaryColor: string;
+  accentColor: string | null;
   logoUrl: string | null;
 }
 

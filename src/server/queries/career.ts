@@ -1,5 +1,6 @@
 import { prisma } from "@/persistence/prisma";
 import { cookies } from "next/headers";
+import { deriveCareerPhaseFromSeason } from "@/domain/rules/season-progress";
 import type {
   CareerSetupCategory,
   CareerSetupSupplier,
@@ -50,6 +51,8 @@ export async function getCareerSetupData() {
     region: category.region,
     fantasyModeAllowed: category.fantasyModeAllowed,
     teamsCount: category._count.teams,
+    isStartEligible: category.tier <= 2,
+    lockReason: category.tier <= 2 ? null : "Progress in lower tiers to unlock elite categories.",
   }));
 
   const mappedTeams: CareerSetupTeam[] = teams.map((team) => ({
@@ -63,6 +66,7 @@ export async function getCareerSetupData() {
     reputation: team.reputation,
     primaryColor: team.primaryColor,
     secondaryColor: team.secondaryColor,
+    accentColor: team.accentColor,
     logoUrl: team.logoUrl,
   }));
 
@@ -133,16 +137,24 @@ export async function getLatestCareer() {
 export interface ActiveCareerContext {
   careerId: string | null;
   careerName: string;
+  mode: "TEAM_PRINCIPAL" | "MY_TEAM" | "GLOBAL";
+  onboardingComplete: boolean;
+  foundationSummary: unknown | null;
   teamId: string | null;
   teamName: string;
   teamCountryCode: string | null;
   teamBudget: number;
   teamReputation: number;
+  teamPrimaryColor: string;
+  teamSecondaryColor: string;
+  teamAccentColor: string;
+  teamIsCustom: boolean;
   categoryId: string | null;
   categoryCode: string;
   managerProfileCode: string;
   cashBalance: number;
   currentDateIso: string;
+  seasonPhase: "PRESEASON" | "ROUND_ACTIVE" | "MID_SEASON" | "SEASON_END" | "OFFSEASON";
 }
 
 export async function getActiveCareerContext(): Promise<ActiveCareerContext> {
@@ -154,14 +166,38 @@ export async function getActiveCareerContext(): Promise<ActiveCareerContext> {
         where: { id: cookieCareerId },
         include: {
           selectedCategory: { select: { id: true, code: true } },
-          selectedTeam: { select: { id: true, name: true, countryCode: true, budget: true, reputation: true } },
+          selectedTeam: {
+            select: {
+              id: true,
+              name: true,
+              countryCode: true,
+              budget: true,
+              reputation: true,
+              primaryColor: true,
+              secondaryColor: true,
+              accentColor: true,
+              isCustom: true,
+            },
+          },
         },
       })
     : await prisma.career.findFirst({
         orderBy: { createdAt: "desc" },
         include: {
           selectedCategory: { select: { id: true, code: true } },
-          selectedTeam: { select: { id: true, name: true, countryCode: true, budget: true, reputation: true } },
+          selectedTeam: {
+            select: {
+              id: true,
+              name: true,
+              countryCode: true,
+              budget: true,
+              reputation: true,
+              primaryColor: true,
+              secondaryColor: true,
+              accentColor: true,
+              isCustom: true,
+            },
+          },
         },
       });
 
@@ -169,47 +205,103 @@ export async function getActiveCareerContext(): Promise<ActiveCareerContext> {
     return {
       careerId: null,
       careerName: "Prototype Sandbox",
+      mode: "TEAM_PRINCIPAL",
+      onboardingComplete: true,
+      foundationSummary: null,
       teamId: null,
       teamName: "Apex Quantum GP",
       teamCountryCode: "US",
       teamBudget: 95_000_000,
       teamReputation: 70,
+      teamPrimaryColor: "#0ea5e9",
+      teamSecondaryColor: "#facc15",
+      teamAccentColor: "#22d3ee",
+      teamIsCustom: false,
       categoryId: null,
       categoryCode: "F1",
       managerProfileCode: "ESTRATEGISTA",
       cashBalance: 42_500_000,
       currentDateIso: "2026-03-08",
+      seasonPhase: "PRESEASON",
     };
   }
 
   const firstUpcomingEvent = await prisma.calendarEvent.findFirst({
+    where: { categoryId: career.selectedCategory.id },
+    orderBy: [{ startDate: "asc" }],
+    select: { startDate: true },
+  });
+
+  const season = await prisma.season.findFirst({
     where: {
       categoryId: career.selectedCategory.id,
-      season: {
-        year: career.currentSeasonYear,
-      },
+      year: career.currentSeasonYear,
     },
-    orderBy: { startDate: "asc" },
-    select: {
-      startDate: true,
+    include: {
+      events: {
+        orderBy: [{ round: "asc" }],
+        select: {
+          round: true,
+          startDate: true,
+          endDate: true,
+        },
+      },
     },
   });
 
-  const eventDate = firstUpcomingEvent?.startDate ?? new Date(Date.UTC(career.currentSeasonYear, 2, 8));
-  const currentDateIso = eventDate.toISOString().slice(0, 10);
+  let currentDate = firstUpcomingEvent?.startDate ?? new Date(Date.UTC(career.currentSeasonYear, 2, 8));
+  let seasonPhase = career.seasonPhase;
+
+  if (season && season.events.length > 0) {
+    const firstEvent = season.events[0];
+    const targetEvent =
+      season.events.find((event) => event.round >= season.currentRound) ??
+      season.events[season.events.length - 1];
+
+    if (season.status === "PRESEASON") {
+      currentDate = firstEvent.startDate;
+    } else if (season.status === "ACTIVE") {
+      currentDate = targetEvent.startDate;
+    } else {
+      currentDate = new Date(targetEvent.endDate.getTime() + 1000 * 60 * 60 * 24 * 5);
+    }
+
+    seasonPhase = deriveCareerPhaseFromSeason({
+      seasonStatus: season.status,
+      currentRound: season.currentRound,
+      totalRounds: season.events.length,
+    });
+
+    if (seasonPhase !== career.seasonPhase) {
+      await prisma.career.update({
+        where: { id: career.id },
+        data: { seasonPhase },
+      });
+    }
+  }
+
+  const currentDateIso = currentDate.toISOString().slice(0, 10);
 
   return {
     careerId: career.id,
     careerName: career.name,
+    mode: career.mode,
+    onboardingComplete: career.onboardingComplete,
+    foundationSummary: career.foundationSummary,
     teamId: career.selectedTeam?.id ?? null,
     teamName: career.selectedTeam?.name ?? "Independent Program",
     teamCountryCode: career.selectedTeam?.countryCode ?? null,
     teamBudget: career.selectedTeam?.budget ?? 0,
     teamReputation: career.selectedTeam?.reputation ?? career.reputation,
+    teamPrimaryColor: career.selectedTeam?.primaryColor ?? "#0ea5e9",
+    teamSecondaryColor: career.selectedTeam?.secondaryColor ?? "#facc15",
+    teamAccentColor: career.selectedTeam?.accentColor ?? career.selectedTeam?.secondaryColor ?? "#22d3ee",
+    teamIsCustom: career.selectedTeam?.isCustom ?? false,
     categoryId: career.selectedCategory.id,
     categoryCode: career.selectedCategory.code,
     managerProfileCode: career.managerProfileCode,
     cashBalance: career.cashBalance,
     currentDateIso,
+    seasonPhase,
   };
 }

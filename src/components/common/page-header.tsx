@@ -19,7 +19,7 @@ export function PageHeader({ eyebrow, title, description, badge, className }: Pa
           </span>
         ) : null}
         {badge ? (
-          <Badge className="rounded-full border border-cyan-300/40 bg-cyan-500/10 text-cyan-200">
+          <Badge className="team-outline rounded-full border bg-white/5 team-accent-text">
             {badge}
           </Badge>
         ) : null}

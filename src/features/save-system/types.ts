@@ -38,6 +38,14 @@ export interface CareerSnapshotV2 {
     selectedTeamId: string | null;
     cashBalance: number;
     reputation: number;
+    seasonPhase?: "PRESEASON" | "ROUND_ACTIVE" | "MID_SEASON" | "SEASON_END" | "OFFSEASON";
+    onboardingComplete?: boolean;
+    foundationSummary?: unknown;
+    teamTheme?: {
+      primaryColor: string;
+      secondaryColor: string;
+      accentColor: string | null;
+    } | null;
   };
   season:
     | {

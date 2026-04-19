@@ -270,6 +270,7 @@ export async function getScoutingBoard(categoryCode: string) {
       orderBy: [{ potential: "desc" }, { overall: "desc" }],
       take: 24,
       include: {
+        currentTeam: { select: { id: true, name: true } },
         currentCategory: { select: { code: true, name: true } },
         traits: {
           orderBy: { isPrimary: "desc" },

@@ -21,6 +21,17 @@ const snapshotSchema = z.object({
     selectedTeamId: z.string().nullable(),
     cashBalance: z.number().int(),
     reputation: z.number().int(),
+    seasonPhase: z.enum(["PRESEASON", "ROUND_ACTIVE", "MID_SEASON", "SEASON_END", "OFFSEASON"]).optional(),
+    onboardingComplete: z.boolean().optional(),
+    foundationSummary: z.unknown().optional(),
+    teamTheme: z
+      .object({
+        primaryColor: z.string(),
+        secondaryColor: z.string(),
+        accentColor: z.string().nullable(),
+      })
+      .nullable()
+      .optional(),
   }),
   season: z
     .object({
@@ -146,7 +157,14 @@ async function buildSnapshot(tx: Prisma.TransactionClient, params: {
     where: { id: params.careerId },
     include: {
       selectedCategory: { select: { id: true } },
-      selectedTeam: { select: { id: true } },
+      selectedTeam: {
+        select: {
+          id: true,
+          primaryColor: true,
+          secondaryColor: true,
+          accentColor: true,
+        },
+      },
     },
   });
 
@@ -307,6 +325,16 @@ async function buildSnapshot(tx: Prisma.TransactionClient, params: {
       selectedTeamId: career.selectedTeamId,
       cashBalance: career.cashBalance,
       reputation: career.reputation,
+      seasonPhase: career.seasonPhase,
+      onboardingComplete: career.onboardingComplete,
+      foundationSummary: career.foundationSummary,
+      teamTheme: career.selectedTeam
+        ? {
+            primaryColor: career.selectedTeam.primaryColor,
+            secondaryColor: career.selectedTeam.secondaryColor,
+            accentColor: career.selectedTeam.accentColor,
+          }
+        : null,
     },
     season: season
       ? {
@@ -552,8 +580,22 @@ export async function restoreFromSaveSlot(params: {
         managerProfileCode: snapshot.career.managerProfileCode,
         selectedCategoryId: snapshot.career.selectedCategoryId,
         selectedTeamId: snapshot.career.selectedTeamId,
+        seasonPhase: snapshot.career.seasonPhase,
+        onboardingComplete: snapshot.career.onboardingComplete,
+        foundationSummary: toPrismaJson(snapshot.career.foundationSummary),
       },
     });
+
+    if (snapshot.career.teamTheme && snapshot.career.selectedTeamId) {
+      await tx.team.update({
+        where: { id: snapshot.career.selectedTeamId },
+        data: {
+          primaryColor: snapshot.career.teamTheme.primaryColor,
+          secondaryColor: snapshot.career.teamTheme.secondaryColor,
+          accentColor: snapshot.career.teamTheme.accentColor,
+        },
+      });
+    }
 
     if (snapshot.season) {
       await tx.season.update({

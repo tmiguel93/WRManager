@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatCompactMoney } from "@/lib/format";
+import { useI18n } from "@/i18n/client";
 
 interface ActiveSponsorContractRow {
   id: string;
@@ -63,6 +64,7 @@ export function SponsorMarketplace({ context, activeContracts, sponsors }: Spons
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [riskBySponsor, setRiskBySponsor] = useState<Record<string, SponsorObjectiveRisk>>({});
+  const { t } = useI18n();
 
   const filteredSponsors = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -193,7 +195,7 @@ export function SponsorMarketplace({ context, activeContracts, sponsors }: Spons
               </div>
               {sponsor.isActiveWithTeam ? (
                 <Badge className="rounded-full border border-emerald-300/35 bg-emerald-500/10 text-emerald-100">
-                  Already active
+                  {t("sponsors.alreadyActive", "Already active")}
                 </Badge>
               ) : null}
               <div className="flex items-center gap-2">
@@ -217,10 +219,12 @@ export function SponsorMarketplace({ context, activeContracts, sponsors }: Spons
                   variant="premium"
                   size="sm"
                   className="h-9 flex-1"
-                  disabled={isPending}
+                  disabled={isPending || sponsor.isActiveWithTeam}
                   onClick={() => negotiateSponsor(sponsor.id)}
                 >
-                  Negotiate Deal
+                  {sponsor.isActiveWithTeam
+                    ? t("sponsors.alreadyActive", "Already active")
+                    : t("sponsors.negotiate", "Negotiate")}
                 </Button>
               </div>
             </CardContent>

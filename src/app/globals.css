@@ -83,6 +83,9 @@
   --sidebar-accent-foreground: oklch(0.96 0.006 236.3);
   --sidebar-border: oklch(0.27 0.01 245.62);
   --sidebar-ring: oklch(0.73 0.13 209.84);
+  --team-primary: #0ea5e9;
+  --team-secondary: #facc15;
+  --team-accent: #22d3ee;
 }
 
 .dark {
@@ -134,6 +137,12 @@
   html {
     @apply font-sans;
   }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
+  p, span, li, td, th, label, input, textarea, button {
+    letter-spacing: 0.01em;
+  }
   ::selection {
     @apply bg-cyan-300/40 text-cyan-50;
   }
@@ -150,5 +159,22 @@
 
   .premium-card {
     @apply rounded-3xl border border-white/10 bg-card/70 shadow-[0_20px_55px_-25px_rgba(2,6,23,0.85)] backdrop-blur-xl;
+  }
+
+  .team-gradient {
+    background-image: linear-gradient(
+      130deg,
+      color-mix(in oklab, var(--team-primary) 30%, transparent) 0%,
+      color-mix(in oklab, var(--team-secondary) 25%, transparent) 55%,
+      color-mix(in oklab, var(--team-accent) 28%, transparent) 100%
+    );
+  }
+
+  .team-outline {
+    border-color: color-mix(in oklab, var(--team-primary) 35%, white 10%);
+  }
+
+  .team-accent-text {
+    color: color-mix(in oklab, var(--team-accent) 72%, white 18%);
   }
 }

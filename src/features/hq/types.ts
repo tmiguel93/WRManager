@@ -65,4 +65,16 @@ export interface HqDashboardSnapshot {
   evolution: HqEvolutionPoint[];
   driverPulse: HqDriverPulse[];
   priorities: string[];
+  foundationSummary: {
+    foundedAtIso: string | null;
+    initialCost: number;
+    morale: number;
+    mediaExpectation: string;
+    strengths: string[];
+    weaknesses: string[];
+    contractsClosed: {
+      drivers: number;
+      staff: number;
+    };
+  } | null;
 }

@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { Clock3, PlayCircle } from "lucide-react";
 
 import { NewCareerWizard } from "@/features/career/components/new-career-wizard";
@@ -8,9 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CountryFlag } from "@/components/common/country-flag";
 import { listCareerSaves, getCareerSetupData } from "@/server/queries/career";
 import { formatCompactMoney } from "@/lib/format";
+import { getServerTranslator } from "@/i18n/server";
 
 export default async function NewCareerPage() {
-  const [setupData, careers] = await Promise.all([
+  const [{ t }, setupData, careers] = await Promise.all([
+    getServerTranslator(),
     getCareerSetupData(),
     listCareerSaves(),
   ]);
@@ -24,14 +26,12 @@ export default async function NewCareerPage() {
             <Badge className="rounded-full border border-white/20 bg-white/5 text-cyan-100">
               WORLD MOTORSPORT MANAGER
             </Badge>
-            <h1 className="mt-4 font-heading text-4xl text-white md:text-5xl">New Career</h1>
-            <p className="mt-2 max-w-2xl text-muted-foreground">
-              Escolha categoria, equipe ou crie seu próprio time e inicie uma carreira longa no ecossistema global.
-            </p>
+            <h1 className="mt-4 font-heading text-4xl text-white md:text-5xl">{t("career.title")}</h1>
+            <p className="mt-2 max-w-2xl text-muted-foreground">{t("career.subtitle")}</p>
           </div>
           <Link href="/">
             <Button variant="ghost" className="rounded-2xl border border-white/20 text-white">
-              Back to Main Menu
+              Main Menu
             </Button>
           </Link>
         </header>
@@ -47,7 +47,7 @@ export default async function NewCareerPage() {
                   <div key={career.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <p className="text-sm font-semibold">{career.name}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {career.mode.replaceAll("_", " ")} • {career.selectedCategory?.code ?? "N/A"}
+                      {career.mode.replaceAll("_", " ")} - {career.selectedCategory?.code ?? "N/A"}
                     </p>
                     {career.selectedTeam ? (
                       <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
@@ -79,7 +79,7 @@ export default async function NewCareerPage() {
 
         <footer className="mt-10 flex items-center gap-2 text-xs text-muted-foreground">
           <Clock3 className="size-3.5" />
-          Career persistence writes directly to SQLite save data.
+          Structured save progression with autosave support.
         </footer>
       </main>
     </div>

@@ -102,9 +102,22 @@ export async function negotiateSponsorDealAction(input: z.input<typeof sponsorAc
       message: `${deal.sponsorName} signed with ${deal.objectiveRisk.toLowerCase()} objectives.`,
     };
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not sign sponsor deal.";
+    if (message.toLowerCase().includes("already active")) {
+      return {
+        ok: false,
+        message: "This sponsor is already active with your team. End the current contract before negotiating again.",
+      };
+    }
+    if (message.toLowerCase().includes("slots")) {
+      return {
+        ok: false,
+        message: "All sponsor slots are occupied. End one active sponsor to open a slot.",
+      };
+    }
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not sign sponsor deal.",
+      message,
     };
   }
 }

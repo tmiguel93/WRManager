@@ -62,6 +62,15 @@ async function createMyTeamProgram(tx: Prisma.TransactionClient, input: CreateCa
     throw new Error("The selected power unit is not compatible with this category.");
   }
 
+  const teamBudget = computeStartingBudget({
+    mode: "MY_TEAM",
+    managerProfileCode: input.managerProfileCode,
+    requestedBudget: input.requestedBudget,
+    categoryTier: category.tier,
+    categoryCode: category.code,
+    isExistingTeam: false,
+  });
+
   const team = await tx.team.create({
     data: {
       categoryId: category.id,
@@ -70,18 +79,16 @@ async function createMyTeamProgram(tx: Prisma.TransactionClient, input: CreateCa
       slug: `${slugify(input.myTeamName!)}-${randomSuffix()}`,
       countryCode: input.myTeamCountryCode!.trim().toUpperCase(),
       headquarters: input.myTeamHeadquarters!.trim(),
-      budget: computeStartingBudget({
-        mode: "MY_TEAM",
-        managerProfileCode: input.managerProfileCode,
-        requestedBudget: input.requestedBudget,
-      }),
+      budget: teamBudget,
       reputation: 52,
       fanbase: 34,
       history: `${input.myTeamName} joined the world motorsport ecosystem in 2026.`,
       primaryColor: input.myTeamPrimaryColor ?? "#0ea5e9",
       secondaryColor: input.myTeamSecondaryColor ?? "#facc15",
+      accentColor: input.myTeamAccentColor ?? input.myTeamSecondaryColor ?? "#22d3ee",
       philosophy: input.myTeamPhilosophy!.trim(),
       manufacturerName: engineSupplier.name,
+      isCustom: true,
     },
   });
 
@@ -89,7 +96,7 @@ async function createMyTeamProgram(tx: Prisma.TransactionClient, input: CreateCa
     data: {
       teamId: team.id,
       seasonYear: 2026,
-      summary: "Expansion team entering debut season.",
+      summary: "Expansion team entering debut season with a staged onboarding plan.",
     },
   });
 
@@ -163,131 +170,6 @@ async function createMyTeamProgram(tx: Prisma.TransactionClient, input: CreateCa
     });
   }
 
-  const launchSponsor = await tx.sponsor.findFirst({
-    orderBy: { baseValue: "desc" },
-  });
-
-  if (launchSponsor) {
-    await tx.sponsorContract.create({
-      data: {
-        sponsorId: launchSponsor.id,
-        teamId: team.id,
-        startDate: new Date(Date.UTC(2026, 0, 1)),
-        endDate: new Date(Date.UTC(2027, 0, 1)),
-        fixedValue: Math.round(launchSponsor.baseValue * 0.55),
-        confidence: 65,
-        bonusTargets: { top10: 90_000, podium: 250_000 },
-      },
-    });
-  }
-
-  const rookieNames = [
-    [`${team.shortName} Lead`, "Driver"],
-    [`${team.shortName} Prospect`, "Driver"],
-  ] as const;
-
-  for (const [index, nameParts] of rookieNames.entries()) {
-    const [firstName, lastName] = nameParts;
-    const driver = await tx.driver.create({
-      data: {
-        firstName,
-        lastName,
-        displayName: `${firstName} ${lastName}`,
-        countryCode: team.countryCode,
-        birthDate: new Date(Date.UTC(2001 + index, 5, 12 + index)),
-        overall: index === 0 ? 73 : 69,
-        potential: index === 0 ? 86 : 89,
-        reputation: index === 0 ? 57 : 51,
-        marketValue: 3_800_000 + index * 400_000,
-        salary: 850_000 + index * 120_000,
-        morale: 74,
-        personality: index === 0 ? "Leader" : "Rookie",
-        preferredDisciplines: [category.code],
-        attributes: {
-          purePace: 71 + index * 2,
-          consistency: 68 + index,
-          qualifying: 70 + index * 2,
-          launch: 65,
-          defense: 64,
-          overtaking: 69,
-          aggression: 60,
-          emotionalControl: 67,
-          wetWeather: 66,
-          technicalFeedback: 70,
-          tireManagement: 67,
-          fuelSaving: 65,
-          strategyIQ: 63,
-          trafficAdaptation: 66,
-          ovalAdaptation: 60,
-          streetAdaptation: 68,
-          roadCourseAdaptation: 67,
-          enduranceAdaptation: 64,
-        },
-        currentCategoryId: category.id,
-        currentTeamId: team.id,
-      },
-    });
-
-    await tx.driverContract.create({
-      data: {
-        driverId: driver.id,
-        teamId: team.id,
-        role: index === 0 ? "Lead Driver" : "Race Driver",
-        annualSalary: driver.salary,
-        buyoutClause: driver.salary * 4,
-        bonusWin: 150_000,
-        bonusPodium: 90_000,
-        bonusPole: 60_000,
-        bonusTopTen: 40_000,
-        startDate: new Date(Date.UTC(2026, 0, 1)),
-        endDate: new Date(Date.UTC(2028, 0, 1)),
-        clauses: { academyPromotion: index === 1 },
-      },
-    });
-  }
-
-  const staffProfiles = [
-    { name: `${team.shortName} Tech Director`, role: "Technical Director", specialty: "Aero" },
-    { name: `${team.shortName} Strategy Lead`, role: "Head of Strategy", specialty: "Pit Wall" },
-  ];
-
-  for (const [index, staffProfile] of staffProfiles.entries()) {
-    const staff = await tx.staff.create({
-      data: {
-        name: staffProfile.name,
-        role: staffProfile.role,
-        countryCode: team.countryCode,
-        reputation: 58 + index * 3,
-        salary: 520_000 + index * 90_000,
-        specialty: staffProfile.specialty,
-        compatibility: { categories: [category.code] },
-        personality: index === 0 ? "Driven" : "Calm",
-        attributes: {
-          pitStopExecution: 62 + index * 3,
-          setupQuality: 64 + index * 2,
-          degradationControl: 60 + index * 2,
-          scoutingDepth: 58 + index,
-          upgradeEfficiency: 61 + index * 3,
-          talentRetention: 59 + index,
-        },
-        currentTeamId: team.id,
-        currentCategoryId: category.id,
-      },
-    });
-
-    await tx.staffContract.create({
-      data: {
-        staffId: staff.id,
-        teamId: team.id,
-        role: staffProfile.role,
-        annualSalary: staff.salary,
-        startDate: new Date(Date.UTC(2026, 0, 1)),
-        endDate: new Date(Date.UTC(2028, 0, 1)),
-        bonusObjectives: { pointsTarget: 80 + index * 20 },
-      },
-    });
-  }
-
   await tx.teamContract.create({
     data: {
       teamId: team.id,
@@ -300,7 +182,7 @@ async function createMyTeamProgram(tx: Prisma.TransactionClient, input: CreateCa
     },
   });
 
-  return team.id;
+  return { teamId: team.id, teamBudget };
 }
 
 export async function createCareerWithSetup(input: CreateCareerInput): Promise<CreatedCareerResult> {
@@ -316,11 +198,18 @@ export async function createCareerWithSetup(input: CreateCareerInput): Promise<C
       throw new Error("Category not found.");
     }
 
+    if (selectedCategory.tier > 2) {
+      throw new Error("Top-tier categories are locked at career start. Progress from feeder tiers first.");
+    }
+
     let selectedTeamId: string | null = parsed.selectedTeamId ?? null;
     let cashBalance = computeStartingBudget({
       mode: parsed.mode,
       managerProfileCode: parsed.managerProfileCode,
       requestedBudget: parsed.requestedBudget,
+      categoryTier: selectedCategory.tier,
+      categoryCode: selectedCategory.code,
+      isExistingTeam: parsed.mode === "TEAM_PRINCIPAL",
     });
 
     if (parsed.mode === "TEAM_PRINCIPAL") {
@@ -337,14 +226,26 @@ export async function createCareerWithSetup(input: CreateCareerInput): Promise<C
 
       selectedTeamId = selectedTeam.id;
       cashBalance = Math.max(cashBalance, Math.round(selectedTeam.budget * 0.3));
+      cashBalance = computeStartingBudget({
+        mode: parsed.mode,
+        managerProfileCode: parsed.managerProfileCode,
+        categoryTier: selectedCategory.tier,
+        categoryCode: selectedCategory.code,
+        teamReputation: selectedTeam.reputation,
+        isExistingTeam: true,
+      });
     }
 
     if (parsed.mode === "MY_TEAM") {
-      selectedTeamId = await createMyTeamProgram(tx, parsed);
+      const myTeam = await createMyTeamProgram(tx, parsed);
+      selectedTeamId = myTeam.teamId;
       cashBalance = computeStartingBudget({
         mode: parsed.mode,
         managerProfileCode: parsed.managerProfileCode,
         requestedBudget: parsed.requestedBudget,
+        categoryTier: selectedCategory.tier,
+        categoryCode: selectedCategory.code,
+        isExistingTeam: false,
       });
     }
 
@@ -357,6 +258,18 @@ export async function createCareerWithSetup(input: CreateCareerInput): Promise<C
       }
     }
 
+    const initialFoundationSummary =
+      parsed.mode === "MY_TEAM"
+        ? {
+            foundedAtIso: new Date().toISOString(),
+            lineupReady: false,
+            initialCost: 0,
+            mediaExpectation: "Underdog with long-term upside",
+            strengths: ["Flexible structure", "Early supplier backing"],
+            weaknesses: ["Unproven lineup", "Low category reputation"],
+          }
+        : undefined;
+
     const career = await tx.career.create({
       data: {
         profileId: profile.id,
@@ -364,10 +277,13 @@ export async function createCareerWithSetup(input: CreateCareerInput): Promise<C
         mode: parsed.mode,
         managerProfileCode: parsed.managerProfileCode,
         currentSeasonYear: 2026,
+        seasonPhase: "PRESEASON",
         selectedCategoryId: parsed.categoryId,
         selectedTeamId,
         cashBalance,
         reputation: parsed.mode === "MY_TEAM" ? 44 : 56,
+        onboardingComplete: parsed.mode !== "MY_TEAM",
+        ...(initialFoundationSummary ? { foundationSummary: initialFoundationSummary } : {}),
       },
     });
 

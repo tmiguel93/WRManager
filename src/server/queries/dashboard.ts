@@ -107,6 +107,41 @@ function daysBetween(start: Date, end: Date) {
   return Math.max(0, Math.ceil((end.getTime() - start.getTime()) / msPerDay));
 }
 
+function parseFoundationSummary(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const summary = value as Record<string, unknown>;
+  const contractsClosed =
+    summary.contractsClosed && typeof summary.contractsClosed === "object"
+      ? (summary.contractsClosed as Record<string, unknown>)
+      : {};
+
+  const strengths = Array.isArray(summary.strengths)
+    ? summary.strengths.filter((item): item is string => typeof item === "string")
+    : [];
+  const weaknesses = Array.isArray(summary.weaknesses)
+    ? summary.weaknesses.filter((item): item is string => typeof item === "string")
+    : [];
+
+  return {
+    foundedAtIso: typeof summary.foundedAtIso === "string" ? summary.foundedAtIso : null,
+    initialCost: typeof summary.initialCost === "number" ? summary.initialCost : 0,
+    morale: typeof summary.morale === "number" ? summary.morale : 70,
+    mediaExpectation:
+      typeof summary.mediaExpectation === "string"
+        ? summary.mediaExpectation
+        : "Development campaign in progress",
+    strengths,
+    weaknesses,
+    contractsClosed: {
+      drivers: typeof contractsClosed.drivers === "number" ? contractsClosed.drivers : 0,
+      staff: typeof contractsClosed.staff === "number" ? contractsClosed.staff : 0,
+    },
+  };
+}
+
 export async function getDashboardSnapshot(params: {
   careerId: string | null;
   categoryCode: string;
@@ -359,5 +394,6 @@ export async function getDashboardSnapshot(params: {
       imageUrl: driver.imageUrl,
     })),
     priorities,
+    foundationSummary: parseFoundationSummary(career?.foundationSummary),
   };
 }

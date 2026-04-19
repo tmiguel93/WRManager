@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarClock, Coins, ShieldAlert, Sparkles, TrendingUp } from "lucide-react";
+﻿import { AlertTriangle, CalendarClock, Coins, ShieldAlert, Sparkles, TrendingUp } from "lucide-react";
 
 import { EntityAvatar } from "@/components/common/entity-avatar";
 import { KpiCard } from "@/components/common/kpi-card";
@@ -46,7 +46,6 @@ export default async function HqPage() {
       ? toPercentDelta(latestEvolutionPoint.facilities, previousEvolutionPoint.facilities)
       : 0;
   const moraleDelta = toPercentDelta(snapshot.kpis.morale, 72);
-
   const nextAgenda = snapshot.agenda[0] ?? null;
 
   return (
@@ -55,8 +54,38 @@ export default async function HqPage() {
         eyebrow="Race Command"
         title="Dashboard HQ"
         description={`Active career ${activeCareer.careerName} with finance, morale and competition pulse in real time.`}
-        badge={`${activeCareer.categoryCode} • ${activeCareer.teamName}`}
+        badge={`${activeCareer.categoryCode} - ${activeCareer.teamName}`}
       />
+
+      {snapshot.foundationSummary ? (
+        <Card className="premium-card team-outline team-gradient">
+          <CardHeader>
+            <CardTitle className="font-heading text-xl">
+              {activeCareer.teamIsCustom ? "Your Team Was Founded" : "Program Snapshot"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-white/15 bg-black/20 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Initial Cost</p>
+              <p className="mt-2 text-base font-semibold">{formatCompactMoney(snapshot.foundationSummary.initialCost)}</p>
+            </div>
+            <div className="rounded-2xl border border-white/15 bg-black/20 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Contracts Closed</p>
+              <p className="mt-2 text-base font-semibold">
+                {snapshot.foundationSummary.contractsClosed.drivers} drivers / {snapshot.foundationSummary.contractsClosed.staff} staff
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/15 bg-black/20 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Starting Morale</p>
+              <p className="mt-2 text-base font-semibold">{snapshot.foundationSummary.morale}/100</p>
+            </div>
+            <div className="rounded-2xl border border-white/15 bg-black/20 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Media Expectation</p>
+              <p className="mt-2 text-sm font-medium">{snapshot.foundationSummary.mediaExpectation}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
@@ -92,10 +121,7 @@ export default async function HqPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {snapshot.alerts.map((alert) => (
-              <div
-                key={alert.id}
-                className="rounded-2xl border border-white/10 bg-white/5 p-4"
-              >
+              <div key={alert.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold">{alert.title}</p>
                   <Badge
@@ -167,9 +193,7 @@ export default async function HqPage() {
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
                 <p className="text-xs text-muted-foreground">Monthly burn projection</p>
-                <p className="text-lg font-semibold text-amber-100">
-                  {formatMoney(Math.abs(snapshot.kpis.monthlyBurnRate))}
-                </p>
+                <p className="text-lg font-semibold text-amber-100">{formatMoney(Math.abs(snapshot.kpis.monthlyBurnRate))}</p>
               </div>
             </div>
           </CardContent>
@@ -195,76 +219,44 @@ export default async function HqPage() {
         </Card>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card className="premium-card">
-          <CardHeader>
-            <CardTitle className="font-heading text-xl">Upcoming Agenda</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {snapshot.agenda.map((event) => (
-              <div
-                key={event.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold">
-                    R{event.round} • {event.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{event.circuitName}</p>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CountryFlag countryCode={event.countryCode} className="h-4 w-6" />
-                  {formatDate(event.startDateIso)}
-                </div>
-                <Badge className="border border-white/15 bg-white/10 text-white">
-                  {event.daysUntil}d
-                </Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="premium-card">
-          <CardHeader>
-            <CardTitle className="font-heading text-xl">Driver Morale Pulse</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {snapshot.driverPulse.map((driver) => (
-              <div key={driver.id} className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <EntityAvatar
-                      entityType="DRIVER"
-                      name={driver.name}
-                      countryCode={driver.countryCode}
-                      imageUrl={driver.imageUrl}
-                    />
-                    <div>
-                      <p className="text-sm font-medium">{driver.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        OVR {driver.overall} • POT {driver.potential}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right text-xs">
-                    <p className="font-semibold text-cyan-100">{driver.morale}/100</p>
+      <Card className="premium-card">
+        <CardHeader>
+          <CardTitle className="font-heading text-xl">Driver Morale Pulse</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {snapshot.driverPulse.map((driver) => (
+            <div key={driver.id} className="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <EntityAvatar
+                    entityType="DRIVER"
+                    name={driver.name}
+                    countryCode={driver.countryCode}
+                    imageUrl={driver.imageUrl}
+                  />
+                  <div>
+                    <p className="text-sm font-medium">{driver.name}</p>
+                    <p className="text-xs text-muted-foreground">OVR {driver.overall} - POT {driver.potential}</p>
                   </div>
                 </div>
-                <div className="mt-2">
-                  <Progress value={driver.morale} />
+                <div className="text-right text-xs">
+                  <p className="font-semibold text-cyan-100">{driver.morale}/100</p>
                 </div>
               </div>
-            ))}
-
-            {snapshot.driverPulse.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
-                <AlertTriangle className="mb-2 size-4 text-amber-300" />
-                No active roster linked to this career yet.
+              <div className="mt-2">
+                <Progress value={driver.morale} />
               </div>
-            ) : null}
-          </CardContent>
-        </Card>
-      </section>
+            </div>
+          ))}
+
+          {snapshot.driverPulse.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+              <AlertTriangle className="mb-2 size-4 text-amber-300" />
+              No active roster linked to this career yet.
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
     </div>
   );
 }

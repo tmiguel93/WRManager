@@ -59,7 +59,7 @@ export interface ManagerProfileDefinition {
 
 export interface NavItemDefinition {
   href: string;
-  label: string;
+  labelKey: string;
   icon: string;
 }
 

@@ -3,40 +3,71 @@ import { describe, expect, it } from "vitest";
 import { computeStartingBudget } from "@/domain/rules/starting-budget";
 
 describe("computeStartingBudget", () => {
-  it("applies mode base budgets", () => {
+  it("scales budget by category tier", () => {
+    const tierOne = computeStartingBudget({
+      mode: "TEAM_PRINCIPAL",
+      managerProfileCode: "ESTRATEGISTA",
+      categoryTier: 1,
+    });
+    const tierFour = computeStartingBudget({
+      mode: "TEAM_PRINCIPAL",
+      managerProfileCode: "ESTRATEGISTA",
+      categoryTier: 4,
+    });
+
+    expect(tierFour).toBeGreaterThan(tierOne);
+  });
+
+  it("keeps my-team requested budget inside realistic envelope", () => {
+    const budget = computeStartingBudget({
+      mode: "MY_TEAM",
+      managerProfileCode: "ENGENHEIRO",
+      categoryTier: 1,
+      requestedBudget: 20_000_000,
+    });
+
+    expect(budget).toBeLessThan(20_000_000);
+    expect(budget).toBeGreaterThan(3_000_000);
+  });
+
+  it("applies manager delta and existing-team multiplier", () => {
     expect(
       computeStartingBudget({
         mode: "TEAM_PRINCIPAL",
         managerProfileCode: "ESTRATEGISTA",
+        categoryTier: 2,
       }),
-    ).toBeGreaterThanOrEqual(40_000_000);
+    ).toBeGreaterThan(8_000_000);
 
-    expect(
-      computeStartingBudget({
-        mode: "MY_TEAM",
-        managerProfileCode: "ENGENHEIRO",
-      }),
-    ).toBeGreaterThanOrEqual(75_000_000);
-  });
-
-  it("applies manager budget delta and respects min threshold", () => {
     const negotiator = computeStartingBudget({
       mode: "GLOBAL",
       managerProfileCode: "NEGOCIADOR",
+      categoryTier: 3,
     });
 
     const strategist = computeStartingBudget({
       mode: "GLOBAL",
       managerProfileCode: "ESTRATEGISTA",
+      categoryTier: 3,
     });
 
     expect(negotiator).toBeGreaterThan(strategist);
-    expect(
-      computeStartingBudget({
-        mode: "MY_TEAM",
-        managerProfileCode: "MOTIVADOR",
-        requestedBudget: 10_000_000,
-      }),
-    ).toBe(20_000_000);
+
+    const existingTeam = computeStartingBudget({
+      mode: "TEAM_PRINCIPAL",
+      managerProfileCode: "ESTRATEGISTA",
+      categoryTier: 3,
+      teamReputation: 88,
+      isExistingTeam: true,
+    });
+    const createdTeam = computeStartingBudget({
+      mode: "TEAM_PRINCIPAL",
+      managerProfileCode: "ESTRATEGISTA",
+      categoryTier: 3,
+      teamReputation: 60,
+      isExistingTeam: false,
+    });
+
+    expect(existingTeam).toBeGreaterThan(createdTeam);
   });
 });

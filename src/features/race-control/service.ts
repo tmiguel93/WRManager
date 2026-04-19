@@ -14,6 +14,7 @@ import {
   type RaceDecisionProfile,
 } from "@/domain/rules/race-control-sim";
 import type { TrackType } from "@/domain/models/core";
+import { resolveSeasonRoundAfterMainRace } from "@/domain/rules/season-progress";
 import { prisma } from "@/persistence/prisma";
 import type { RaceSimulationResult } from "@/features/race-control/types";
 
@@ -169,6 +170,7 @@ export async function runRaceControlSession(input: RaceSimulationInput): Promise
                 id: true,
                 year: true,
                 currentRound: true,
+                status: true,
               },
             },
             ruleSet: {
@@ -736,10 +738,33 @@ export async function runRaceControlSession(input: RaceSimulationInput): Promise
     });
 
     if (isMainRaceSession(session.sessionType)) {
+      const totalRounds = await tx.calendarEvent.count({
+        where: {
+          seasonId: session.raceWeekend.season.id,
+        },
+      });
+
+      const resolution = resolveSeasonRoundAfterMainRace({
+        currentRound: session.raceWeekend.season.currentRound,
+        completedRound: session.raceWeekend.event.round,
+        totalRounds,
+      });
+
       await tx.season.update({
         where: { id: session.raceWeekend.season.id },
         data: {
-          currentRound: Math.max(session.raceWeekend.season.currentRound, session.raceWeekend.event.round + 1),
+          status: resolution.status,
+          currentRound: resolution.nextRound,
+        },
+      });
+
+      await tx.career.updateMany({
+        where: {
+          selectedCategoryId: session.raceWeekend.event.categoryId,
+          currentSeasonYear: session.raceWeekend.season.year,
+        },
+        data: {
+          seasonPhase: resolution.phase,
         },
       });
     }

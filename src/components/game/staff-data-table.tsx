@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -69,18 +69,46 @@ const columns: ColumnDef<StaffRow>[] = [
 export function StaffDataTable({ data }: { data: StaffRow[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([{ id: "reputation", desc: true }]);
   const [search, setSearch] = React.useState("");
+  const [roleFilter, setRoleFilter] = React.useState("ALL");
+  const [categoryFilter, setCategoryFilter] = React.useState("ALL");
+  const [countryFilter, setCountryFilter] = React.useState("ALL");
+  const [minReputation, setMinReputation] = React.useState(0);
+  const [maxSalary, setMaxSalary] = React.useState(25_000_000);
+
+  const roles = React.useMemo(
+    () => ["ALL", ...new Set(data.map((item) => item.role).sort((a, b) => a.localeCompare(b)))],
+    [data],
+  );
+  const categories = React.useMemo(
+    () => ["ALL", ...new Set(data.map((item) => item.category).sort((a, b) => a.localeCompare(b)))],
+    [data],
+  );
+  const countries = React.useMemo(
+    () => ["ALL", ...new Set(data.map((item) => item.countryCode).sort((a, b) => a.localeCompare(b)))],
+    [data],
+  );
 
   const filteredData = React.useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return data;
     return data.filter((member) => {
-      return (
-        member.name.toLowerCase().includes(term) ||
-        member.team.toLowerCase().includes(term) ||
-        member.role.toLowerCase().includes(term)
-      );
+      if (term) {
+        const matchesSearch =
+          member.name.toLowerCase().includes(term) ||
+          member.team.toLowerCase().includes(term) ||
+          member.role.toLowerCase().includes(term) ||
+          member.specialty.toLowerCase().includes(term);
+        if (!matchesSearch) return false;
+      }
+
+      if (roleFilter !== "ALL" && member.role !== roleFilter) return false;
+      if (categoryFilter !== "ALL" && member.category !== categoryFilter) return false;
+      if (countryFilter !== "ALL" && member.countryCode !== countryFilter) return false;
+      if (member.reputation < minReputation) return false;
+      if (member.salary > maxSalary) return false;
+
+      return true;
     });
-  }, [data, search]);
+  }, [data, search, roleFilter, categoryFilter, countryFilter, minReputation, maxSalary]);
 
   const table = useReactTable({
     data: filteredData,
@@ -93,16 +121,78 @@ export function StaffDataTable({ data }: { data: StaffRow[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+      <div className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 xl:grid-cols-6">
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search staff, role or team"
-          className="h-10 max-w-md border-white/20 bg-background/40"
+          placeholder="Search staff, role or specialty"
+          className="h-10 border-white/20 bg-background/40 xl:col-span-2"
         />
-        <Badge className="rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
+
+        <select
+          value={roleFilter}
+          onChange={(event) => setRoleFilter(event.target.value)}
+          className="h-10 rounded-xl border border-white/20 bg-background/40 px-2 text-xs text-foreground"
+        >
+          {roles.map((role) => (
+            <option key={role} value={role}>
+              {role === "ALL" ? "All roles" : role}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={categoryFilter}
+          onChange={(event) => setCategoryFilter(event.target.value)}
+          className="h-10 rounded-xl border border-white/20 bg-background/40 px-2 text-xs text-foreground"
+        >
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category === "ALL" ? "All categories" : category}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={countryFilter}
+          onChange={(event) => setCountryFilter(event.target.value)}
+          className="h-10 rounded-xl border border-white/20 bg-background/40 px-2 text-xs text-foreground"
+        >
+          {countries.map((country) => (
+            <option key={country} value={country}>
+              {country === "ALL" ? "All countries" : country}
+            </option>
+          ))}
+        </select>
+
+        <Badge className="h-10 justify-center rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
           {filteredData.length} staff listed
         </Badge>
+
+        <div className="xl:col-span-3">
+          <label className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Min reputation: {minReputation}</label>
+          <input
+            type="range"
+            min={0}
+            max={99}
+            value={minReputation}
+            onChange={(event) => setMinReputation(Number(event.target.value))}
+            className="mt-1 w-full"
+          />
+        </div>
+
+        <div className="xl:col-span-3">
+          <label className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Max salary: {formatCompactMoney(maxSalary)}</label>
+          <input
+            type="range"
+            min={500_000}
+            max={25_000_000}
+            step={250_000}
+            value={maxSalary}
+            onChange={(event) => setMaxSalary(Number(event.target.value))}
+            className="mt-1 w-full"
+          />
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-3xl border border-white/10 bg-card/60">

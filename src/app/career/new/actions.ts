@@ -8,6 +8,7 @@ import { createCareerWithSetup } from "@/features/career/service";
 interface CreateCareerActionResult {
   ok: boolean;
   careerId?: string;
+  nextPath?: string;
   message: string;
   fieldErrors?: Record<string, string[]>;
 }
@@ -37,6 +38,10 @@ export async function createCareerAction(
       ok: true,
       message: "Career created successfully.",
       careerId: created.careerId,
+      nextPath:
+        created.mode === "MY_TEAM"
+          ? `/career/onboarding/${created.careerId}`
+          : `/game/hq?careerId=${created.careerId}`,
     };
   } catch (error) {
     return {

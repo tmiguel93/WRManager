@@ -23,10 +23,11 @@ export const createCareerSchema = z
     myTeamCountryCode: z.string().optional(),
     myTeamPrimaryColor: z.string().optional(),
     myTeamSecondaryColor: z.string().optional(),
+    myTeamAccentColor: z.string().optional(),
     myTeamHeadquarters: z.string().optional(),
     myTeamPhilosophy: z.string().optional(),
     startingSupplierId: z.string().optional(),
-    requestedBudget: z.number().min(25_000_000).max(150_000_000).optional(),
+    requestedBudget: z.number().min(3_000_000).max(220_000_000).optional(),
   })
   .superRefine((value, context) => {
     if (value.mode === "TEAM_PRINCIPAL" && !value.selectedTeamId) {

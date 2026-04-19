@@ -1,4 +1,4 @@
-import { ShieldCheck } from "lucide-react";
+﻿import { ShieldCheck } from "lucide-react";
 
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ export default async function AssetsPage() {
       <PageHeader
         eyebrow="Licensing Pipeline"
         title="Asset Registry"
-        description="Sistema de assets com fallback premium e trilha segura para importação de material autorizado/licenciado."
+        description="Track visual assets with premium fallbacks and a safe path for authorized media packs."
       />
 
       <Card className="premium-card">
@@ -24,13 +24,16 @@ export default async function AssetsPage() {
         </CardHeader>
         <CardContent className="grid gap-3">
           {entries.map((entry) => (
-            <div key={entry.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <div
+              key={entry.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+            >
               <div>
                 <p className="text-sm font-medium">
-                  {entry.entityType} • {entry.assetType}
+                  {entry.entityType} - {entry.assetType}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  source: {entry.packSource} • entity: {entry.entityId}
+                  {entry.entityName} - source pack: {entry.packSource}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -43,6 +46,12 @@ export default async function AssetsPage() {
               </div>
             </div>
           ))}
+
+          {entries.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+              No assets registered yet.
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>

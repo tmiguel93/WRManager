@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 
 import { calculateSponsorOffer, calculateSupplierOffer, type SponsorObjectiveRisk } from "@/domain/rules/commercial-deals";
+import { evaluateSponsorContractGuard } from "@/domain/rules/sponsor-contracts";
 import { prisma } from "@/persistence/prisma";
 
 const supplierDealSchema = z.object({
@@ -160,43 +161,20 @@ export async function signSponsorDeal(input: SignSponsorDealInput) {
         teamId: team.id,
         status: "ACTIVE",
       },
-      orderBy: [{ fixedValue: "asc" }, { endDate: "asc" }],
-      take: 1,
+      select: { sponsorId: true },
     });
 
-    const sameSponsorActive = await tx.sponsorContract.findFirst({
-      where: {
-        teamId: team.id,
-        sponsorId: sponsor.id,
-        status: "ACTIVE",
-      },
+    const guard = evaluateSponsorContractGuard({
+      sponsorId: sponsor.id,
+      activeSponsorIds: activeContracts.map((contract) => contract.sponsorId),
+      maxActiveContracts: 3,
     });
 
-    if (sameSponsorActive) {
-      await tx.sponsorContract.update({
-        where: { id: sameSponsorActive.id },
-        data: {
-          status: "TERMINATED",
-          endDate: startDate,
-        },
-      });
-    } else {
-      const activeCount = await tx.sponsorContract.count({
-        where: {
-          teamId: team.id,
-          status: "ACTIVE",
-        },
-      });
-
-      if (activeCount >= 3 && activeContracts[0]) {
-        await tx.sponsorContract.update({
-          where: { id: activeContracts[0].id },
-          data: {
-            status: "TERMINATED",
-            endDate: startDate,
-          },
-        });
+    if (!guard.allowed) {
+      if (guard.reason === "DUPLICATE_SPONSOR") {
+        throw new Error("Sponsor already active with this team. End the current contract before renegotiating.");
       }
+      throw new Error("All sponsor slots are already filled. End an active sponsor before signing a new one.");
     }
 
     await tx.sponsorContract.create({
