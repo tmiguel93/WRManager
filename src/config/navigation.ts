@@ -12,6 +12,7 @@ export const PRIMARY_NAV: NavItemDefinition[] = [
   { href: "/game/sponsors", label: "Sponsors", icon: "Handshake" },
   { href: "/game/car-development", label: "Car Development", icon: "Wrench" },
   { href: "/game/facilities", label: "Facilities", icon: "Building2" },
+  { href: "/game/weekend-rules", label: "Weekend Rules", icon: "ListChecks" },
   { href: "/game/newsroom", label: "Inbox & News", icon: "Newspaper" },
 ];
 

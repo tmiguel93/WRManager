@@ -101,6 +101,25 @@ Base do manager global de automobilismo construída com foco em:
 - Seed expandida com duas temporadas (`2025` finalizada + `2026` preseason) e tabelas populadas
 - Regras de desempate desacopladas para standings em `domain/rules/championship-standings.ts`
 
+## Módulo 8 (entregue)
+
+- Engine de Weekend Rules desacoplada da UI em `domain/rules/weekend-rules.ts`
+- Normalização de rulesets por categoria com suporte a:
+  - F1 style (`Q1/Q2/Q3`, sprint)
+  - F2 style (sprint + feature)
+  - INDYCAR style (variações por pista)
+  - NASCAR style (stage racing)
+  - Endurance style (hyperpole + race endurance)
+- Novo centro operacional em `/game/weekend-rules` com:
+  - catálogo de rulesets da categoria
+  - preview por tipo de pista
+  - leitura de complexidade e sensibilidade climática
+  - geração de skeleton de fim de semana para o próximo evento
+- Serviço server-side para gerar `RaceWeekend` + `Session` ordenadas:
+  - `features/weekend-rules/service.ts`
+  - ação em `app/(game)/game/weekend-rules/actions.ts`
+- Registry de simulação expandido para todas as séries seedadas em `simulation/rulesets/registry.ts`
+
 ## Estrutura de pastas (resumo)
 
 ```txt
@@ -166,4 +185,4 @@ npm run assets:import -- assets/packs/sample-pack/asset-pack.json
 
 ## Próximo módulo
 
-Módulo 8: engine de weekend rules (abstração de formatos de fim de semana por série).
+Módulo 9: Practice e Qualifying (setup learning + classificação rápida/detalhada).

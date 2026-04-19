@@ -68,8 +68,16 @@ export interface WeekendRuleSetDefinition {
   name: string;
   qualiFormat: string;
   hasSprint: boolean;
+  hasFeature?: boolean;
   hasStages: boolean;
   endurance: boolean;
   weatherSensitivity: number;
   sessions: string[];
+  parcFerme?: boolean;
+  safetyCarBehavior?: string;
+  pointSystem?: Record<string, unknown>;
+  tireRules?: Record<string, unknown>;
+  fuelRules?: Record<string, unknown>;
+  requiredPitRules?: Record<string, unknown> | null;
+  manufacturerRules?: Record<string, unknown> | null;
 }
