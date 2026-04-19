@@ -61,6 +61,18 @@ Base do manager global de automobilismo construída com foco em:
 - Quick compare de pilotos e scouting board com score de avaliação desacoplado (`domain/rules`)
 - Navegação expandida com `Staff` e `Scouting`
 
+## Módulo 5 (entregue)
+
+- Marketplace de fornecedores com negociação de contrato e substituição por tipo
+- Marketplace de patrocinadores com objetivos de risco (`SAFE`, `BALANCED`, `AGGRESSIVE`)
+- Perfis comerciais de fornecedores e marcas com previews financeiros
+- Contratação com impacto real em caixa e orçamento do time
+- Registro financeiro em `transactions` para signing fee e signing advance
+- Novas telas:
+  - `/game/suppliers` (contratos ativos + marketplace)
+  - `/game/sponsors` (portfólio ativo + negociação)
+- Regras de negócio desacopladas em `domain/rules/commercial-deals.ts`
+
 ## Estrutura de pastas (resumo)
 
 ```txt

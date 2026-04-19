@@ -133,8 +133,14 @@ export async function getLatestCareer() {
 export interface ActiveCareerContext {
   careerId: string | null;
   careerName: string;
+  teamId: string | null;
   teamName: string;
+  teamCountryCode: string | null;
+  teamBudget: number;
+  teamReputation: number;
+  categoryId: string | null;
   categoryCode: string;
+  managerProfileCode: string;
   cashBalance: number;
   currentDateIso: string;
 }
@@ -148,14 +154,14 @@ export async function getActiveCareerContext(): Promise<ActiveCareerContext> {
         where: { id: cookieCareerId },
         include: {
           selectedCategory: { select: { id: true, code: true } },
-          selectedTeam: { select: { name: true } },
+          selectedTeam: { select: { id: true, name: true, countryCode: true, budget: true, reputation: true } },
         },
       })
     : await prisma.career.findFirst({
         orderBy: { createdAt: "desc" },
         include: {
           selectedCategory: { select: { id: true, code: true } },
-          selectedTeam: { select: { name: true } },
+          selectedTeam: { select: { id: true, name: true, countryCode: true, budget: true, reputation: true } },
         },
       });
 
@@ -163,8 +169,14 @@ export async function getActiveCareerContext(): Promise<ActiveCareerContext> {
     return {
       careerId: null,
       careerName: "Prototype Sandbox",
+      teamId: null,
       teamName: "Apex Quantum GP",
+      teamCountryCode: "US",
+      teamBudget: 95_000_000,
+      teamReputation: 70,
+      categoryId: null,
       categoryCode: "F1",
+      managerProfileCode: "ESTRATEGISTA",
       cashBalance: 42_500_000,
       currentDateIso: "2026-03-08",
     };
@@ -189,8 +201,14 @@ export async function getActiveCareerContext(): Promise<ActiveCareerContext> {
   return {
     careerId: career.id,
     careerName: career.name,
+    teamId: career.selectedTeam?.id ?? null,
     teamName: career.selectedTeam?.name ?? "Independent Program",
+    teamCountryCode: career.selectedTeam?.countryCode ?? null,
+    teamBudget: career.selectedTeam?.budget ?? 0,
+    teamReputation: career.selectedTeam?.reputation ?? career.reputation,
+    categoryId: career.selectedCategory.id,
     categoryCode: career.selectedCategory.code,
+    managerProfileCode: career.managerProfileCode,
     cashBalance: career.cashBalance,
     currentDateIso,
   };
