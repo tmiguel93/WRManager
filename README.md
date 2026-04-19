@@ -39,6 +39,16 @@ Base do manager global de automobilismo construída com foco em:
 - Criação de equipe customizada com lineup inicial, carro, facilities e contratos base
 - Contexto de carreira ativa via cookie no shell do jogo
 
+## Módulo 3 (entregue)
+
+- Dashboard HQ orientado por carreira ativa
+- KPIs de caixa, burn rate, moral, índice competitivo e ritmo de desenvolvimento
+- Alert Center com níveis de severidade e prioridades operacionais
+- Agenda de próximos eventos por categoria/carreira
+- Blocos visuais de caixa, próximo evento e pulse de pilotos
+- Gráficos de evolução financeira e técnica com Recharts
+- Camada de regras de negócio do HQ desacoplada em `domain/rules`
+
 ## Estrutura de pastas (resumo)
 
 ```txt
@@ -103,4 +113,4 @@ npm run assets:import -- assets/packs/sample-pack/asset-pack.json
 
 ## Próximo módulo
 
-Módulo 3: Dashboard HQ orientado por carreira ativa.
+Módulo 4: dados detalhados de pilotos, staff e equipes com comparação e scouting base.
