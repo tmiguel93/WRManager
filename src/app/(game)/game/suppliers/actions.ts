@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { signSponsorDeal, signSupplierDeal } from "@/features/commercial/service";
+import { tryAutosaveForCareer } from "@/features/save-system/autosave";
 import { getActiveCareerContext } from "@/server/queries/career";
 
 const supplierActionSchema = z.object({
@@ -53,6 +54,7 @@ export async function negotiateSupplierDealAction(input: z.input<typeof supplier
       termYears: parsed.data.termYears,
     });
 
+    await tryAutosaveForCareer(active.careerId, "SUPPLIER_DEAL");
     revalidateCommercialViews();
 
     return {
@@ -92,6 +94,7 @@ export async function negotiateSponsorDealAction(input: z.input<typeof sponsorAc
       objectiveRisk: parsed.data.objectiveRisk,
     });
 
+    await tryAutosaveForCareer(active.careerId, "SPONSOR_DEAL");
     revalidateCommercialViews();
 
     return {

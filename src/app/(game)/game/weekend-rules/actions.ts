@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { generateRaceWeekendSkeleton } from "@/features/weekend-rules/service";
+import { tryAutosaveForCareer } from "@/features/save-system/autosave";
+import { getActiveCareerContext } from "@/server/queries/career";
 
 const generateWeekendActionSchema = z.object({
   eventId: z.string().min(1),
@@ -30,6 +32,7 @@ export async function generateWeekendSkeletonAction(
       eventId: parsed.data.eventId,
     });
 
+    await tryAutosaveForCareer((await getActiveCareerContext()).careerId, "WEEKEND_GENERATED");
     revalidatePath("/game/weekend-rules");
     revalidatePath("/game/calendar");
 

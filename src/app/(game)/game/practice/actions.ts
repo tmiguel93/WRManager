@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getActiveCareerContext } from "@/server/queries/career";
+import { tryAutosaveForCareer } from "@/features/save-system/autosave";
 import { runPracticeSession } from "@/features/weekend-sessions/service";
 import { generateRaceWeekendSkeleton } from "@/features/weekend-rules/service";
 
@@ -46,6 +47,7 @@ export async function generateWeekendForPracticeAction(
       eventId: parsed.data.eventId,
     });
 
+    await tryAutosaveForCareer((await getActiveCareerContext()).careerId, "WEEKEND_GENERATED");
     revalidatePracticeViews();
 
     return {
@@ -88,6 +90,7 @@ export async function runPracticeSimulationAction(
       weatherFocus: parsed.data.weatherFocus,
     });
 
+    await tryAutosaveForCareer(active.careerId, "PRACTICE_SESSION");
     revalidatePracticeViews();
 
     return {

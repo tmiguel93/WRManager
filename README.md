@@ -169,6 +169,25 @@ Base do manager global de automobilismo construída com foco em:
 - Queries server-side dedicadas para ecossistema vivo:
   - `server/queries/motorsport-world.ts`
 
+## Módulo 12 (entregue)
+
+- Save Center completo em `/game/save-center`
+- Save manual com nome customizável e slots persistidos no banco
+- Autosave funcional com:
+  - trigger nas principais ações de gameplay
+  - política de intervalo mínimo
+  - retenção automática de slots
+- Load funcional com restauração transacional de snapshot para:
+  - carreira (caixa/reputação/config)
+  - progresso de sessões
+  - resultados de quali/corrida
+  - standings
+  - transações principais
+- Ação de quick save no top bar para checkpoint imediato
+- Nova camada dedicada de persistência:
+  - `features/save-system/service.ts`
+  - `server/queries/save-system.ts`
+
 ## Estrutura de pastas (resumo)
 
 ```txt
@@ -234,4 +253,4 @@ npm run assets:import -- assets/packs/sample-pack/asset-pack.json
 
 ## Próximo módulo
 
-Módulo 12: Save/load, autosave, persistência final e pass de polimento/testes.
+MVP base completa nos 12 módulos.

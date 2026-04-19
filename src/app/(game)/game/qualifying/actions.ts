@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getActiveCareerContext } from "@/server/queries/career";
+import { tryAutosaveForCareer } from "@/features/save-system/autosave";
 import { runQualifyingSession } from "@/features/weekend-sessions/service";
 import { generateRaceWeekendSkeleton } from "@/features/weekend-rules/service";
 
@@ -47,6 +48,7 @@ export async function generateWeekendForQualifyingAction(
       eventId: parsed.data.eventId,
     });
 
+    await tryAutosaveForCareer((await getActiveCareerContext()).careerId, "WEEKEND_GENERATED");
     revalidateQualifyingViews();
 
     return {
@@ -90,6 +92,7 @@ export async function runQualifyingSimulationAction(
       tyreCompound: parsed.data.tyreCompound,
     });
 
+    await tryAutosaveForCareer(active.careerId, "QUALIFYING_SESSION");
     revalidateQualifyingViews();
 
     return {

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getActiveCareerContext } from "@/server/queries/career";
 import { runRaceControlSession } from "@/features/race-control/service";
 import { generateRaceWeekendSkeleton } from "@/features/weekend-rules/service";
+import { tryAutosaveForCareer } from "@/features/save-system/autosave";
 
 const runRaceActionSchema = z.object({
   sessionId: z.string().min(1),
@@ -50,6 +51,7 @@ export async function generateWeekendForRaceAction(
       eventId: parsed.data.eventId,
     });
 
+    await tryAutosaveForCareer((await getActiveCareerContext()).careerId, "WEEKEND_GENERATED");
     revalidateRaceViews();
 
     return {
@@ -95,6 +97,7 @@ export async function runRaceControlAction(
       weatherReaction: parsed.data.weatherReaction,
     });
 
+    await tryAutosaveForCareer(active.careerId, "RACE_SESSION");
     revalidateRaceViews();
 
     return {

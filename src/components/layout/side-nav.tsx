@@ -17,6 +17,7 @@ import {
   Newspaper,
   Radar,
   Shield,
+  Save,
   Timer,
   Trophy,
   UsersRound,
@@ -45,6 +46,7 @@ const iconMap = {
   Flag,
   Newspaper,
   Globe2,
+  Save,
   Image,
 };
 
@@ -96,10 +98,10 @@ export function SideNav() {
       </div>
 
       <div className="mt-auto rounded-3xl border border-emerald-300/20 bg-emerald-400/5 p-4">
-        <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Module 11</p>
-        <p className="mt-2 text-sm font-medium text-emerald-50">World news hub live</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Module 12</p>
+        <p className="mt-2 text-sm font-medium text-emerald-50">Persistence live</p>
         <p className="mt-1 text-xs text-emerald-100/70">
-          Inbox, rumor wire, transfer radar and global motorsport ecosystem are now active.
+          Manual save, autosave checkpoints and load pipeline are now active.
         </p>
       </div>
     </aside>

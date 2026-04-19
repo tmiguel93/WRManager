@@ -18,6 +18,7 @@ export const PRIMARY_NAV: NavItemDefinition[] = [
   { href: "/game/race-control", label: "Race Control", icon: "Flag" },
   { href: "/game/newsroom", label: "Inbox & News", icon: "Newspaper" },
   { href: "/game/global-hub", label: "Global Hub", icon: "Globe2" },
+  { href: "/game/save-center", label: "Save Center", icon: "Save" },
 ];
 
 export const SECONDARY_NAV: NavItemDefinition[] = [

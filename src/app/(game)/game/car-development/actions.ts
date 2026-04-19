@@ -8,6 +8,7 @@ import {
   launchDevelopmentProject,
   upgradeTeamFacility,
 } from "@/features/engineering/service";
+import { tryAutosaveForCareer } from "@/features/save-system/autosave";
 import { getActiveCareerContext } from "@/server/queries/career";
 
 const launchProjectActionSchema = z.object({
@@ -62,6 +63,7 @@ export async function launchDevelopmentProjectAction(
       templateCode: parsed.data.templateCode,
     });
 
+    await tryAutosaveForCareer(active.careerId, "DEVELOPMENT_LAUNCH");
     revalidateEngineeringViews();
 
     return {
@@ -102,6 +104,7 @@ export async function completeDevelopmentProjectAction(
       projectId: parsed.data.projectId,
     });
 
+    await tryAutosaveForCareer(active.careerId, "DEVELOPMENT_COMPLETE");
     revalidateEngineeringViews();
 
     return {
@@ -142,6 +145,7 @@ export async function upgradeTeamFacilityAction(
       teamFacilityId: parsed.data.teamFacilityId,
     });
 
+    await tryAutosaveForCareer(active.careerId, "FACILITY_UPGRADE");
     revalidateEngineeringViews();
 
     return {
