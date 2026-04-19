@@ -133,6 +133,24 @@ Base do manager global de automobilismo construída com foco em:
 - Regras puras desacopladas da UI:
   - `domain/rules/weekend-session-sim.ts`
 
+## Módulo 10 (entregue)
+
+- Tela `Race Control` completa em `/game/race-control`
+- Simulação de corrida com decisões em tempo real:
+  - `pace mode`
+  - `pit plan`
+  - `fuel mode`
+  - `tyre mode`
+  - `team orders`
+  - `weather reaction`
+- Leaderboard de corrida com status, gaps, pontos, pit stops e voltas completas
+- Feed de eventos e resumo final de sessão com desempenho da equipe gerenciada
+- Persistência de resultados em `race_results` e notas de estratégia/feed em `session_team_states`
+- Atualização automática de standings (`drivers`, `teams`, `manufacturers`) após sessão
+- Evolução de `season.currentRound` em sessões principais de corrida
+- Engine desacoplada da UI:
+  - `domain/rules/race-control-sim.ts`
+
 ## Estrutura de pastas (resumo)
 
 ```txt
@@ -198,4 +216,4 @@ npm run assets:import -- assets/packs/sample-pack/asset-pack.json
 
 ## Próximo módulo
 
-Módulo 10: Race Control (corrida, decisões em tempo real, event feed e resultado final).
+Módulo 11: Notícias, rumores e mundo vivo (inbox dinâmico, transfer rumors e global motorsport hub).
