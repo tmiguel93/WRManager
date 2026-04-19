@@ -9,6 +9,7 @@ import {
   Factory,
   Flag,
   FlaskConical,
+  Globe2,
   Handshake,
   Image,
   LayoutDashboard,
@@ -43,6 +44,7 @@ const iconMap = {
   Timer,
   Flag,
   Newspaper,
+  Globe2,
   Image,
 };
 
@@ -94,10 +96,10 @@ export function SideNav() {
       </div>
 
       <div className="mt-auto rounded-3xl border border-emerald-300/20 bg-emerald-400/5 p-4">
-        <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Module 10</p>
-        <p className="mt-2 text-sm font-medium text-emerald-50">Race control live</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/80">Module 11</p>
+        <p className="mt-2 text-sm font-medium text-emerald-50">World news hub live</p>
         <p className="mt-1 text-xs text-emerald-100/70">
-          Race simulation, strategic controls, event feed and final session result are now active.
+          Inbox, rumor wire, transfer radar and global motorsport ecosystem are now active.
         </p>
       </div>
     </aside>

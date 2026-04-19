@@ -17,6 +17,7 @@ export const PRIMARY_NAV: NavItemDefinition[] = [
   { href: "/game/qualifying", label: "Qualifying", icon: "Timer" },
   { href: "/game/race-control", label: "Race Control", icon: "Flag" },
   { href: "/game/newsroom", label: "Inbox & News", icon: "Newspaper" },
+  { href: "/game/global-hub", label: "Global Hub", icon: "Globe2" },
 ];
 
 export const SECONDARY_NAV: NavItemDefinition[] = [

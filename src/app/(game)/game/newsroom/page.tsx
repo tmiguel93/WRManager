@@ -1,43 +1,60 @@
-import { ModulePreviewPanel } from "@/components/game/module-preview-panel";
-import { PageHeader } from "@/components/common/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getNewsroomView } from "@/server/queries/world";
+import Link from "next/link";
 
-export default async function NewsroomPage() {
-  const news = await getNewsroomView().catch(() => []);
+import { PageHeader } from "@/components/common/page-header";
+import { NewsroomCenter } from "@/components/game/newsroom-center";
+import { cn } from "@/lib/utils";
+import { getNewsroomHubView } from "@/server/queries/motorsport-world";
+
+interface NewsroomPageProps {
+  searchParams: Promise<{ category?: string }>;
+}
+
+export default async function NewsroomPage({ searchParams }: NewsroomPageProps) {
+  const { category } = await searchParams;
+  const view = await getNewsroomHubView(category);
+
+  if (!view) {
+    return (
+      <div className="space-y-8">
+        <PageHeader
+          eyebrow="Media and Inbox"
+          title="Newsroom"
+          description="No newsroom context available for the current save."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Media & Inbox"
+        eyebrow="Media and Inbox"
         title="Newsroom"
-        description="Fluxo de notícias e rumores carregado do banco para sustentar a sensação de paddock vivo."
+        description="Monitor inbox priorities, global headlines, transfer rumors and paddock intelligence."
+        badge={`${view.selectedCategory.code} - ${view.seasonYear}`}
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <Card className="premium-card">
-          <CardHeader>
-            <CardTitle className="font-heading text-xl">Latest Headlines</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {news.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                  {item.categoryCode} • Importance {item.importance}
-                </p>
-                <p className="mt-1 text-base font-medium text-foreground">{item.title}</p>
-                <p className="mt-2 text-sm text-muted-foreground">{item.body}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      <section className="flex flex-wrap gap-2">
+        {view.categories.map((option) => {
+          const isActive = option.code === view.selectedCategory.code;
+          return (
+            <Link
+              key={option.code}
+              href={`/game/newsroom?category=${option.code}`}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                isActive
+                  ? "border-cyan-300/45 bg-cyan-500/10 text-cyan-100"
+                  : "border-white/15 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground",
+              )}
+            >
+              {option.code}
+            </Link>
+          );
+        })}
+      </section>
 
-        <ModulePreviewPanel
-          title="Global Motorsport Hub"
-          description="A camada de ecossistema mundial está preparada no schema para rumores, transferências e narrativas sistêmicas."
-          status="Module 11 expansion target"
-        />
-      </div>
+      <NewsroomCenter view={view} />
     </div>
   );
 }

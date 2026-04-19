@@ -151,6 +151,24 @@ Base do manager global de automobilismo construída com foco em:
 - Engine desacoplada da UI:
   - `domain/rules/race-control-sim.ts`
 
+## Módulo 11 (entregue)
+
+- Newsroom completo em `/game/newsroom` com:
+  - inbox operacional priorizada
+  - headlines por categoria e globais
+  - rumor wire com credibilidade
+  - transfer rumor board gerado por regras
+- Global Motorsport Hub em `/game/global-hub` com:
+  - pulso simultâneo de todas as categorias
+  - pilotos e fabricantes em alta
+  - radar global de transferências
+  - watchlist regulatória
+  - resultados recentes multi-série
+- Nova camada de regras para narrativa sistêmica:
+  - `domain/rules/world-hub.ts`
+- Queries server-side dedicadas para ecossistema vivo:
+  - `server/queries/motorsport-world.ts`
+
 ## Estrutura de pastas (resumo)
 
 ```txt
@@ -216,4 +234,4 @@ npm run assets:import -- assets/packs/sample-pack/asset-pack.json
 
 ## Próximo módulo
 
-Módulo 11: Notícias, rumores e mundo vivo (inbox dinâmico, transfer rumors e global motorsport hub).
+Módulo 12: Save/load, autosave, persistência final e pass de polimento/testes.
