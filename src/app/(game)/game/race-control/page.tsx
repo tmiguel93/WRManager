@@ -2,6 +2,7 @@
 
 import { PageHeader } from "@/components/common/page-header";
 import { RaceControlCenter } from "@/components/game/race-control-center";
+import { getServerTranslator } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import { getRaceControlCenterView } from "@/server/queries/race-control";
 
@@ -10,6 +11,7 @@ interface RaceControlPageProps {
 }
 
 export default async function RaceControlPage({ searchParams }: RaceControlPageProps) {
+  const { t } = await getServerTranslator();
   const { category } = await searchParams;
   const view = await getRaceControlCenterView(category);
 
@@ -17,9 +19,9 @@ export default async function RaceControlPage({ searchParams }: RaceControlPageP
     return (
       <div className="space-y-8">
         <PageHeader
-          eyebrow="Race Weekend"
-          title="Race Control"
-          description="No race-control context available for the current save."
+          eyebrow={t("race.eyebrow", "Race Weekend")}
+          title={t("race.title", "Race Control")}
+          description={t("race.noContext", "No race-control context available for the current save.")}
         />
       </div>
     );
@@ -28,9 +30,12 @@ export default async function RaceControlPage({ searchParams }: RaceControlPageP
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Race Weekend"
-        title="Race Control"
-        description="Command race pace, pit windows, fuel and tyre behavior with a full event feed and final session result."
+        eyebrow={t("race.eyebrow", "Race Weekend")}
+        title={t("race.title", "Race Control")}
+        description={t(
+          "race.description",
+          "Command race pace, pit windows, fuel and tyre behavior with a full event feed and final session result.",
+        )}
         badge={`${view.selectedCategory.code} · ${view.seasonYear}`}
       />
 
@@ -58,4 +63,3 @@ export default async function RaceControlPage({ searchParams }: RaceControlPageP
     </div>
   );
 }
-

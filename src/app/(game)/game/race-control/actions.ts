@@ -7,6 +7,7 @@ import { getActiveCareerContext } from "@/server/queries/career";
 import { runRaceControlSession } from "@/features/race-control/service";
 import { generateRaceWeekendSkeleton } from "@/features/weekend-rules/service";
 import { tryAutosaveForCareer } from "@/features/save-system/autosave";
+import { toPublicErrorMessage } from "@/lib/public-error";
 
 const runRaceActionSchema = z.object({
   sessionId: z.string().min(1),
@@ -61,7 +62,7 @@ export async function generateWeekendForRaceAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not generate weekend.",
+      message: toPublicErrorMessage(error, "Could not generate weekend."),
     };
   }
 }
@@ -107,7 +108,7 @@ export async function runRaceControlAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not run race control simulation.",
+      message: toPublicErrorMessage(error, "Could not run race control simulation."),
     };
   }
 }

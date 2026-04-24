@@ -7,6 +7,7 @@ import { getActiveCareerContext } from "@/server/queries/career";
 import { tryAutosaveForCareer } from "@/features/save-system/autosave";
 import { runQualifyingSession } from "@/features/weekend-sessions/service";
 import { generateRaceWeekendSkeleton } from "@/features/weekend-rules/service";
+import { toPublicErrorMessage } from "@/lib/public-error";
 
 const runQualifyingActionSchema = z.object({
   sessionId: z.string().min(1),
@@ -58,7 +59,7 @@ export async function generateWeekendForQualifyingAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not generate weekend.",
+      message: toPublicErrorMessage(error, "Could not generate weekend."),
     };
   }
 }
@@ -102,7 +103,7 @@ export async function runQualifyingSimulationAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not run qualifying session.",
+      message: toPublicErrorMessage(error, "Could not run qualifying session."),
     };
   }
 }

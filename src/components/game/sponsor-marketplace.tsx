@@ -104,20 +104,26 @@ export function SponsorMarketplace({ context, activeContracts, sponsors }: Spons
       <section className="grid gap-4 md:grid-cols-3">
         <Card className="premium-card">
           <CardContent className="pt-5">
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Managed Team</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              {t("commercial.managedTeam", "Managed Team")}
+            </p>
             <p className="mt-2 text-lg font-semibold">{context.teamName}</p>
             <p className="text-xs text-muted-foreground">{context.managerProfileCode}</p>
           </CardContent>
         </Card>
         <Card className="premium-card">
           <CardContent className="pt-5">
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Cash Balance</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              {t("commercial.cashBalance", "Cash Balance")}
+            </p>
             <p className="mt-2 text-lg font-semibold text-emerald-100">{formatCompactMoney(context.cashBalance)}</p>
           </CardContent>
         </Card>
         <Card className="premium-card">
           <CardContent className="pt-5">
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Active Sponsor Deals</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              {t("commercial.activeSponsorDeals", "Active Sponsor Deals")}
+            </p>
             <p className="mt-2 text-lg font-semibold">{activeContracts.length}</p>
           </CardContent>
         </Card>
@@ -126,7 +132,9 @@ export function SponsorMarketplace({ context, activeContracts, sponsors }: Spons
       <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Current Sponsor Portfolio</CardTitle>
+            <CardTitle className="font-heading text-xl">
+              {t("commercial.currentSponsorPortfolio", "Current Sponsor Portfolio")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {activeContracts.map((contract) => (
@@ -147,7 +155,7 @@ export function SponsorMarketplace({ context, activeContracts, sponsors }: Spons
             ))}
             {activeContracts.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
-                No active sponsor contracts found for this team.
+                {t("commercial.noActiveSponsorContracts", "No active sponsor contracts found for this team.")}
               </div>
             ) : null}
           </CardContent>
@@ -155,17 +163,19 @@ export function SponsorMarketplace({ context, activeContracts, sponsors }: Spons
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Search Sponsors</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("commercial.searchSponsors", "Search Sponsors")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Input
-              placeholder="Search sponsor, industry or country"
+              placeholder={t("commercial.searchSponsorPlaceholder", "Search sponsor, industry or country")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="h-10 border-white/20 bg-background/40"
             />
             <Badge className="rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
-              {filteredSponsors.length} sponsor opportunities
+              {t("commercial.sponsorOpportunities", "{count} sponsor opportunities", {
+                count: filteredSponsors.length,
+              })}
             </Badge>
           </CardContent>
         </Card>

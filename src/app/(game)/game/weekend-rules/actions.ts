@@ -6,6 +6,7 @@ import { z } from "zod";
 import { generateRaceWeekendSkeleton } from "@/features/weekend-rules/service";
 import { tryAutosaveForCareer } from "@/features/save-system/autosave";
 import { getActiveCareerContext } from "@/server/queries/career";
+import { toPublicErrorMessage } from "@/lib/public-error";
 
 const generateWeekendActionSchema = z.object({
   eventId: z.string().min(1),
@@ -43,7 +44,7 @@ export async function generateWeekendSkeletonAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not generate weekend skeleton.",
+      message: toPublicErrorMessage(error, "Could not generate weekend skeleton."),
     };
   }
 }

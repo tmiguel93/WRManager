@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 
 import { createCareerSchema, type CreateCareerInput } from "@/features/career/schema";
 import { createCareerWithSetup } from "@/features/career/service";
+import { toPublicErrorMessage } from "@/lib/public-error";
 
 interface CreateCareerActionResult {
   ok: boolean;
@@ -46,10 +47,7 @@ export async function createCareerAction(
   } catch (error) {
     return {
       ok: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Could not create career due to an unexpected error.",
+      message: toPublicErrorMessage(error, "Could not create career due to an unexpected error."),
     };
   }
 }

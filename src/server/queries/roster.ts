@@ -266,6 +266,11 @@ export async function getScoutingBoard(categoryCode: string) {
     prisma.driver.findMany({
       where: {
         currentTeamId: null,
+        contracts: {
+          none: {
+            status: "ACTIVE",
+          },
+        },
       },
       orderBy: [{ potential: "desc" }, { overall: "desc" }],
       take: 24,
@@ -280,7 +285,13 @@ export async function getScoutingBoard(categoryCode: string) {
     }),
     prisma.driver.findMany({
       where: {
+        currentTeamId: null,
         potential: { gte: 86 },
+        contracts: {
+          none: {
+            status: "ACTIVE",
+          },
+        },
       },
       orderBy: [{ potential: "desc" }, { overall: "desc" }],
       take: 24,
@@ -296,6 +307,11 @@ export async function getScoutingBoard(categoryCode: string) {
     prisma.staff.findMany({
       where: {
         currentTeamId: null,
+        contracts: {
+          none: {
+            status: "ACTIVE",
+          },
+        },
         OR: [{ currentCategory: { code: categoryCode } }, { currentCategoryId: null }],
       },
       orderBy: [{ reputation: "desc" }],

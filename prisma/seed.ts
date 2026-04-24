@@ -1503,6 +1503,7 @@ async function seed() {
       data: {
         sponsorId,
         teamId,
+        activeKey: `${teamId}:${sponsorId}`,
         startDate: new Date(Date.UTC(2026, 0, 1)),
         endDate: new Date(Date.UTC(2027, 0, 1)),
         fixedValue: sponsor[3] - 1_000_000 + index * 180_000,

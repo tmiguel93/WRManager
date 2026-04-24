@@ -8,6 +8,11 @@ export interface SeasonRoundResolution {
   totalRounds: number;
 }
 
+export interface SeasonActivationResolution {
+  status: SeasonStatus;
+  phase: CareerSeasonPhase;
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
@@ -65,4 +70,30 @@ export function deriveCareerPhaseFromSeason(params: {
   }
 
   return "ROUND_ACTIVE";
+}
+
+export function resolveSeasonActivationFromCompetitiveSession(params: {
+  seasonStatus: SeasonStatus;
+  currentRound: number;
+  totalRounds: number;
+}): SeasonActivationResolution {
+  if (params.seasonStatus !== "PRESEASON") {
+    return {
+      status: params.seasonStatus,
+      phase: deriveCareerPhaseFromSeason({
+        seasonStatus: params.seasonStatus,
+        currentRound: params.currentRound,
+        totalRounds: params.totalRounds,
+      }),
+    };
+  }
+
+  return {
+    status: "ACTIVE",
+    phase: deriveCareerPhaseFromSeason({
+      seasonStatus: "ACTIVE",
+      currentRound: params.currentRound,
+      totalRounds: params.totalRounds,
+    }),
+  };
 }

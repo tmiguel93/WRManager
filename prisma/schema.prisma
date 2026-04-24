@@ -562,6 +562,7 @@ model SponsorContract {
   id              String         @id @default(cuid())
   sponsorId       String
   teamId          String
+  activeKey       String?        @unique
   startDate       DateTime
   endDate         DateTime
   fixedValue      Int

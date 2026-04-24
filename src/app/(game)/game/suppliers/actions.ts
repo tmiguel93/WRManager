@@ -6,6 +6,7 @@ import { z } from "zod";
 import { signSponsorDeal, signSupplierDeal } from "@/features/commercial/service";
 import { tryAutosaveForCareer } from "@/features/save-system/autosave";
 import { getActiveCareerContext } from "@/server/queries/career";
+import { toPublicErrorMessage } from "@/lib/public-error";
 
 const supplierActionSchema = z.object({
   supplierId: z.string().min(1),
@@ -64,7 +65,7 @@ export async function negotiateSupplierDealAction(input: z.input<typeof supplier
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not sign supplier deal.",
+      message: toPublicErrorMessage(error, "Could not sign supplier deal."),
     };
   }
 }
@@ -102,7 +103,7 @@ export async function negotiateSponsorDealAction(input: z.input<typeof sponsorAc
       message: `${deal.sponsorName} signed with ${deal.objectiveRisk.toLowerCase()} objectives.`,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Could not sign sponsor deal.";
+    const message = toPublicErrorMessage(error, "Could not sign sponsor deal.");
     if (message.toLowerCase().includes("already active")) {
       return {
         ok: false,

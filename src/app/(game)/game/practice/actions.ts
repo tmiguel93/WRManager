@@ -7,6 +7,7 @@ import { getActiveCareerContext } from "@/server/queries/career";
 import { tryAutosaveForCareer } from "@/features/save-system/autosave";
 import { runPracticeSession } from "@/features/weekend-sessions/service";
 import { generateRaceWeekendSkeleton } from "@/features/weekend-rules/service";
+import { toPublicErrorMessage } from "@/lib/public-error";
 
 const runPracticeActionSchema = z.object({
   sessionId: z.string().min(1),
@@ -57,7 +58,7 @@ export async function generateWeekendForPracticeAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not generate weekend.",
+      message: toPublicErrorMessage(error, "Could not generate weekend."),
     };
   }
 }
@@ -100,7 +101,7 @@ export async function runPracticeSimulationAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not run practice session.",
+      message: toPublicErrorMessage(error, "Could not run practice session."),
     };
   }
 }

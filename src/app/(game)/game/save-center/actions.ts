@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { getActiveCareerContext } from "@/server/queries/career";
 import { createAutoSaveSlot, createManualSaveSlot, deleteSaveSlot, restoreFromSaveSlot } from "@/features/save-system/service";
+import { toPublicErrorMessage } from "@/lib/public-error";
 
 const manualSaveSchema = z.object({
   name: z.string().max(80).optional(),
@@ -64,7 +65,7 @@ export async function createManualSaveAction(input: z.input<typeof manualSaveSch
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Failed to create manual save.",
+      message: toPublicErrorMessage(error, "Failed to create manual save."),
     };
   }
 }
@@ -94,7 +95,7 @@ export async function quickAutoSaveAction(): Promise<SaveActionResult> {
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Autosave failed.",
+      message: toPublicErrorMessage(error, "Autosave failed."),
     };
   }
 }
@@ -138,7 +139,7 @@ export async function loadSaveSlotAction(input: z.input<typeof slotSchema>): Pro
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Failed to load save.",
+      message: toPublicErrorMessage(error, "Failed to load save."),
     };
   }
 }
@@ -175,7 +176,7 @@ export async function deleteSaveSlotAction(input: z.input<typeof slotSchema>): P
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Failed to delete save slot.",
+      message: toPublicErrorMessage(error, "Failed to delete save slot."),
     };
   }
 }

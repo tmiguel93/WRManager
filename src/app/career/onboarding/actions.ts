@@ -7,6 +7,7 @@ import { z } from "zod";
 import { finalizeMyTeamOnboarding, submitNegotiationProposal } from "@/features/contracts/service";
 import { tryAutosaveForCareer } from "@/features/save-system/autosave";
 import { prisma } from "@/persistence/prisma";
+import { toPublicErrorMessage } from "@/lib/public-error";
 
 const proposalSchema = z.object({
   careerId: z.string().min(1),
@@ -94,7 +95,7 @@ export async function submitOnboardingProposalAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not submit onboarding proposal.",
+      message: toPublicErrorMessage(error, "Could not submit onboarding proposal."),
     };
   }
 }
@@ -131,7 +132,7 @@ export async function finalizeOnboardingAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not finalize onboarding.",
+      message: toPublicErrorMessage(error, "Could not finalize onboarding."),
     };
   }
 }

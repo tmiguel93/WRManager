@@ -1,11 +1,13 @@
 ﻿import { PageHeader } from "@/components/common/page-header";
 import { ScoutingBoard } from "@/components/game/scouting-board";
 import { calculateScoutingScore } from "@/domain/rules/scouting-score";
+import { getServerTranslator } from "@/i18n/server";
 import { formatAge } from "@/lib/format";
 import { getActiveCareerContext } from "@/server/queries/career";
 import { getScoutingBoard } from "@/server/queries/roster";
 
 export default async function ScoutingPage() {
+  const { t } = await getServerTranslator();
   const activeCareer = await getActiveCareerContext();
   const board = await getScoutingBoard(activeCareer.categoryCode).catch(() => ({
     freeAgents: [],
@@ -19,7 +21,7 @@ export default async function ScoutingPage() {
     countryCode: driver.countryCode,
     imageUrl: driver.imageUrl,
     currentCategoryCode: driver.currentCategory?.code ?? "OPEN",
-    currentTeamName: driver.currentTeam?.name ?? "Open market",
+    currentTeamName: driver.currentTeam?.name ?? t("scouting.openMarket", "Open market"),
     scoutingScore: calculateScoutingScore({
       overall: driver.overall,
       potential: driver.potential,
@@ -34,7 +36,7 @@ export default async function ScoutingPage() {
     potential: driver.potential,
     marketValue: driver.marketValue,
     salary: driver.salary,
-    primaryTraitName: driver.traits[0]?.trait.name ?? "No highlighted trait",
+    primaryTraitName: driver.traits[0]?.trait.name ?? t("scouting.noHighlightedTrait", "No highlighted trait"),
   }));
 
   const breakoutTargets = board.highPotential.map((driver) => ({
@@ -43,7 +45,7 @@ export default async function ScoutingPage() {
     countryCode: driver.countryCode,
     imageUrl: driver.imageUrl,
     currentCategoryCode: driver.currentCategory?.code ?? "OPEN",
-    currentTeamName: driver.currentTeam?.name ?? "Open market",
+    currentTeamName: driver.currentTeam?.name ?? t("scouting.openMarket", "Open market"),
     scoutingScore: calculateScoutingScore({
       overall: driver.overall,
       potential: driver.potential,
@@ -58,7 +60,7 @@ export default async function ScoutingPage() {
     potential: driver.potential,
     marketValue: driver.marketValue,
     salary: driver.salary,
-    primaryTraitName: driver.traits[0]?.trait.name ?? "No highlighted trait",
+    primaryTraitName: driver.traits[0]?.trait.name ?? t("scouting.noHighlightedTrait", "No highlighted trait"),
   }));
 
   const staffMarket = board.roleGaps.map((member) => ({
@@ -75,9 +77,12 @@ export default async function ScoutingPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Talent Intelligence"
-        title="Scouting Center"
-        description="Unified scouting board with live proposal flow for drivers and staff across the global ecosystem."
+        eyebrow={t("scouting.eyebrow", "Talent Intelligence")}
+        title={t("scouting.title", "Scouting Center")}
+        description={t(
+          "scouting.description",
+          "Unified scouting board with live proposal flow for drivers and staff across the global ecosystem.",
+        )}
         badge={activeCareer.categoryCode}
       />
 

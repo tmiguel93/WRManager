@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   deriveCareerPhaseFromSeason,
+  resolveSeasonActivationFromCompetitiveSession,
   resolveSeasonRoundAfterMainRace,
 } from "@/domain/rules/season-progress";
 
@@ -38,5 +39,16 @@ describe("season progress transitions", () => {
     });
 
     expect(phase).toBe("OFFSEASON");
+  });
+
+  it("activates season after first competitive session in pre-season", () => {
+    const resolved = resolveSeasonActivationFromCompetitiveSession({
+      seasonStatus: "PRESEASON",
+      currentRound: 1,
+      totalRounds: 10,
+    });
+
+    expect(resolved.status).toBe("ACTIVE");
+    expect(resolved.phase).toBe("ROUND_ACTIVE");
   });
 });

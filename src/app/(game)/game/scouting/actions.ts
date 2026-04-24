@@ -6,6 +6,7 @@ import { z } from "zod";
 import { submitNegotiationProposal } from "@/features/contracts/service";
 import { getActiveCareerContext } from "@/server/queries/career";
 import { tryAutosaveForCareer } from "@/features/save-system/autosave";
+import { toPublicErrorMessage } from "@/lib/public-error";
 
 const submitProposalSchema = z.object({
   targetType: z.enum(["DRIVER", "STAFF"]),
@@ -67,8 +68,7 @@ export async function submitScoutingProposalAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not send proposal.",
+      message: toPublicErrorMessage(error, "Could not send proposal."),
     };
   }
 }
-

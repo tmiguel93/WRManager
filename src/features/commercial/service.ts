@@ -1,5 +1,6 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { calculateSponsorOffer, calculateSupplierOffer, type SponsorObjectiveRisk } from "@/domain/rules/commercial-deals";
@@ -161,8 +162,18 @@ export async function signSponsorDeal(input: SignSponsorDealInput) {
         teamId: team.id,
         status: "ACTIVE",
       },
-      select: { sponsorId: true },
+      select: { id: true, sponsorId: true, activeKey: true },
     });
+
+    for (const contract of activeContracts) {
+      if (contract.activeKey) continue;
+      await tx.sponsorContract.update({
+        where: { id: contract.id },
+        data: {
+          activeKey: `${team.id}:${contract.sponsorId}`,
+        },
+      });
+    }
 
     const guard = evaluateSponsorContractGuard({
       sponsorId: sponsor.id,
@@ -177,22 +188,34 @@ export async function signSponsorDeal(input: SignSponsorDealInput) {
       throw new Error("All sponsor slots are already filled. End an active sponsor before signing a new one.");
     }
 
-    await tx.sponsorContract.create({
-      data: {
-        sponsorId: sponsor.id,
-        teamId: team.id,
-        startDate,
-        endDate,
-        fixedValue: offer.fixedValue,
-        bonusTargets: offer.bonusTargets,
-        confidence: offer.confidence,
-        clauses: {
-          objectiveRisk: parsed.objectiveRisk,
-          reputationalRisk: offer.reputationalRisk,
-          multiplier: Number(offer.multiplier.toFixed(3)),
+    try {
+      await tx.sponsorContract.create({
+        data: {
+          sponsorId: sponsor.id,
+          teamId: team.id,
+          startDate,
+          endDate,
+          fixedValue: offer.fixedValue,
+          bonusTargets: offer.bonusTargets,
+          confidence: offer.confidence,
+          activeKey: `${team.id}:${sponsor.id}`,
+          clauses: {
+            objectiveRisk: parsed.objectiveRisk,
+            reputationalRisk: offer.reputationalRisk,
+            multiplier: Number(offer.multiplier.toFixed(3)),
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002" &&
+        String(error.meta?.target ?? "").includes("activeKey")
+      ) {
+        throw new Error("Sponsor already active with this team. End the current contract before renegotiating.");
+      }
+      throw error;
+    }
 
     const nextCash = career.cashBalance + offer.signingAdvance;
     const nextTeamBudget = team.budget + offer.signingAdvance;

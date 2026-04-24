@@ -1,16 +1,21 @@
 import { PageHeader } from "@/components/common/page-header";
 import { SponsorMarketplace } from "@/components/game/sponsor-marketplace";
+import { getServerTranslator } from "@/i18n/server";
 import { getSponsorsMarketplaceView } from "@/server/queries/commercial";
 
 export default async function SponsorsPage() {
+  const { t } = await getServerTranslator();
   const view = await getSponsorsMarketplaceView();
 
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Commercial Hub"
-        title="Sponsors & Objectives"
-        description="Build your sponsor portfolio with risk-based target packages, signing advances and confidence management."
+        eyebrow={t("commercial.eyebrow", "Commercial Hub")}
+        title={t("commercial.sponsorsTitle", "Sponsors & Objectives")}
+        description={t(
+          "commercial.sponsorsDescription",
+          "Build your sponsor portfolio with risk-based target packages, signing advances and confidence management.",
+        )}
       />
       <SponsorMarketplace
         context={{

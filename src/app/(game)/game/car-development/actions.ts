@@ -10,6 +10,7 @@ import {
 } from "@/features/engineering/service";
 import { tryAutosaveForCareer } from "@/features/save-system/autosave";
 import { getActiveCareerContext } from "@/server/queries/career";
+import { toPublicErrorMessage } from "@/lib/public-error";
 
 const launchProjectActionSchema = z.object({
   carId: z.string().min(1),
@@ -73,7 +74,7 @@ export async function launchDevelopmentProjectAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not start development project.",
+      message: toPublicErrorMessage(error, "Could not start development project."),
     };
   }
 }
@@ -114,7 +115,7 @@ export async function completeDevelopmentProjectAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not complete project.",
+      message: toPublicErrorMessage(error, "Could not complete project."),
     };
   }
 }
@@ -155,7 +156,7 @@ export async function upgradeTeamFacilityAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Could not upgrade facility.",
+      message: toPublicErrorMessage(error, "Could not upgrade facility."),
     };
   }
 }

@@ -14,7 +14,10 @@ import {
   type RaceDecisionProfile,
 } from "@/domain/rules/race-control-sim";
 import type { TrackType } from "@/domain/models/core";
-import { resolveSeasonRoundAfterMainRace } from "@/domain/rules/season-progress";
+import {
+  resolveSeasonActivationFromCompetitiveSession,
+  resolveSeasonRoundAfterMainRace,
+} from "@/domain/rules/season-progress";
 import { prisma } from "@/persistence/prisma";
 import type { RaceSimulationResult } from "@/features/race-control/types";
 
@@ -144,6 +147,10 @@ function isMainRaceSession(sessionType: SessionType) {
 
 function isPodiumSession(sessionType: SessionType) {
   return sessionType === SessionType.RACE || sessionType === SessionType.FEATURE || sessionType === SessionType.SPRINT;
+}
+
+function isCompetitiveSession(sessionType: SessionType) {
+  return raceSessionTypes.has(sessionType);
 }
 
 export async function runRaceControlSession(input: RaceSimulationInput): Promise<RaceSimulationResult> {
@@ -737,13 +744,45 @@ export async function runRaceControlSession(input: RaceSimulationInput): Promise
       },
     });
 
-    if (isMainRaceSession(session.sessionType)) {
-      const totalRounds = await tx.calendarEvent.count({
-        where: {
-          seasonId: session.raceWeekend.season.id,
+    const shouldResolveActivation =
+      session.raceWeekend.season.status === "PRESEASON" && isCompetitiveSession(session.sessionType);
+    const shouldResolveRound = isMainRaceSession(session.sessionType);
+
+    const totalRounds =
+      shouldResolveActivation || shouldResolveRound
+        ? await tx.calendarEvent.count({
+            where: {
+              seasonId: session.raceWeekend.season.id,
+            },
+          })
+        : 0;
+
+    if (shouldResolveActivation) {
+      const activation = resolveSeasonActivationFromCompetitiveSession({
+        seasonStatus: session.raceWeekend.season.status,
+        currentRound: session.raceWeekend.season.currentRound,
+        totalRounds,
+      });
+
+      await tx.season.update({
+        where: { id: session.raceWeekend.season.id },
+        data: {
+          status: activation.status,
         },
       });
 
+      await tx.career.updateMany({
+        where: {
+          selectedCategoryId: session.raceWeekend.event.categoryId,
+          currentSeasonYear: session.raceWeekend.season.year,
+        },
+        data: {
+          seasonPhase: activation.phase,
+        },
+      });
+    }
+
+    if (shouldResolveRound) {
       const resolution = resolveSeasonRoundAfterMainRace({
         currentRound: session.raceWeekend.season.currentRound,
         completedRound: session.raceWeekend.event.round,

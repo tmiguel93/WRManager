@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { useI18n } from "@/i18n/client";
 import { formatCompactMoney } from "@/lib/format";
 
 interface SupplierOfferRow {
@@ -66,6 +67,7 @@ export function SupplierMarketplace({ context, activeContracts, suppliers }: Sup
   const [search, setSearch] = useState("");
   const [selectedType, setSelectedType] = useState<string>("ALL");
   const [termBySupplier, setTermBySupplier] = useState<Record<string, number>>({});
+  const { t } = useI18n();
 
   const types = useMemo(() => {
     return ["ALL", ...new Set(suppliers.map((supplier) => supplier.type))];
@@ -116,13 +118,17 @@ export function SupplierMarketplace({ context, activeContracts, suppliers }: Sup
         </Card>
         <Card className="premium-card">
           <CardContent className="pt-5">
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Cash Balance</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              {t("commercial.cashBalance", "Cash Balance")}
+            </p>
             <p className="mt-2 text-lg font-semibold text-cyan-100">{formatCompactMoney(context.cashBalance)}</p>
           </CardContent>
         </Card>
         <Card className="premium-card">
           <CardContent className="pt-5">
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Active Supplier Deals</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              {t("commercial.activeSupplierDeals", "Active Supplier Deals")}
+            </p>
             <p className="mt-2 text-lg font-semibold">{activeContracts.length}</p>
           </CardContent>
         </Card>
@@ -131,7 +137,9 @@ export function SupplierMarketplace({ context, activeContracts, suppliers }: Sup
       <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Current Supplier Contracts</CardTitle>
+            <CardTitle className="font-heading text-xl">
+              {t("commercial.currentSupplierContracts", "Current Supplier Contracts")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {activeContracts.map((contract) => (
@@ -163,7 +171,7 @@ export function SupplierMarketplace({ context, activeContracts, suppliers }: Sup
             ))}
             {activeContracts.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
-                No active supplier contracts found for this team.
+                {t("commercial.noActiveSupplierContracts", "No active supplier contracts found for this team.")}
               </div>
             ) : null}
           </CardContent>
@@ -171,11 +179,11 @@ export function SupplierMarketplace({ context, activeContracts, suppliers }: Sup
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Marketplace Filters</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("commercial.marketplaceFilters", "Marketplace Filters")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Input
-              placeholder="Search supplier or category"
+              placeholder={t("commercial.searchSupplierPlaceholder", "Search supplier or category")}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="h-10 border-white/20 bg-background/40"
@@ -187,12 +195,14 @@ export function SupplierMarketplace({ context, activeContracts, suppliers }: Sup
             >
               {types.map((type) => (
                 <option key={type} value={type}>
-                  {type === "ALL" ? "All supplier types" : type}
+                  {type === "ALL" ? t("commercial.allSupplierTypes", "All supplier types") : type}
                 </option>
               ))}
             </select>
             <Badge className="rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
-              {filteredSuppliers.length} suppliers available
+              {t("commercial.suppliersAvailable", "{count} suppliers available", {
+                count: filteredSuppliers.length,
+              })}
             </Badge>
           </CardContent>
         </Card>
@@ -245,7 +255,7 @@ export function SupplierMarketplace({ context, activeContracts, suppliers }: Sup
               ) : null}
               {supplier.isCurrentSupplier ? (
                 <Badge className="rounded-full border border-emerald-300/35 bg-emerald-500/10 text-emerald-100">
-                  Active supplier
+                  {t("commercial.activeSupplier", "Active supplier")}
                 </Badge>
               ) : null}
 
@@ -271,7 +281,9 @@ export function SupplierMarketplace({ context, activeContracts, suppliers }: Sup
                   disabled={isPending || supplier.isCurrentSupplier}
                   onClick={() => negotiateDeal(supplier.id)}
                 >
-                  {supplier.isCurrentSupplier ? "Current Deal" : "Negotiate Deal"}
+                  {supplier.isCurrentSupplier
+                    ? t("commercial.currentDeal", "Current Deal")
+                    : t("commercial.negotiateDeal", "Negotiate Deal")}
                 </Button>
               </div>
             </CardContent>
