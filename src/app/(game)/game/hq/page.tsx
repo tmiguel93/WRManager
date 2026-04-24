@@ -3,6 +3,7 @@
 import { EntityAvatar } from "@/components/common/entity-avatar";
 import { KpiCard } from "@/components/common/kpi-card";
 import { PageHeader } from "@/components/common/page-header";
+import { TeamLogoMark } from "@/components/common/team-logo-mark";
 import { CountryFlag } from "@/components/common/country-flag";
 import { HqCashflowChart } from "@/components/game/hq-cashflow-chart";
 import { HqEvolutionChart } from "@/components/game/hq-evolution-chart";
@@ -56,6 +57,29 @@ export default async function HqPage() {
         description={`Active career ${activeCareer.careerName} with finance, morale and competition pulse in real time.`}
         badge={`${activeCareer.categoryCode} - ${activeCareer.teamName}`}
       />
+
+      <Card className="premium-card team-outline overflow-hidden">
+        <CardContent className="grid gap-4 p-5 md:grid-cols-[auto_1fr_auto] md:items-center">
+          <TeamLogoMark
+            name={activeCareer.teamName}
+            logoUrl={activeCareer.teamLogoUrl}
+            className="h-20 w-28"
+            priority
+          />
+          <div>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Team Identity</p>
+            <p className="mt-1 font-heading text-2xl">{activeCareer.teamName}</p>
+            <p className="text-sm text-muted-foreground">
+              {activeCareer.teamIsCustom ? "Custom team program" : "Existing team operation"} · {activeCareer.categoryCode}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <span className="h-4 w-10 rounded-full border border-white/25" style={{ backgroundColor: "var(--team-primary)" }} />
+            <span className="h-4 w-10 rounded-full border border-white/25" style={{ backgroundColor: "var(--team-secondary)" }} />
+            <span className="h-4 w-10 rounded-full border border-white/25" style={{ backgroundColor: "var(--team-accent)" }} />
+          </div>
+        </CardContent>
+      </Card>
 
       {snapshot.foundationSummary ? (
         <Card className="premium-card team-outline team-gradient">

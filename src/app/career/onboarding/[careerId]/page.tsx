@@ -3,6 +3,7 @@
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { MyTeamOnboarding } from "@/features/career/components/my-team-onboarding";
+import { createTeamTheme } from "@/lib/team-theme";
 import { getMyTeamOnboardingView } from "@/server/queries/career-onboarding";
 
 interface OnboardingPageProps {
@@ -25,9 +26,20 @@ export default async function CareerOnboardingPage({ params }: OnboardingPagePro
     redirect(`/game/hq?careerId=${careerId}`);
   }
 
+  const palette = createTeamTheme({
+    primary: view.team.primaryColor,
+    secondary: view.team.secondaryColor,
+    accent: view.team.accentColor,
+  });
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-app-surface px-6 py-8 md:px-10">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_6%,_rgba(56,189,248,0.16),_transparent_30%),radial-gradient(circle_at_78%_14%,_rgba(250,204,21,0.12),_transparent_28%)]" />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: `radial-gradient(circle_at_12%_6%, ${palette.primary}33, transparent 30%), radial-gradient(circle_at_78%_14%, ${palette.secondary}2f, transparent 28%)`,
+        }}
+      />
       <main className="relative z-10 mx-auto w-full max-w-7xl space-y-7">
         <PageHeader
           eyebrow="My Team Founding"

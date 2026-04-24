@@ -177,4 +177,14 @@
   .team-accent-text {
     color: color-mix(in oklab, var(--team-accent) 72%, white 18%);
   }
+
+  .team-soft-surface {
+    background-color: color-mix(in oklab, var(--team-primary) 10%, transparent);
+    border-color: color-mix(in oklab, var(--team-primary) 28%, white 8%);
+  }
+
+  .team-row-highlight {
+    background-color: color-mix(in oklab, var(--team-primary) 10%, transparent);
+    border-color: color-mix(in oklab, var(--team-accent) 22%, transparent);
+  }
 }

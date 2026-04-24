@@ -50,9 +50,14 @@ export interface ChampionshipTeamStandingRow {
   teamId: string;
   name: string;
   countryCode: string;
+  logoUrl: string | null;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string | null;
   points: number;
   wins: number;
   podiums: number;
+  isManagedTeam: boolean;
 }
 
 export interface ChampionshipManufacturerStandingRow {
@@ -84,6 +89,7 @@ export interface ChampionshipCalendarView {
 export interface ChampionshipStandingsView {
   selectedCategory: ChampionshipCategoryOption;
   categories: ChampionshipCategoryOption[];
+  managedTeamId: string | null;
   seasonYear: number;
   seasonStatus: string;
   drivers: ChampionshipDriverStandingRow[];

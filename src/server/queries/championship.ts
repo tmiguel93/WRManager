@@ -77,7 +77,7 @@ async function buildFallbackDriverStandings(categoryId: string) {
   );
 }
 
-async function buildFallbackTeamStandings(categoryId: string) {
+async function buildFallbackTeamStandings(categoryId: string, managedTeamId: string | null) {
   const teams = await prisma.team.findMany({
     where: { categoryId },
     orderBy: [{ reputation: "desc" }, { budget: "desc" }],
@@ -85,19 +85,28 @@ async function buildFallbackTeamStandings(categoryId: string) {
       id: true,
       name: true,
       countryCode: true,
+      logoUrl: true,
+      primaryColor: true,
+      secondaryColor: true,
+      accentColor: true,
       reputation: true,
     },
   });
 
   return rankTeamStandings(
-    teams.map((team) => ({
-      teamId: team.id,
-      name: team.name,
-      countryCode: team.countryCode,
-      points: Math.max(0, Math.round((team.reputation - 55) * 3.1)),
-      wins: 0,
-      podiums: 0,
-    })),
+      teams.map((team) => ({
+        teamId: team.id,
+        name: team.name,
+        countryCode: team.countryCode,
+        logoUrl: team.logoUrl,
+        primaryColor: team.primaryColor,
+        secondaryColor: team.secondaryColor,
+        accentColor: team.accentColor,
+        points: Math.max(0, Math.round((team.reputation - 55) * 3.1)),
+        wins: 0,
+        podiums: 0,
+        isManagedTeam: Boolean(managedTeamId && team.id === managedTeamId),
+      })),
   );
 }
 
@@ -273,6 +282,10 @@ export async function getChampionshipStandingsView(
             id: true,
             name: true,
             countryCode: true,
+            logoUrl: true,
+            primaryColor: true,
+            secondaryColor: true,
+            accentColor: true,
           },
         },
       },
@@ -306,12 +319,17 @@ export async function getChampionshipStandingsView(
             teamId: row.team.id,
             name: row.team.name,
             countryCode: row.team.countryCode,
+            logoUrl: row.team.logoUrl,
+            primaryColor: row.team.primaryColor,
+            secondaryColor: row.team.secondaryColor,
+            accentColor: row.team.accentColor,
             points: row.points,
             wins: row.wins,
             podiums: row.podiums,
+            isManagedTeam: Boolean(context.active.teamId && row.team.id === context.active.teamId),
           })),
         )
-      : await buildFallbackTeamStandings(context.selected.id);
+      : await buildFallbackTeamStandings(context.selected.id, context.active.teamId);
 
   const manufacturers =
     manufacturerRowsRaw.length > 0
@@ -351,7 +369,17 @@ export async function getChampionshipStandingsView(
           prisma.standingsTeam.findMany({
             where: { seasonId: previousSeason.id, categoryId: context.selected.id },
             include: {
-              team: { select: { id: true, name: true, countryCode: true } },
+              team: {
+                select: {
+                  id: true,
+                  name: true,
+                  countryCode: true,
+                  logoUrl: true,
+                  primaryColor: true,
+                  secondaryColor: true,
+                  accentColor: true,
+                },
+              },
             },
           }),
           prisma.standingsManufacturer.findMany({
@@ -372,16 +400,21 @@ export async function getChampionshipStandingsView(
             imageUrl: row.driver.imageUrl ?? null,
           })),
         );
-        const rankedTeams = rankTeamStandings(
-          historyTeams.map((row) => ({
-            teamId: row.team.id,
-            name: row.team.name,
-            countryCode: row.team.countryCode,
-            points: row.points,
-            wins: row.wins,
-            podiums: row.podiums,
-          })),
-        );
+          const rankedTeams = rankTeamStandings(
+            historyTeams.map((row) => ({
+              teamId: row.team.id,
+              name: row.team.name,
+              countryCode: row.team.countryCode,
+              logoUrl: row.team.logoUrl,
+              primaryColor: row.team.primaryColor,
+              secondaryColor: row.team.secondaryColor,
+              accentColor: row.team.accentColor,
+              points: row.points,
+              wins: row.wins,
+              podiums: row.podiums,
+              isManagedTeam: Boolean(context.active.teamId && row.team.id === context.active.teamId),
+            })),
+          );
         const rankedManufacturers = rankManufacturerStandings(
           historyManufacturers.map((row) => ({
             manufacturerName: row.manufacturerName,
@@ -403,6 +436,7 @@ export async function getChampionshipStandingsView(
   return {
     selectedCategory: context.selected,
     categories: context.categories,
+    managedTeamId: context.active.teamId,
     seasonYear: currentSeason.year,
     seasonStatus: currentSeason.status,
     drivers: drivers.slice(0, 24),

@@ -142,6 +142,7 @@ export interface ActiveCareerContext {
   foundationSummary: unknown | null;
   teamId: string | null;
   teamName: string;
+  teamLogoUrl: string | null;
   teamCountryCode: string | null;
   teamBudget: number;
   teamReputation: number;
@@ -176,6 +177,7 @@ export async function getActiveCareerContext(): Promise<ActiveCareerContext> {
               primaryColor: true,
               secondaryColor: true,
               accentColor: true,
+              logoUrl: true,
               isCustom: true,
             },
           },
@@ -195,6 +197,7 @@ export async function getActiveCareerContext(): Promise<ActiveCareerContext> {
               primaryColor: true,
               secondaryColor: true,
               accentColor: true,
+              logoUrl: true,
               isCustom: true,
             },
           },
@@ -210,6 +213,7 @@ export async function getActiveCareerContext(): Promise<ActiveCareerContext> {
       foundationSummary: null,
       teamId: null,
       teamName: "Apex Quantum GP",
+      teamLogoUrl: null,
       teamCountryCode: "US",
       teamBudget: 95_000_000,
       teamReputation: 70,
@@ -290,6 +294,7 @@ export async function getActiveCareerContext(): Promise<ActiveCareerContext> {
     foundationSummary: career.foundationSummary,
     teamId: career.selectedTeam?.id ?? null,
     teamName: career.selectedTeam?.name ?? "Independent Program",
+    teamLogoUrl: career.selectedTeam?.logoUrl ?? null,
     teamCountryCode: career.selectedTeam?.countryCode ?? null,
     teamBudget: career.selectedTeam?.budget ?? 0,
     teamReputation: career.selectedTeam?.reputation ?? career.reputation,

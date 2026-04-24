@@ -8,6 +8,7 @@ import { CloudSun, Flag, Fuel, Gauge, ListOrdered, ShieldAlert, Timer } from "lu
 import { CountryFlag } from "@/components/common/country-flag";
 import { EntityAvatar } from "@/components/common/entity-avatar";
 import { KpiCard } from "@/components/common/kpi-card";
+import { TeamLogoMark } from "@/components/common/team-logo-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,6 +76,10 @@ export function RaceControlCenter({ view }: RaceControlCenterProps) {
 
   const winner = view.leaderboard[0] ?? null;
   const managedBest = view.summary?.managedBestPosition ?? null;
+
+  function teamStripe(primary: string, secondary: string, accent: string | null) {
+    return `linear-gradient(90deg, ${primary}, ${secondary}, ${accent ?? secondary})`;
+  }
 
   return (
     <div className="space-y-6">
@@ -316,7 +321,7 @@ export function RaceControlCenter({ view }: RaceControlCenterProps) {
                       key={row.driverId}
                       className={
                         row.isManagedTeam
-                          ? "border-cyan-300/20 bg-cyan-500/5 hover:bg-cyan-500/10"
+                          ? "team-row-highlight hover:bg-white/10"
                           : "border-white/10 hover:bg-white/5"
                       }
                     >
@@ -332,7 +337,18 @@ export function RaceControlCenter({ view }: RaceControlCenterProps) {
                           <span className="text-sm">{row.driverName}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{row.teamName}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <TeamLogoMark name={row.teamName} logoUrl={row.teamLogoUrl} className="h-7 w-10 rounded-lg" />
+                          <div>
+                            <p>{row.teamName}</p>
+                            <div
+                              className="mt-1 h-1 w-11 rounded-full"
+                              style={{ background: teamStripe(row.teamPrimaryColor, row.teamSecondaryColor, row.teamAccentColor) }}
+                            />
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge
                           className={
@@ -422,7 +438,7 @@ export function RaceControlCenter({ view }: RaceControlCenterProps) {
                       key={row.driverId}
                       className={
                         row.isManagedTeam
-                          ? "border-cyan-300/20 bg-cyan-500/5 hover:bg-cyan-500/10"
+                          ? "team-row-highlight hover:bg-white/10"
                           : "border-white/10 hover:bg-white/5"
                       }
                     >
@@ -438,10 +454,21 @@ export function RaceControlCenter({ view }: RaceControlCenterProps) {
                           <span className="text-sm">{row.driverName}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{row.teamName}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <TeamLogoMark name={row.teamName} logoUrl={row.teamLogoUrl} className="h-7 w-10 rounded-lg" />
+                          <div>
+                            <p>{row.teamName}</p>
+                            <div
+                              className="mt-1 h-1 w-11 rounded-full"
+                              style={{ background: teamStripe(row.teamPrimaryColor, row.teamSecondaryColor, row.teamAccentColor) }}
+                            />
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         {row.isManagedTeam ? (
-                          <Badge className="rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
+                          <Badge className="team-outline team-accent-text rounded-full border bg-white/10">
                             Managed
                           </Badge>
                         ) : (

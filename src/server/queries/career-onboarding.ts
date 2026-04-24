@@ -24,6 +24,7 @@ export async function getMyTeamOnboardingView(careerId: string) {
           primaryColor: true,
           secondaryColor: true,
           accentColor: true,
+          logoUrl: true,
           budget: true,
           reputation: true,
         },

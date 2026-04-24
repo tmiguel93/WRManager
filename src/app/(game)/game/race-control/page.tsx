@@ -49,7 +49,7 @@ export default async function RaceControlPage({ searchParams }: RaceControlPageP
               className={cn(
                 "rounded-full border px-3 py-1.5 text-xs font-medium transition",
                 isActive
-                  ? "border-cyan-300/45 bg-cyan-500/10 text-cyan-100"
+                  ? "team-outline bg-white/10 team-accent-text"
                   : "border-white/15 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground",
               )}
             >

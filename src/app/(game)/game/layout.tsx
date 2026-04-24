@@ -19,6 +19,7 @@ export default async function GameLayout({ children }: PropsWithChildren) {
     <AppShell
       topBarContext={{
         teamName: careerContext.teamName,
+        teamLogoUrl: careerContext.teamLogoUrl,
         categoryCode: careerContext.categoryCode,
         cashBalance: careerContext.cashBalance,
         currentDateIso: careerContext.currentDateIso,

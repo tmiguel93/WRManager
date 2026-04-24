@@ -16,10 +16,10 @@ export function KpiCard({ label, value, delta, icon, className }: KpiCardProps) 
   const positive = (delta ?? 0) >= 0;
 
   return (
-    <Card className={cn("bg-card/70 backdrop-blur-lg", className)}>
+    <Card className={cn("team-outline bg-card/70 backdrop-blur-lg", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
         <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
-        <div className="text-muted-foreground">{icon}</div>
+        <div className="team-accent-text">{icon}</div>
       </CardHeader>
       <CardContent className="space-y-1">
         <p className="text-2xl font-semibold tracking-tight text-foreground">{value}</p>

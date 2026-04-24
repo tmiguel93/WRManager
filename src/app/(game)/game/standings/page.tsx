@@ -5,6 +5,8 @@ import { CountryFlag } from "@/components/common/country-flag";
 import { EntityAvatar } from "@/components/common/entity-avatar";
 import { KpiCard } from "@/components/common/kpi-card";
 import { PageHeader } from "@/components/common/page-header";
+import { TeamLogoMark } from "@/components/common/team-logo-mark";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
@@ -53,7 +55,7 @@ export default async function StandingsPage({ searchParams }: StandingsPageProps
               className={cn(
                 "rounded-full border px-3 py-1.5 text-xs font-medium transition",
                 isActive
-                  ? "border-cyan-300/45 bg-cyan-500/10 text-cyan-100"
+                  ? "team-outline bg-white/10 team-accent-text"
                   : "border-white/15 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground",
               )}
             >
@@ -199,17 +201,41 @@ export default async function StandingsPage({ searchParams }: StandingsPageProps
                 </TableHeader>
                 <TableBody>
                   {view.teams.map((row) => (
-                    <TableRow key={row.teamId} className="border-white/10 hover:bg-white/5">
+                    <TableRow
+                      key={row.teamId}
+                      className={cn(
+                        "border-white/10 hover:bg-white/5",
+                        row.isManagedTeam && "team-row-highlight",
+                      )}
+                    >
                       <TableCell className="font-semibold">{row.position}</TableCell>
                       <TableCell>
                         <Link href={`/game/teams/${row.teamId}`} className="inline-flex items-center gap-2">
+                          <TeamLogoMark name={row.name} logoUrl={row.logoUrl} className="h-8 w-11 rounded-xl" />
                           <CountryFlag countryCode={row.countryCode} className="h-4 w-6" />
-                          <span className="text-sm hover:text-cyan-100">{row.name}</span>
+                          <div>
+                            <span className="text-sm hover:text-cyan-100">{row.name}</span>
+                            <div
+                              className="mt-1 h-1 w-12 rounded-full"
+                              style={{
+                                background: `linear-gradient(90deg, ${row.primaryColor}, ${row.secondaryColor}, ${row.accentColor ?? row.secondaryColor})`,
+                              }}
+                            />
+                          </div>
                         </Link>
                       </TableCell>
                       <TableCell className="font-semibold">{row.points}</TableCell>
                       <TableCell>{row.wins}</TableCell>
-                      <TableCell>{row.podiums}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span>{row.podiums}</span>
+                          {row.isManagedTeam ? (
+                            <Badge className="team-outline team-accent-text rounded-full border bg-white/10 text-[10px]">
+                              Managed
+                            </Badge>
+                          ) : null}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

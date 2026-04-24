@@ -22,6 +22,10 @@ export interface RaceGridRow {
   driverName: string;
   teamId: string | null;
   teamName: string;
+  teamLogoUrl: string | null;
+  teamPrimaryColor: string;
+  teamSecondaryColor: string;
+  teamAccentColor: string | null;
   countryCode: string;
   imageUrl: string | null;
   startPosition: number;
@@ -34,6 +38,10 @@ export interface RaceLeaderboardRow {
   driverName: string;
   teamId: string | null;
   teamName: string;
+  teamLogoUrl: string | null;
+  teamPrimaryColor: string;
+  teamSecondaryColor: string;
+  teamAccentColor: string | null;
   countryCode: string;
   imageUrl: string | null;
   status: string;

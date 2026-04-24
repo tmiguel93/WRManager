@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { EntityAvatar } from "@/components/common/entity-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TeamLogoMark } from "@/components/common/team-logo-mark";
 import {
   Dialog,
   DialogContent,
@@ -89,6 +90,7 @@ interface MyTeamOnboardingProps {
     primaryColor: string;
     secondaryColor: string;
     accentColor: string | null;
+    logoUrl: string | null;
     budget: number;
   };
   category: {
@@ -156,6 +158,8 @@ export function MyTeamOnboarding({
   const [annualSalary, setAnnualSalary] = useState(0);
   const [bonus, setBonus] = useState(250_000);
   const [durationYears, setDurationYears] = useState(2);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [teamLogoUrl, setTeamLogoUrl] = useState(team.logoUrl);
 
   const palette = useMemo(
     () => createTeamTheme({ primary: team.primaryColor, secondary: team.secondaryColor, accent: team.accentColor }),
@@ -189,6 +193,43 @@ export function MyTeamOnboarding({
     setBonus(Math.round(driver.salary * 0.12));
     setDurationYears(2);
     setDialogOpen(true);
+  }
+
+  async function handleLogoUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    event.currentTarget.value = "";
+    if (!file) return;
+
+    setIsUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("careerId", careerId);
+      formData.append("logo", file);
+
+      const response = await fetch("/api/team-logo/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const payload = (await response.json()) as {
+        ok: boolean;
+        message: string;
+        logoUrl?: string;
+      };
+
+      if (!response.ok || !payload.ok || !payload.logoUrl) {
+        toast.error(payload.message || "Could not upload team logo.");
+        return;
+      }
+
+      setTeamLogoUrl(payload.logoUrl);
+      toast.success(payload.message || "Team logo updated.");
+      router.refresh();
+    } catch {
+      toast.error("Could not upload team logo.");
+    } finally {
+      setIsUploadingLogo(false);
+    }
   }
 
   function openStaffNegotiation(staff: StaffMarketRow) {
@@ -285,6 +326,34 @@ export function MyTeamOnboarding({
             <p className="mt-2 text-xs text-muted-foreground">
               {managerHintByProfile[managerProfileCode] ?? "Balanced contract approach for debut season."}
             </p>
+          </div>
+          <div className="team-soft-surface rounded-2xl border bg-white/5 p-4 md:col-span-2 xl:col-span-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <TeamLogoMark name={team.name} logoUrl={teamLogoUrl} className="h-20 w-28" priority />
+              <div className="min-w-[220px] flex-1">
+                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Team Branding</p>
+                <p className="mt-1 text-sm text-foreground">
+                  Upload a PNG logo now and keep this identity across dashboard, standings, race control and cards.
+                </p>
+                <div className="mt-2 flex gap-2">
+                  <span className="h-3 w-8 rounded-full border border-white/25" style={{ backgroundColor: "var(--team-primary)" }} />
+                  <span className="h-3 w-8 rounded-full border border-white/25" style={{ backgroundColor: "var(--team-secondary)" }} />
+                  <span className="h-3 w-8 rounded-full border border-white/25" style={{ backgroundColor: "var(--team-accent)" }} />
+                </div>
+              </div>
+              <label className={cn("inline-flex", isUploadingLogo && "pointer-events-none opacity-75")}>
+                <input
+                  type="file"
+                  accept="image/png"
+                  className="sr-only"
+                  onChange={handleLogoUpload}
+                  disabled={isUploadingLogo}
+                />
+                <span className="inline-flex h-10 cursor-pointer items-center rounded-xl border border-white/20 bg-white/10 px-4 text-sm font-medium transition hover:bg-white/15">
+                  {isUploadingLogo ? "Uploading..." : "Upload Team Logo (PNG)"}
+                </span>
+              </label>
+            </div>
           </div>
         </CardContent>
       </Card>

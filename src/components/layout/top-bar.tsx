@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 import { AnimatedNumber } from "@/components/motion/animated-number";
+import { TeamLogoMark } from "@/components/common/team-logo-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -20,6 +21,7 @@ import { setLocalePreferenceAction } from "@/app/(game)/game/settings/actions";
 
 interface TopBarProps {
   teamName: string;
+  teamLogoUrl: string | null;
   categoryCode: string;
   cashBalance: number;
   currentDateIso: string;
@@ -29,6 +31,7 @@ interface TopBarProps {
 
 export function TopBar({
   teamName,
+  teamLogoUrl,
   categoryCode,
   cashBalance,
   currentDateIso,
@@ -83,8 +86,13 @@ export function TopBar({
     >
       <div className="mx-auto flex w-full max-w-[1680px] items-center justify-between gap-4 px-4 py-3 md:px-6">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-foreground">{teamName}</p>
-          <p className="truncate text-xs text-muted-foreground">{careerName}</p>
+          <div className="flex items-center gap-3">
+            <TeamLogoMark name={teamName} logoUrl={teamLogoUrl} className="h-9 w-12 shrink-0 rounded-xl" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-foreground">{teamName}</p>
+              <p className="truncate text-xs text-muted-foreground">{careerName}</p>
+            </div>
+          </div>
         </div>
 
         <Sheet>
@@ -137,7 +145,7 @@ export function TopBar({
               </option>
             ))}
           </select>
-          <Badge className="rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
+          <Badge className="team-outline team-accent-text rounded-full border bg-white/10">
             <Flag className="mr-1 size-3" />
             {categoryCode}
           </Badge>
