@@ -8,6 +8,7 @@ export const PRIMARY_NAV: NavItemDefinition[] = [
   { href: "/game/staff", labelKey: "nav.staff", icon: "BriefcaseBusiness" },
   { href: "/game/teams", labelKey: "nav.teams", icon: "Shield" },
   { href: "/game/scouting", labelKey: "nav.scouting", icon: "Radar" },
+  { href: "/game/career-road", labelKey: "nav.careerRoad", icon: "Trophy" },
   { href: "/game/suppliers", labelKey: "nav.suppliers", icon: "Factory" },
   { href: "/game/sponsors", labelKey: "nav.sponsors", icon: "Handshake" },
   { href: "/game/car-development", labelKey: "nav.carDevelopment", icon: "Wrench" },
