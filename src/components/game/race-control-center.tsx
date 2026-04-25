@@ -9,6 +9,7 @@ import { CountryFlag } from "@/components/common/country-flag";
 import { EntityAvatar } from "@/components/common/entity-avatar";
 import { KpiCard } from "@/components/common/kpi-card";
 import { TeamLogoMark } from "@/components/common/team-logo-mark";
+import { RaceLiveViewer } from "@/components/game/race-live-viewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,6 +109,10 @@ export function RaceControlCenter({ view }: RaceControlCenterProps) {
           delta={winner ? winner.points * 1.2 : 0}
           icon={<Timer className="size-4" />}
         />
+      </section>
+
+      <section>
+        <RaceLiveViewer view={view} />
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
