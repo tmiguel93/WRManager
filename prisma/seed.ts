@@ -38,6 +38,13 @@ type PortraitManifest = {
   staff?: Record<string, string>;
 };
 
+type BrandMarkRegistry = {
+  packSource?: string;
+  teams?: Record<string, string>;
+  suppliers?: Record<string, string>;
+  sponsors?: Record<string, string>;
+};
+
 const expansionTeamsSeed = [
   ["FORMULA_VEE", "BRS Formula Vee", "BRS", "BR", "Sao Paulo", 6_500_000, 49, "#16a34a", "#f8fafc"],
   ["F4", "Prema F4 Program", "PF4", "IT", "Vicenza", 8_400_000, 55, "#ef4444", "#f8fafc"],
@@ -271,6 +278,10 @@ function teamSlug(name: string) {
     .replace(/(^-|-$)/g, "");
 }
 
+function brandKey(name: string) {
+  return canonicalName(name).replace(/ /g, "-");
+}
+
 async function loadPortraitManifest(): Promise<PortraitManifest | null> {
   const manifestPath = path.resolve(process.cwd(), "prisma", "seed-data", "portrait-manifest.json");
 
@@ -280,6 +291,35 @@ async function loadPortraitManifest(): Promise<PortraitManifest | null> {
   } catch {
     return null;
   }
+}
+
+async function loadBrandMarkRegistry(): Promise<BrandMarkRegistry | null> {
+  const manifestPath = path.resolve(
+    process.cwd(),
+    "public",
+    "assets",
+    "brand-marks",
+    "brand-mark-registry.json",
+  );
+
+  try {
+    const raw = await fs.readFile(manifestPath, "utf8");
+    return JSON.parse(raw) as BrandMarkRegistry;
+  } catch {
+    return null;
+  }
+}
+
+function resolveTeamBrandMark(
+  registry: BrandMarkRegistry | null,
+  categoryCode: string,
+  teamName: string,
+) {
+  return registry?.teams?.[`${categoryCode}:${brandKey(teamName)}`] ?? null;
+}
+
+function resolveBrandMark(registry: BrandMarkRegistry | null, bucket: "suppliers" | "sponsors", name: string) {
+  return registry?.[bucket]?.[brandKey(name)] ?? null;
 }
 
 const categorySeeds: CategorySeed[] = [
@@ -700,6 +740,7 @@ const eventsPerCategory: Record<string, SeedEvent[]> = Object.fromEntries(
 
 async function seed() {
   const portraitManifest = await loadPortraitManifest();
+  const brandMarkRegistry = await loadBrandMarkRegistry();
   await prisma.qualifyingResult.deleteMany();
   await prisma.raceResult.deleteMany();
   await prisma.sessionTeamState.deleteMany();
@@ -847,6 +888,7 @@ async function seed() {
   for (const [categoryCode, name, shortName, countryCode, headquarters, budget, reputation, primaryColor, secondaryColor] of uniqueTeamsSeed) {
     const categoryId = categoryMap.get(categoryCode)?.id;
     if (!categoryId) continue;
+    const brandMarkUrl = resolveTeamBrandMark(brandMarkRegistry, categoryCode, name);
 
     const created = await prisma.team.create({
       data: {
@@ -862,6 +904,8 @@ async function seed() {
           history: `${name} enters 2026 with real-world operations baseline and long-term ambitions.`,
           primaryColor,
           secondaryColor,
+          logoUrl: brandMarkUrl,
+          imageUrl: brandMarkUrl,
           philosophy: "Performance-first program with sustainable growth and elite talent development.",
           sourceUrl: wikipediaUrl(name),
           sourceConfidence: 78,
@@ -1104,6 +1148,7 @@ async function seed() {
 
   const sponsorMap = new Map<string, string>();
   for (const [name, countryCode, industry, baseValue, brandColor] of sponsorSeed) {
+    const brandMarkUrl = resolveBrandMark(brandMarkRegistry, "sponsors", name);
     const sponsor = await prisma.sponsor.create({
       data: {
         name,
@@ -1113,6 +1158,7 @@ async function seed() {
         confidence: 72,
         reputationRisk: 20,
         brandColor,
+        logoUrl: brandMarkUrl,
       },
     });
     sponsorMap.set(name, sponsor.id);
@@ -1671,11 +1717,12 @@ async function seed() {
         entityType: "TEAM",
         entityId: team.id,
         assetType: "TEAM_LOGO",
-        packSource: "builtin-seed",
-        sourcePath: null,
-        resolvedPath: null,
+        packSource: brandMarkRegistry?.packSource ?? "builtin-vector-brand-marks",
+        sourcePath: team.logoUrl,
+        resolvedPath: team.logoUrl,
         isPlaceholder: true,
         approved: true,
+        meta: { generated: true, officialLogo: false },
       },
     });
   }
@@ -1710,17 +1757,35 @@ async function seed() {
     });
   }
 
-  for (const supplier of await prisma.supplier.findMany({ take: 12 })) {
+  for (const supplier of await prisma.supplier.findMany()) {
+    const brandMarkUrl = resolveBrandMark(brandMarkRegistry, "suppliers", supplier.name);
     await prisma.assetRegistry.create({
       data: {
         entityType: "SUPPLIER",
         entityId: supplier.id,
         assetType: "SUPPLIER_LOGO",
-        packSource: "builtin-seed",
-        sourcePath: null,
-        resolvedPath: null,
+        packSource: brandMarkRegistry?.packSource ?? "builtin-vector-brand-marks",
+        sourcePath: brandMarkUrl,
+        resolvedPath: brandMarkUrl,
         isPlaceholder: true,
         approved: true,
+        meta: { generated: true, officialLogo: false },
+      },
+    });
+  }
+
+  for (const sponsor of await prisma.sponsor.findMany()) {
+    await prisma.assetRegistry.create({
+      data: {
+        entityType: "SPONSOR",
+        entityId: sponsor.id,
+        assetType: "SPONSOR_BANNER",
+        packSource: brandMarkRegistry?.packSource ?? "builtin-vector-brand-marks",
+        sourcePath: sponsor.logoUrl,
+        resolvedPath: sponsor.logoUrl,
+        isPlaceholder: true,
+        approved: true,
+        meta: { generated: true, officialLogo: false },
       },
     });
   }

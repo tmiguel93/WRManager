@@ -1,4 +1,4 @@
-﻿import type { CareerSeasonPhase, SeasonStatus } from "@prisma/client";
+import { SessionType, type CareerSeasonPhase, type SeasonStatus } from "@prisma/client";
 
 export interface SeasonRoundResolution {
   status: SeasonStatus;
@@ -96,4 +96,39 @@ export function resolveSeasonActivationFromCompetitiveSession(params: {
       totalRounds: params.totalRounds,
     }),
   };
+}
+
+const raceSessionTypes = new Set<SessionType>([
+  SessionType.SPRINT,
+  SessionType.FEATURE,
+  SessionType.STAGE,
+  SessionType.RACE,
+]);
+
+export function isCompetitiveRaceSession(sessionType: SessionType) {
+  return raceSessionTypes.has(sessionType);
+}
+
+export function isRoundClosingRaceSession(params: {
+  sessionType: SessionType;
+  orderIndex: number;
+  weekendSessions: Array<{
+    sessionType: SessionType;
+    orderIndex: number;
+  }>;
+}) {
+  if (!isCompetitiveRaceSession(params.sessionType)) {
+    return false;
+  }
+
+  const raceOrderIndexes = params.weekendSessions
+    .filter((row) => raceSessionTypes.has(row.sessionType))
+    .map((row) => row.orderIndex);
+
+  if (raceOrderIndexes.length === 0) {
+    return false;
+  }
+
+  const lastRaceOrder = Math.max(...raceOrderIndexes);
+  return params.orderIndex === lastRaceOrder;
 }

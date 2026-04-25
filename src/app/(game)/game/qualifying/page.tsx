@@ -2,14 +2,16 @@ import Link from "next/link";
 
 import { PageHeader } from "@/components/common/page-header";
 import { QualifyingCenter } from "@/components/game/qualifying-center";
-import { getQualifyingCenterView } from "@/server/queries/weekend-sessions";
+import { getServerTranslator } from "@/i18n/server";
 import { cn } from "@/lib/utils";
+import { getQualifyingCenterView } from "@/server/queries/weekend-sessions";
 
 interface QualifyingPageProps {
   searchParams: Promise<{ category?: string }>;
 }
 
 export default async function QualifyingPage({ searchParams }: QualifyingPageProps) {
+  const { t } = await getServerTranslator();
   const { category } = await searchParams;
   const view = await getQualifyingCenterView(category);
 
@@ -17,9 +19,9 @@ export default async function QualifyingPage({ searchParams }: QualifyingPagePro
     return (
       <div className="space-y-8">
         <PageHeader
-          eyebrow="Race Weekend"
-          title="Qualifying"
-          description="No qualifying context available for the current save."
+          eyebrow={t("weekend.eyebrow", "Race Weekend")}
+          title={t("qualifying.pageTitle", "Qualifying")}
+          description={t("qualifying.noContext", "No qualifying context available for the current save.")}
         />
       </div>
     );
@@ -28,10 +30,13 @@ export default async function QualifyingPage({ searchParams }: QualifyingPagePro
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Race Weekend"
-        title="Qualifying"
-        description="Run quick or detailed qualifying simulations with risk, release timing and tyre strategy controls."
-        badge={`${view.selectedCategory.code} · ${view.seasonYear}`}
+        eyebrow={t("weekend.eyebrow", "Race Weekend")}
+        title={t("qualifying.pageTitle", "Qualifying")}
+        description={t(
+          "qualifying.pageDescription",
+          "Run quick or detailed qualifying simulations with risk, release timing and tyre strategy controls.",
+        )}
+        badge={`${view.selectedCategory.code} | ${view.seasonYear}`}
       />
 
       <section className="flex flex-wrap gap-2">

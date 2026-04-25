@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Mercedes fallback mark</title>
+  <desc id="desc">Generated local vector fallback mark for Mercedes fallback mark; not an official logo.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="78%" cy="18%" r="72%">
+      <stop offset="0" stop-color="#38bdf8" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="960" height="540" rx="52" fill="url(#bg)"/>
+  <rect width="960" height="540" rx="52" fill="url(#glow)"/>
+  <path d="M0 416 960 204v336H0z" fill="#38bdf8" opacity="0.13"/>
+  <path d="M72 72h816v396H72z" fill="none" stroke="#e0f2fe" stroke-width="4" opacity="0.18"/>
+  <path d="M152 312c82-118 250-128 340-30 38 42 90 56 144 32" fill="none" stroke="#38bdf8" stroke-width="28" stroke-linecap="round" opacity="0.34"/><circle cx="646" cy="216" r="76" fill="none" stroke="#e0f2fe" stroke-width="16" opacity="0.34"/>
+  <circle cx="480" cy="256" r="126" fill="#020617" opacity="0.42"/>
+  <circle cx="480" cy="256" r="110" fill="#0f172a" stroke="#38bdf8" stroke-width="10"/>
+  <text x="480" y="288" text-anchor="middle" font-family="Verdana, Geneva, sans-serif" font-size="84" font-weight="800" fill="#e0f2fe" letter-spacing="3">M</text>
+  <text x="86" y="104" font-family="Verdana, Geneva, sans-serif" font-size="25" font-weight="700" fill="#e0f2fe" opacity="0.92">Mercedes</text>
+  <text x="86" y="438" font-family="Verdana, Geneva, sans-serif" font-size="22" font-weight="700" fill="#e0f2fe" opacity="0.76">ENGINE SUPPLIER / DE</text>
+  <text x="86" y="474" font-family="Verdana, Geneva, sans-serif" font-size="15" fill="#e0f2fe" opacity="0.46">GENERATED LOCAL FALLBACK</text>
+</svg>

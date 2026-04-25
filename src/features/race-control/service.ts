@@ -15,6 +15,7 @@ import {
 } from "@/domain/rules/race-control-sim";
 import type { TrackType } from "@/domain/models/core";
 import {
+  isRoundClosingRaceSession,
   resolveSeasonActivationFromCompetitiveSession,
   resolveSeasonRoundAfterMainRace,
 } from "@/domain/rules/season-progress";
@@ -139,10 +140,6 @@ function buildRaceEventFeed(params: {
   }
 
   return feed.slice(0, 10);
-}
-
-function isMainRaceSession(sessionType: SessionType) {
-  return sessionType === SessionType.RACE || sessionType === SessionType.FEATURE;
 }
 
 function isPodiumSession(sessionType: SessionType) {
@@ -491,6 +488,7 @@ export async function runRaceControlSession(input: RaceSimulationInput): Promise
         paceScore: perf.paceScore,
         reliabilityScore: perf.reliabilityScore,
         raceCraftScore: perf.raceCraftScore,
+        incidentRisk: perf.incidentRisk,
         expectedPitStops: perf.expectedPitStops,
         pitStopTimeMs: perf.pitStopTimeMs,
         decisionProfile,
@@ -746,7 +744,14 @@ export async function runRaceControlSession(input: RaceSimulationInput): Promise
 
     const shouldResolveActivation =
       session.raceWeekend.season.status === "PRESEASON" && isCompetitiveSession(session.sessionType);
-    const shouldResolveRound = isMainRaceSession(session.sessionType);
+    const shouldResolveRound = isRoundClosingRaceSession({
+      sessionType: session.sessionType,
+      orderIndex: session.orderIndex,
+      weekendSessions: session.raceWeekend.sessions.map((row) => ({
+        sessionType: row.sessionType,
+        orderIndex: row.orderIndex,
+      })),
+    });
 
     const totalRounds =
       shouldResolveActivation || shouldResolveRound

@@ -62,6 +62,9 @@ export const messages: Record<AppLocale, MessageTree> = {
       seasonEnd: "Fim de temporada",
       offSeason: "Offseason",
     },
+    weekend: {
+      eyebrow: "Fim de semana",
+    },
     career: {
       title: "Nova Carreira",
       subtitle: "Escolha categoria, equipe e plano de crescimento de longo prazo.",
@@ -254,6 +257,9 @@ export const messages: Record<AppLocale, MessageTree> = {
       dnf: "DNF",
     },
     practice: {
+      pageTitle: "Treino",
+      pageDescription: "Execute programas de acerto, aumente conhecimento de pista e prepare a base da classificacao.",
+      noContext: "Nenhum contexto de treino disponivel para o save atual.",
       kpiSessions: "Sessoes de treino",
       kpiSetup: "Confianca de setup",
       kpiTrack: "Conhecimento de pista",
@@ -289,6 +295,9 @@ export const messages: Record<AppLocale, MessageTree> = {
       feedbackHint: "Melhores ganhos no treino elevam diretamente a base de classificacao da equipe.",
     },
     qualifying: {
+      pageTitle: "Classificacao",
+      pageDescription: "Simule classificacao rapida ou detalhada com risco, momento de saida e estrategia de pneus.",
+      noContext: "Nenhum contexto de classificacao disponivel para o save atual.",
       kpiSessions: "Sessoes de classificacao",
       kpiSetup: "Base de setup",
       kpiTrack: "Aprendizado de pista",
@@ -405,6 +414,9 @@ export const messages: Record<AppLocale, MessageTree> = {
       midSeason: "Mid-season",
       seasonEnd: "Season end",
       offSeason: "Offseason",
+    },
+    weekend: {
+      eyebrow: "Race Weekend",
     },
     career: {
       title: "New Career",
@@ -598,6 +610,9 @@ export const messages: Record<AppLocale, MessageTree> = {
       dnf: "DNF",
     },
     practice: {
+      pageTitle: "Practice",
+      pageDescription: "Run setup programs, build track knowledge and prepare qualifying baseline through structured practice sessions.",
+      noContext: "No practice context available for the current save.",
       kpiSessions: "Practice Sessions",
       kpiSetup: "Setup Confidence",
       kpiTrack: "Track Knowledge",
@@ -633,6 +648,9 @@ export const messages: Record<AppLocale, MessageTree> = {
       feedbackHint: "Better practice setup/track learning directly improves qualifying baseline for your team.",
     },
     qualifying: {
+      pageTitle: "Qualifying",
+      pageDescription: "Run quick or detailed qualifying simulations with risk, release timing and tyre strategy controls.",
+      noContext: "No qualifying context available for the current save.",
       kpiSessions: "Qualifying Sessions",
       kpiSetup: "Setup Baseline",
       kpiTrack: "Track Learning",
@@ -750,6 +768,9 @@ export const messages: Record<AppLocale, MessageTree> = {
       seasonEnd: "Fin de temporada",
       offSeason: "Offseason",
     },
+    weekend: {
+      eyebrow: "Fin de semana",
+    },
     career: {
       title: "Nueva Carrera",
       subtitle: "Elige categoria, equipo y un plan de crecimiento de largo plazo.",
@@ -818,6 +839,9 @@ export const messages: Record<AppLocale, MessageTree> = {
       sending: "Enviando...",
     },
     practice: {
+      pageTitle: "Practica",
+      pageDescription: "Ejecuta programas de setup, aumenta conocimiento de pista y prepara la base de clasificacion.",
+      noContext: "No hay contexto de practica disponible para este guardado.",
       kpiSessions: "Sesiones de practica",
       kpiSetup: "Confianza de setup",
       kpiTrack: "Conocimiento de pista",
@@ -853,6 +877,9 @@ export const messages: Record<AppLocale, MessageTree> = {
       feedbackHint: "Una mejor practica mejora directamente la base de clasificacion del equipo.",
     },
     qualifying: {
+      pageTitle: "Clasificacion",
+      pageDescription: "Simula clasificacion rapida o detallada con riesgo, momento de salida y estrategia de neumaticos.",
+      noContext: "No hay contexto de clasificacion disponible para este guardado.",
       kpiSessions: "Sesiones de clasificacion",
       kpiSetup: "Base de setup",
       kpiTrack: "Aprendizaje de pista",

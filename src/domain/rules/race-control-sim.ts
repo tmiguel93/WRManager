@@ -65,6 +65,7 @@ export interface RaceOutcomeInput {
   paceScore: number;
   reliabilityScore: number;
   raceCraftScore: number;
+  incidentRisk?: number;
   expectedPitStops: number;
   pitStopTimeMs: number;
   decisionProfile: RaceDecisionProfile;
@@ -156,6 +157,16 @@ function strategyReliabilityModifier(profile: RaceDecisionProfile) {
   return paceMode + fuelMode + tyreMode + weatherReaction;
 }
 
+function strategyIncidentModifier(profile: RaceDecisionProfile) {
+  const paceMode = profile.paceMode === "ATTACK" ? 4.2 : profile.paceMode === "CONSERVE" ? -2.4 : 0;
+  const tyreMode = profile.tyreMode === "PUSH" ? 2.2 : profile.tyreMode === "SAVE" ? -1.2 : 0;
+  const orders = profile.teamOrders === "FREE_FIGHT" ? 2.8 : -1.8;
+  const weatherReaction =
+    profile.weatherReaction === "AGGRESSIVE" ? 2.4 : profile.weatherReaction === "SAFE" ? -2.1 : 0;
+
+  return paceMode + tyreMode + orders + weatherReaction;
+}
+
 function strategyPitModifier(profile: RaceDecisionProfile) {
   if (profile.pitPlan === "UNDERCUT") return -1;
   if (profile.pitPlan === "OVERCUT") return 1;
@@ -171,6 +182,8 @@ function expectedStops(raceDistanceMinutes: number, tyreManagement: number, fuel
 }
 
 export function calculateRacePerformanceScore(input: RacePerformanceInput): RacePerformanceScore {
+  const weatherPressure = clamp(input.weatherSensitivity / 100, 0, 1);
+  const wetSkillDelta = (input.wetSkill - 70) * weatherPressure;
   const basePace =
     input.driverOverall * 0.17 +
     input.raceCraft * 0.14 +
@@ -185,7 +198,8 @@ export function calculateRacePerformanceScore(input: RacePerformanceInput): Race
     input.setupConfidence * 0.025 +
     input.trackKnowledge * 0.025 +
     input.staffStrategy * 0.03 +
-    input.supplierPerformance * 0.02;
+    input.supplierPerformance * 0.02 +
+    wetSkillDelta * 0.055;
 
   const paceScore = clamp(safeRound(basePace + strategyPaceModifier(input.decisionProfile)), 35, 99);
 
@@ -196,7 +210,8 @@ export function calculateRacePerformanceScore(input: RacePerformanceInput): Race
     input.carReliability * 0.38 +
     input.staffPit * 0.11 +
     input.supplierReliability * 0.09 +
-    (100 - input.weatherSensitivity) * 0.08;
+    (100 - input.weatherSensitivity) * 0.08 +
+    wetSkillDelta * 0.045;
 
   const reliabilityScore = clamp(safeRound(baseReliability + strategyReliabilityModifier(input.decisionProfile)), 28, 99);
 
@@ -214,7 +229,13 @@ export function calculateRacePerformanceScore(input: RacePerformanceInput): Race
   );
 
   const incidentRisk = clamp(
-    safeRound(58 - reliabilityScore * 0.46 + input.weatherSensitivity * 0.12 + (input.decisionProfile.paceMode === "ATTACK" ? 5 : 0)),
+    safeRound(
+      58 -
+        reliabilityScore * 0.46 +
+        input.weatherSensitivity * 0.12 -
+        wetSkillDelta * 0.06 +
+        strategyIncidentModifier(input.decisionProfile),
+    ),
     3,
     58,
   );
@@ -253,7 +274,8 @@ export function simulateRaceOutcome(input: RaceOutcomeInput): RaceOutcome {
   const caution = cautionIntensity(input.safetyCarProfile, input.seed);
   const paceDeltaMs = (80 - input.paceScore) * 1_860;
   const craftDeltaMs = (68 - input.raceCraftScore) * 690;
-  const gridPenaltyMs = Math.max(0, input.startPosition - 1) * (880 - caution * 2800);
+  const fieldPressure = clamp(input.fieldSize / 30, 0.7, 1.45);
+  const gridPenaltyMs = Math.max(0, input.startPosition - 1) * (880 - caution * 2800) * fieldPressure;
 
   const baseRaceMs = input.raceDistanceMinutes * 60_000;
   const pitStops = clamp(
@@ -263,8 +285,17 @@ export function simulateRaceOutcome(input: RaceOutcomeInput): RaceOutcome {
   );
   const pitTimeTotal = pitStops * input.pitStopTimeMs;
 
+  const modeledIncidentRisk =
+    input.incidentRisk ??
+    safeRound(
+      42 -
+        input.reliabilityScore * 0.35 +
+        input.weatherSensitivity * 0.06 +
+        strategyIncidentModifier(input.decisionProfile),
+    );
+
   const dnfRisk = clamp(
-    safeRound(42 - input.reliabilityScore * 0.35 + input.weatherSensitivity * 0.06 + (input.decisionProfile.paceMode === "ATTACK" ? 5 : 0)),
+    safeRound(modeledIncidentRisk * 0.52 + (input.decisionProfile.fuelMode === "PUSH" ? 2 : 0)),
     1,
     36,
   );
@@ -279,10 +310,14 @@ export function simulateRaceOutcome(input: RaceOutcomeInput): RaceOutcome {
     raceNotes.push("Mechanical issue forced retirement.");
   } else {
     const incidentRoll = stableUnitSeed(`${input.seed}:incident`) * 100;
-    const incidentThreshold = clamp(34 - input.reliabilityScore * 0.2 + input.weatherSensitivity * 0.08, 4, 28);
+    const incidentThreshold = clamp(modeledIncidentRisk * 0.62, 4, 32);
     if (incidentRoll < incidentThreshold) {
       incidentPenaltyMs = safeRound(6_000 + stableUnitSeed(`${input.seed}:incident:delta`) * 22_000);
       raceNotes.push("Lost time after a race incident in traffic.");
+    }
+
+    if (input.decisionProfile.teamOrders === "HOLD") {
+      raceNotes.push("Team orders stabilized the intra-team battle.");
     }
 
     if (input.decisionProfile.pitPlan === "UNDERCUT") {

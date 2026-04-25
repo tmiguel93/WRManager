@@ -2,14 +2,16 @@ import Link from "next/link";
 
 import { PageHeader } from "@/components/common/page-header";
 import { PracticeCenter } from "@/components/game/practice-center";
-import { getPracticeCenterView } from "@/server/queries/weekend-sessions";
+import { getServerTranslator } from "@/i18n/server";
 import { cn } from "@/lib/utils";
+import { getPracticeCenterView } from "@/server/queries/weekend-sessions";
 
 interface PracticePageProps {
   searchParams: Promise<{ category?: string }>;
 }
 
 export default async function PracticePage({ searchParams }: PracticePageProps) {
+  const { t } = await getServerTranslator();
   const { category } = await searchParams;
   const view = await getPracticeCenterView(category);
 
@@ -17,9 +19,9 @@ export default async function PracticePage({ searchParams }: PracticePageProps) 
     return (
       <div className="space-y-8">
         <PageHeader
-          eyebrow="Race Weekend"
-          title="Practice"
-          description="No practice context available for the current save."
+          eyebrow={t("weekend.eyebrow", "Race Weekend")}
+          title={t("practice.pageTitle", "Practice")}
+          description={t("practice.noContext", "No practice context available for the current save.")}
         />
       </div>
     );
@@ -28,10 +30,13 @@ export default async function PracticePage({ searchParams }: PracticePageProps) 
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Race Weekend"
-        title="Practice"
-        description="Run setup programs, build track knowledge and prepare qualifying baseline through structured practice sessions."
-        badge={`${view.selectedCategory.code} · ${view.seasonYear}`}
+        eyebrow={t("weekend.eyebrow", "Race Weekend")}
+        title={t("practice.pageTitle", "Practice")}
+        description={t(
+          "practice.pageDescription",
+          "Run setup programs, build track knowledge and prepare qualifying baseline through structured practice sessions.",
+        )}
+        badge={`${view.selectedCategory.code} | ${view.seasonYear}`}
       />
 
       <section className="flex flex-wrap gap-2">

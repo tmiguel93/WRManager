@@ -136,6 +136,35 @@ describe("simulateRaceOutcome", () => {
     expect(backRow.status).toBe("FINISHED");
     expect((pole.totalTimeMs ?? 0)).toBeLessThan(backRow.totalTimeMs ?? Number.MAX_SAFE_INTEGER);
   });
+
+  it("uses modeled incident risk and team orders in race notes", () => {
+    const controlled = simulateRaceOutcome({
+      trackType: "ROAD",
+      raceDistanceMinutes: 90,
+      startPosition: 4,
+      fieldSize: 22,
+      weatherSensitivity: 70,
+      safetyCarProfile: "SAFETY_CAR_FULL",
+      paceScore: 82,
+      reliabilityScore: 92,
+      raceCraftScore: 82,
+      incidentRisk: 4,
+      expectedPitStops: 2,
+      pitStopTimeMs: 21_000,
+      decisionProfile: {
+        paceMode: "CONSERVE",
+        pitPlan: "BALANCED",
+        fuelMode: "SAVE",
+        tyreMode: "SAVE",
+        teamOrders: "HOLD",
+        weatherReaction: "SAFE",
+      },
+      seed: "team-orders-seed",
+    });
+
+    expect(controlled.status).toBe("FINISHED");
+    expect(controlled.raceNotes).toContain("Team orders stabilized the intra-team battle.");
+  });
 });
 
 describe("resolveRacePointsTable", () => {
