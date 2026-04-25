@@ -34,6 +34,8 @@ export interface CategoryProgressNode {
 
 export interface CareerOpportunity {
   id: string;
+  teamId: string;
+  categoryId: string;
   teamName: string;
   categoryCode: string;
   categoryName: string;
@@ -44,6 +46,7 @@ export interface CareerOpportunity {
   invitationScore: number;
   status: "READY" | "WATCHLIST" | "LONG_TERM";
   reasonKey: string;
+  persistedStatus: "WATCHLIST" | "ACCEPTED" | "DECLINED" | null;
 }
 
 export interface BoardObjective {
@@ -52,6 +55,8 @@ export interface BoardObjective {
   descriptionKey: string;
   progressPercent: number;
   priority: "HIGH" | "MEDIUM" | "LOW";
+  persistedStatus: "ACTIVE" | "COMPLETED" | null;
+  pinned: boolean;
 }
 
 export interface AcademyProspect {
@@ -65,6 +70,7 @@ export interface AcademyProspect {
   potential: number;
   fitScore: number;
   imageUrl: string | null;
+  watchlistStatus: "WATCHLIST" | "ARCHIVED" | null;
 }
 
 export interface ChemistrySignal {
@@ -81,6 +87,7 @@ export interface AchievementTrack {
   progressPercent: number;
   isComplete: boolean;
   detailKey: string;
+  persistedStatus: "IN_PROGRESS" | "ACHIEVED" | null;
 }
 
 export interface MediaSignal {

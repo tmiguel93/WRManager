@@ -758,6 +758,10 @@ async function seed() {
   await prisma.teamContract.deleteMany();
   await prisma.supplierContract.deleteMany();
   await prisma.sponsorContract.deleteMany();
+  await prisma.careerAcademyWatchlist.deleteMany();
+  await prisma.careerMilestone.deleteMany();
+  await prisma.careerOpportunity.deleteMany();
+  await prisma.careerObjective.deleteMany();
   await prisma.driverTraitLink.deleteMany();
   await prisma.staffTraitLink.deleteMany();
   await prisma.teamHistory.deleteMany();

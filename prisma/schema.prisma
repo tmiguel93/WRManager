@@ -165,6 +165,10 @@ model Career {
   transactions        Transaction[]
   saveSlots           SaveSlot[]
   negotiationProposals NegotiationProposal[]
+  careerObjectives    CareerObjective[]
+  careerOpportunities CareerOpportunity[]
+  careerMilestones    CareerMilestone[]
+  academyWatchlist    CareerAcademyWatchlist[]
 }
 
 model Category {
@@ -192,6 +196,7 @@ model Category {
   standingsMakers     StandingsManufacturer[]
   selectedCareers     Career[]
   cars                Car[]
+  careerOpportunities CareerOpportunity[]
 }
 
 model RuleSet {
@@ -292,6 +297,7 @@ model Team {
   sessionStates     SessionTeamState[]
   selectedCareers   Career[]
   negotiationProposals NegotiationProposal[]
+  careerOpportunities CareerOpportunity[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -341,6 +347,76 @@ model Driver {
   qualifyingResults    QualifyingResult[]
   raceResults          RaceResult[]
   standings            StandingsDriver[]
+  academyWatchlist     CareerAcademyWatchlist[]
+}
+
+model CareerObjective {
+  id             String    @id @default(cuid())
+  careerId       String
+  key            String
+  titleKey       String
+  descriptionKey String
+  progress       Int       @default(0)
+  priority       String
+  status         String    @default("ACTIVE")
+  pinned         Boolean   @default(false)
+  completedAt    DateTime?
+  meta           Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  career         Career    @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, key])
+}
+
+model CareerOpportunity {
+  id              String    @id @default(cuid())
+  careerId        String
+  teamId          String
+  categoryId      String
+  invitationScore Int
+  status          String    @default("WATCHLIST")
+  reasonKey       String
+  decidedAt       DateTime?
+  meta            Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  career          Career    @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  team            Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  category        Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, teamId, categoryId])
+}
+
+model CareerMilestone {
+  id          String    @id @default(cuid())
+  careerId    String
+  key         String
+  titleKey    String
+  progress    Int       @default(0)
+  status      String    @default("IN_PROGRESS")
+  achievedAt  DateTime?
+  meta        Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  career      Career    @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, key])
+}
+
+model CareerAcademyWatchlist {
+  id        String   @id @default(cuid())
+  careerId  String
+  driverId  String
+  fitScore  Int
+  status    String   @default("WATCHLIST")
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, driverId])
 }
 
 model DriverTrait {

@@ -4,6 +4,7 @@ import { EntityAvatar } from "@/components/common/entity-avatar";
 import { KpiCard } from "@/components/common/kpi-card";
 import { PageHeader } from "@/components/common/page-header";
 import { CountryFlag } from "@/components/common/country-flag";
+import { CareerRoadActionButton } from "@/components/game/career-road-action-button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -167,6 +168,20 @@ export default async function CareerRoadPage() {
                     <Progress value={objective.progressPercent} />
                     <span className="w-10 text-right text-xs text-muted-foreground">{objective.progressPercent}%</span>
                   </div>
+                  <div className="mt-3 flex justify-end">
+                    <CareerRoadActionButton
+                      payload={{
+                        type: "objective",
+                        key: objective.id,
+                        titleKey: objective.titleKey,
+                        descriptionKey: objective.descriptionKey,
+                        progress: objective.progressPercent,
+                        priority: objective.priority,
+                      }}
+                      labelKey={objective.pinned ? "careerRoad.actionObjectiveSavedLabel" : "careerRoad.actionSaveObjective"}
+                      disabled={objective.pinned}
+                    />
+                  </div>
                 </div>
               ))}
             </CardContent>
@@ -205,6 +220,7 @@ export default async function CareerRoadPage() {
                     <TableHead>{t("common.category")}</TableHead>
                     <TableHead>{t("careerRoad.invitation")}</TableHead>
                     <TableHead>{t("common.status")}</TableHead>
+                    <TableHead className="text-right">{t("common.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -230,8 +246,52 @@ export default async function CareerRoadPage() {
                       </TableCell>
                       <TableCell>
                         <Badge className="rounded-full border border-cyan-300/25 bg-cyan-500/10 text-xs text-cyan-100">
-                          {t(opportunityStatusKey(opportunity.status))}
+                          {opportunity.persistedStatus
+                            ? t(`careerRoad.persisted${opportunity.persistedStatus}`)
+                            : t(opportunityStatusKey(opportunity.status))}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <CareerRoadActionButton
+                            payload={{
+                              type: "opportunity",
+                              teamId: opportunity.teamId,
+                              categoryId: opportunity.categoryId,
+                              invitationScore: opportunity.invitationScore,
+                              reasonKey: opportunity.reasonKey,
+                              status: "WATCHLIST",
+                            }}
+                            labelKey="careerRoad.actionSaveOpportunity"
+                            disabled={opportunity.persistedStatus === "WATCHLIST"}
+                          />
+                          <CareerRoadActionButton
+                            payload={{
+                              type: "opportunity",
+                              teamId: opportunity.teamId,
+                              categoryId: opportunity.categoryId,
+                              invitationScore: opportunity.invitationScore,
+                              reasonKey: opportunity.reasonKey,
+                              status: "ACCEPTED",
+                            }}
+                            labelKey="careerRoad.actionAcceptOpportunity"
+                            variant="primary"
+                            disabled={opportunity.persistedStatus === "ACCEPTED"}
+                          />
+                          <CareerRoadActionButton
+                            payload={{
+                              type: "opportunity",
+                              teamId: opportunity.teamId,
+                              categoryId: opportunity.categoryId,
+                              invitationScore: opportunity.invitationScore,
+                              reasonKey: opportunity.reasonKey,
+                              status: "DECLINED",
+                            }}
+                            labelKey="careerRoad.actionDeclineOpportunity"
+                            variant="ghost"
+                            disabled={opportunity.persistedStatus === "DECLINED"}
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -268,6 +328,22 @@ export default async function CareerRoadPage() {
                   <p className="text-xs text-muted-foreground">
                     {t("drivers.overall")} {prospect.overall} / {t("common.potential")} {prospect.potential}
                   </p>
+                  <div className="mt-2">
+                    <CareerRoadActionButton
+                      payload={{
+                        type: "prospect",
+                        driverId: prospect.id,
+                        fitScore: prospect.fitScore,
+                        status: prospect.watchlistStatus === "WATCHLIST" ? "ARCHIVED" : "WATCHLIST",
+                      }}
+                      labelKey={
+                        prospect.watchlistStatus === "WATCHLIST"
+                          ? "careerRoad.actionRemoveWatchlist"
+                          : "careerRoad.actionAddWatchlist"
+                      }
+                      variant={prospect.watchlistStatus === "WATCHLIST" ? "ghost" : "secondary"}
+                    />
+                  </div>
                 </div>
               </div>
             ))}
@@ -297,6 +373,25 @@ export default async function CareerRoadPage() {
                 <p className="mt-1 text-xs text-muted-foreground">{t(achievement.detailKey)}</p>
                 <div className="mt-3">
                   <Progress value={achievement.progressPercent} />
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <CareerRoadActionButton
+                    payload={{
+                      type: "milestone",
+                      key: achievement.id,
+                      titleKey: achievement.titleKey,
+                      detailKey: achievement.detailKey,
+                      progress: achievement.progressPercent,
+                      achieved: achievement.isComplete,
+                    }}
+                    labelKey={
+                      achievement.persistedStatus === "ACHIEVED"
+                        ? "careerRoad.actionMilestoneMarked"
+                        : "careerRoad.actionRecordMilestone"
+                    }
+                    disabled={achievement.persistedStatus === "ACHIEVED"}
+                    variant={achievement.isComplete ? "primary" : "secondary"}
+                  />
                 </div>
               </div>
             ))}

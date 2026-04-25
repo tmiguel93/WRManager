@@ -124,6 +124,8 @@ export function buildBoardObjectives(params: {
       descriptionKey: "careerRoad.objectiveFinancialDescription",
       progressPercent: Math.round(ratio(params.cashBalance, params.tierBaselineCash)),
       priority: params.cashBalance < params.tierBaselineCash * 0.55 ? "HIGH" : "MEDIUM",
+      persistedStatus: null,
+      pinned: false,
     },
     {
       id: "staff-spine",
@@ -131,6 +133,8 @@ export function buildBoardObjectives(params: {
       descriptionKey: "careerRoad.objectiveStaffDescription",
       progressPercent: Math.round(clamp(params.staffQuality)),
       priority: params.staffQuality < 62 ? "HIGH" : "LOW",
+      persistedStatus: null,
+      pinned: false,
     },
     {
       id: "competitive-package",
@@ -138,6 +142,8 @@ export function buildBoardObjectives(params: {
       descriptionKey: "careerRoad.objectivePerformanceDescription",
       progressPercent: Math.round(clamp(params.performanceScore)),
       priority: params.performanceScore < 66 ? "HIGH" : "MEDIUM",
+      persistedStatus: null,
+      pinned: false,
     },
     {
       id: "next-category",
@@ -145,6 +151,8 @@ export function buildBoardObjectives(params: {
       descriptionKey: "careerRoad.objectiveNextTierDescription",
       progressPercent: Math.round(clamp(params.nextGatePercent)),
       priority: params.nextGatePercent >= 72 ? "HIGH" : "MEDIUM",
+      persistedStatus: null,
+      pinned: false,
     },
     {
       id: "academy-pipeline",
@@ -152,6 +160,8 @@ export function buildBoardObjectives(params: {
       descriptionKey: "careerRoad.objectiveAcademyDescription",
       progressPercent: Math.round(clamp(params.prospectCount * 18)),
       priority: params.prospectCount === 0 ? "HIGH" : "LOW",
+      persistedStatus: null,
+      pinned: false,
     },
   ];
 }

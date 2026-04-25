@@ -39,6 +39,7 @@ function buildAchievementTracks(params: {
       progressPercent: params.founded ? 100 : 0,
       isComplete: params.founded,
       detailKey: "careerRoad.achievementFoundedDetail",
+      persistedStatus: null,
     },
     {
       id: "stable-payroll",
@@ -46,6 +47,7 @@ function buildAchievementTracks(params: {
       progressPercent: Math.min(100, params.activeContracts * 20),
       isComplete: params.activeContracts >= 5,
       detailKey: "careerRoad.achievementPayrollDetail",
+      persistedStatus: null,
     },
     {
       id: "reputation-climb",
@@ -53,6 +55,7 @@ function buildAchievementTracks(params: {
       progressPercent: Math.min(100, Math.round((params.reputation / 80) * 100)),
       isComplete: params.reputation >= 80,
       detailKey: "careerRoad.achievementReputationDetail",
+      persistedStatus: null,
     },
     {
       id: "financial-runway",
@@ -60,6 +63,7 @@ function buildAchievementTracks(params: {
       progressPercent: Math.min(100, Math.round((params.cashBalance / moneyGateForTier(Math.max(2, params.currentTier))) * 100)),
       isComplete: params.cashBalance >= moneyGateForTier(Math.max(2, params.currentTier)),
       detailKey: "careerRoad.achievementRunwayDetail",
+      persistedStatus: null,
     },
     {
       id: "sporting-results",
@@ -67,6 +71,7 @@ function buildAchievementTracks(params: {
       progressPercent: Math.min(100, params.wins * 32 + params.podiums * 12),
       isComplete: params.wins > 0 || params.podiums >= 3,
       detailKey: "careerRoad.achievementResultsDetail",
+      persistedStatus: null,
     },
     {
       id: "elite-path",
@@ -74,6 +79,7 @@ function buildAchievementTracks(params: {
       progressPercent: Math.min(100, params.currentTier * 25),
       isComplete: params.currentTier >= 4,
       detailKey: "careerRoad.achievementElitePathDetail",
+      persistedStatus: null,
     },
   ];
 }
@@ -82,7 +88,7 @@ export async function getCareerIntelligenceView(): Promise<CareerIntelligenceVie
   const activeCareer = await getActiveCareerContext();
   const currentDate = new Date(`${activeCareer.currentDateIso}T00:00:00.000Z`);
 
-  const [categories, activeTeam, teams, prospects, news, rumors] = await Promise.all([
+  const [categories, activeTeam, teams, prospects, news, rumors, persistedObjectives, persistedOpportunities, persistedMilestones, watchlist] = await Promise.all([
     prisma.category.findMany({
       orderBy: [{ tier: "asc" }, { name: "asc" }],
       include: { _count: { select: { teams: true } } },
@@ -164,7 +170,34 @@ export async function getCareerIntelligenceView(): Promise<CareerIntelligenceVie
       orderBy: [{ credibility: "desc" }, { createdAt: "desc" }],
       take: 8,
     }),
+    activeCareer.careerId
+      ? prisma.careerObjective.findMany({
+          where: { careerId: activeCareer.careerId },
+        })
+      : [],
+    activeCareer.careerId
+      ? prisma.careerOpportunity.findMany({
+          where: { careerId: activeCareer.careerId },
+        })
+      : [],
+    activeCareer.careerId
+      ? prisma.careerMilestone.findMany({
+          where: { careerId: activeCareer.careerId },
+        })
+      : [],
+    activeCareer.careerId
+      ? prisma.careerAcademyWatchlist.findMany({
+          where: { careerId: activeCareer.careerId },
+        })
+      : [],
   ]);
+
+  const objectiveByKey = new Map(persistedObjectives.map((objective) => [objective.key, objective]));
+  const opportunityByTeamCategory = new Map(
+    persistedOpportunities.map((opportunity) => [`${opportunity.teamId}:${opportunity.categoryId}`, opportunity]),
+  );
+  const milestoneByKey = new Map(persistedMilestones.map((milestone) => [milestone.key, milestone]));
+  const watchlistByDriverId = new Map(watchlist.map((entry) => [entry.driverId, entry]));
 
   const activeCategory = categories.find((category) => category.code === activeCareer.categoryCode);
   const currentTier = activeCategory?.tier ?? activeTeam?.category.tier ?? 1;
@@ -215,6 +248,8 @@ export async function getCareerIntelligenceView(): Promise<CareerIntelligenceVie
       });
       return {
         id: team.id,
+        teamId: team.id,
+        categoryId: team.categoryId,
         teamName: team.name,
         categoryCode: team.category.code,
         categoryName: team.category.name,
@@ -228,6 +263,9 @@ export async function getCareerIntelligenceView(): Promise<CareerIntelligenceVie
           team.category.tier > currentTier
             ? "careerRoad.opportunityReasonPromotion"
             : "careerRoad.opportunityReasonLateral",
+        persistedStatus:
+          (opportunityByTeamCategory.get(`${team.id}:${team.categoryId}`)?.status as "WATCHLIST" | "ACCEPTED" | "DECLINED" | undefined) ??
+          null,
       };
     })
     .sort((a, b) => b.invitationScore - a.invitationScore)
@@ -251,6 +289,8 @@ export async function getCareerIntelligenceView(): Promise<CareerIntelligenceVie
         potential: driver.potential,
         fitScore,
         imageUrl: driver.imageUrl,
+        watchlistStatus:
+          (watchlistByDriverId.get(driver.id)?.status as "WATCHLIST" | "ARCHIVED" | undefined) ?? null,
       };
     })
     .sort((a, b) => b.fitScore - a.fitScore)
@@ -309,6 +349,13 @@ export async function getCareerIntelligenceView(): Promise<CareerIntelligenceVie
     wins,
     podiums,
   });
+  const mergedAchievements = achievements.map((achievement) => {
+    const persisted = milestoneByKey.get(achievement.id);
+    return {
+      ...achievement,
+      persistedStatus: (persisted?.status as "IN_PROGRESS" | "ACHIEVED" | undefined) ?? null,
+    };
+  });
 
   const mediaSignals: MediaSignal[] = [
     ...news.map((item) => ({
@@ -338,6 +385,14 @@ export async function getCareerIntelligenceView(): Promise<CareerIntelligenceVie
     nextGatePercent: nextGate?.progressPercent ?? 100,
     prospectCount: academyProspects.length,
   });
+  const mergedBoardObjectives = boardObjectives.map((objective) => {
+    const persisted = objectiveByKey.get(objective.id);
+    return {
+      ...objective,
+      persistedStatus: (persisted?.status as "ACTIVE" | "COMPLETED" | undefined) ?? null,
+      pinned: persisted?.pinned ?? false,
+    };
+  });
 
   return {
     activeCareer: {
@@ -359,10 +414,10 @@ export async function getCareerIntelligenceView(): Promise<CareerIntelligenceVie
     },
     roadToTop,
     opportunities,
-    boardObjectives,
+    boardObjectives: mergedBoardObjectives,
     academyProspects,
     chemistry,
-    achievements,
+    achievements: mergedAchievements,
     mediaSignals,
   };
 }
