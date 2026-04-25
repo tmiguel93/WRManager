@@ -26,6 +26,13 @@ export interface EvaluateMyTeamLineupResult {
   requiredDrivers: number;
 }
 
+export interface EvaluateOnboardingMarketInput {
+  driverCandidates: number;
+  staffCandidates: number;
+  minimumDrivers?: number;
+  minimumStaff?: number;
+}
+
 export function evaluateMyTeamLineupRequirements(
   input: EvaluateMyTeamLineupInput,
 ): EvaluateMyTeamLineupResult {
@@ -57,4 +64,10 @@ export function evaluateMyTeamLineupRequirements(
     hasStrategyLead,
     requiredDrivers,
   };
+}
+
+export function hasOperationalOnboardingMarket(input: EvaluateOnboardingMarketInput) {
+  const minimumDrivers = input.minimumDrivers ?? 2;
+  const minimumStaff = input.minimumStaff ?? 2;
+  return input.driverCandidates >= minimumDrivers && input.staffCandidates >= minimumStaff;
 }

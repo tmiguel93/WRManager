@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { evaluateMyTeamLineupRequirements } from "@/domain/rules/onboarding";
+import { evaluateMyTeamLineupRequirements, hasOperationalOnboardingMarket } from "@/domain/rules/onboarding";
 
 describe("my team onboarding requirements", () => {
   it("requires at least two drivers and core staff leaders", () => {
@@ -24,5 +24,21 @@ describe("my team onboarding requirements", () => {
 
     expect(result.minimumReady).toBe(true);
     expect(result.missingRequirements).toHaveLength(0);
+  });
+
+  it("detects when onboarding market has enough candidates", () => {
+    expect(
+      hasOperationalOnboardingMarket({
+        driverCandidates: 2,
+        staffCandidates: 2,
+      }),
+    ).toBe(true);
+
+    expect(
+      hasOperationalOnboardingMarket({
+        driverCandidates: 1,
+        staffCandidates: 3,
+      }),
+    ).toBe(false);
   });
 });

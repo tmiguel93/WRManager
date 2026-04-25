@@ -1,6 +1,6 @@
 import { ContractStatus } from "@prisma/client";
 
-import { evaluateMyTeamLineupRequirements } from "@/domain/rules/onboarding";
+import { evaluateMyTeamLineupRequirements, hasOperationalOnboardingMarket } from "@/domain/rules/onboarding";
 import { prisma } from "@/persistence/prisma";
 
 export async function getMyTeamOnboardingView(careerId: string) {
@@ -36,7 +36,7 @@ export async function getMyTeamOnboardingView(careerId: string) {
     return null;
   }
 
-  const [driverContracts, staffContracts, freeDrivers, freeStaff] = await Promise.all([
+  const [driverContracts, staffContracts, localFreeDrivers, localFreeStaff] = await Promise.all([
     prisma.driverContract.findMany({
       where: {
         teamId: career.selectedTeam.id,
@@ -138,6 +138,77 @@ export async function getMyTeamOnboardingView(careerId: string) {
       take: 40,
     }),
   ]);
+
+  const localMarketHasOperationalMinimum = hasOperationalOnboardingMarket({
+    driverCandidates: localFreeDrivers.length,
+    staffCandidates: localFreeStaff.length,
+    minimumDrivers: 2,
+    minimumStaff: 2,
+  });
+
+  const [freeDrivers, freeStaff] = localMarketHasOperationalMinimum
+    ? [localFreeDrivers, localFreeStaff]
+    : await Promise.all([
+        prisma.driver.findMany({
+          where: {
+            currentTeamId: null,
+            contracts: {
+              none: {
+                status: ContractStatus.ACTIVE,
+              },
+            },
+          },
+          include: {
+            currentCategory: {
+              select: {
+                code: true,
+              },
+            },
+            traits: {
+              orderBy: { isPrimary: "desc" },
+              take: 1,
+              include: {
+                trait: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: [{ potential: "desc" }, { overall: "desc" }],
+          take: 40,
+        }),
+        prisma.staff.findMany({
+          where: {
+            currentTeamId: null,
+            contracts: {
+              none: {
+                status: ContractStatus.ACTIVE,
+              },
+            },
+          },
+          include: {
+            currentCategory: {
+              select: {
+                code: true,
+              },
+            },
+            traits: {
+              take: 1,
+              include: {
+                trait: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: [{ reputation: "desc" }, { salary: "asc" }],
+          take: 40,
+        }),
+      ]);
 
   const activeDriverCount = driverContracts.length;
   const lineupCheck = evaluateMyTeamLineupRequirements({

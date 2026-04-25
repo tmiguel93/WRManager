@@ -436,7 +436,7 @@ export function MyTeamOnboarding({
             <CardTitle className="font-heading text-xl">Driver Market</CardTitle>
             <CardDescription>Free agents ready for immediate contract negotiation.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+        <CardContent className="space-y-3">
             {market.drivers.slice(0, 14).map((driver) => (
               <div key={driver.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
                 <div className="flex items-center gap-3">
@@ -461,6 +461,11 @@ export function MyTeamOnboarding({
                 </Button>
               </div>
             ))}
+            {market.drivers.length === 0 ? (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+                No eligible free-agent drivers found for this category right now. Expand your search pool and try again.
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -469,7 +474,7 @@ export function MyTeamOnboarding({
             <CardTitle className="font-heading text-xl">Staff Market</CardTitle>
             <CardDescription>Recruit technical and strategic leaders for launch.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+        <CardContent className="space-y-3">
             {market.staff.slice(0, 14).map((staff) => (
               <div key={staff.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
                 <div className="flex items-center gap-3">
@@ -494,6 +499,11 @@ export function MyTeamOnboarding({
                 </Button>
               </div>
             ))}
+            {market.staff.length === 0 ? (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+                No eligible staff candidates found for this launch phase. Expand your recruitment pool and try again.
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </section>
