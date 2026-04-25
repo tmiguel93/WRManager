@@ -1,57 +1,59 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import { z } from "zod";
-
 import { prisma } from "@/persistence/prisma";
+import { inspectAssetPack, type AssetPackPayload } from "@/persistence/assets/asset-pack-manifest";
 
-const assetEntrySchema = z.object({
-  entityType: z.enum(["DRIVER", "TEAM", "STAFF", "SUPPLIER", "SPONSOR", "CIRCUIT"]),
-  entityId: z.string().min(1),
-  assetType: z.enum(["DRIVER_PHOTO", "TEAM_LOGO", "SUPPLIER_LOGO", "SPONSOR_BANNER", "CIRCUIT_BANNER", "GENERIC"]),
-  sourcePath: z.string().min(1),
-  approved: z.boolean().default(false),
-});
-
-const assetPackSchema = z.object({
-  packSource: z.string().min(1),
-  entries: z.array(assetEntrySchema).min(1),
-});
-
-export type AssetPackPayload = z.infer<typeof assetPackSchema>;
+export type { AssetPackPayload };
 
 export async function importAssetPack(manifestPath: string) {
-  const raw = await fs.readFile(manifestPath, "utf-8");
-  const parsed = assetPackSchema.parse(JSON.parse(raw));
-  const rootDir = path.dirname(manifestPath);
+  const report = await inspectAssetPack(manifestPath);
+  if (report.invalidEntries.length > 0) {
+    throw new Error(`Asset pack has ${report.invalidEntries.length} invalid entr${report.invalidEntries.length === 1 ? "y" : "ies"}. Run --dry-run for details.`);
+  }
 
-  const uniqueEntries = new Map<string, (typeof parsed.entries)[number]>();
-  for (const entry of parsed.entries) {
-    const key = `${entry.entityType}:${entry.entityId}:${entry.assetType}:${parsed.packSource}`;
+  const uniqueEntries = new Map<string, (typeof report.validEntries)[number]>();
+  for (const entry of report.validEntries) {
+    if (!entry.entry.entityId) continue;
+    const key = `${entry.entry.entityType}:${entry.entry.entityId}:${entry.entry.assetType}:${report.pack.packSource}`;
     uniqueEntries.set(key, entry);
   }
 
   let imported = 0;
-  for (const entry of uniqueEntries.values()) {
-    const resolvedPath = path.resolve(rootDir, entry.sourcePath);
+  for (const inspected of uniqueEntries.values()) {
+    const entry = inspected.entry;
+    if (!entry.entityId) continue;
+    const approved = entry.approved ?? entry.review?.status === "approved";
     const existing = await prisma.assetRegistry.findFirst({
       where: {
         entityType: entry.entityType,
         entityId: entry.entityId,
         assetType: entry.assetType,
-        packSource: parsed.packSource,
+        packSource: report.pack.packSource,
       },
       select: { id: true },
       orderBy: { createdAt: "desc" },
     });
+    const meta = {
+      formatVersion: report.pack.formatVersion,
+      displayName: report.pack.displayName ?? report.pack.packSource,
+      version: report.pack.version ?? null,
+      author: report.pack.author ?? null,
+      description: report.pack.description ?? null,
+      mediaType: entry.mediaType ?? null,
+      sha256: inspected.sha256,
+      publicPath: inspected.publicPath,
+      attribution: entry.attribution ?? null,
+      review: entry.review ?? { status: report.pack.defaultReviewStatus },
+      warnings: inspected.warnings,
+    };
 
     if (existing) {
       await prisma.assetRegistry.update({
         where: { id: existing.id },
         data: {
-          sourcePath: entry.sourcePath,
-          resolvedPath,
+          sourcePath: inspected.sourcePath,
+          resolvedPath: inspected.publicPath ?? inspected.resolvedPath,
           isPlaceholder: false,
-          approved: entry.approved,
+          approved,
+          meta,
         },
       });
       imported += 1;
@@ -63,15 +65,16 @@ export async function importAssetPack(manifestPath: string) {
         entityType: entry.entityType,
         entityId: entry.entityId,
         assetType: entry.assetType,
-        packSource: parsed.packSource,
-        sourcePath: entry.sourcePath,
-        resolvedPath,
+        packSource: report.pack.packSource,
+        sourcePath: inspected.sourcePath,
+        resolvedPath: inspected.publicPath ?? inspected.resolvedPath,
         isPlaceholder: false,
-        approved: entry.approved,
+        approved,
+        meta,
       },
     });
     imported += 1;
   }
 
-  return { imported };
+  return { imported, inspected: report.entries.length, skipped: report.validEntries.length - imported };
 }

@@ -6,7 +6,9 @@ import { SUPPORTED_LOCALES, type AppLocale } from "@/i18n/config";
 import { extraMessages } from "@/i18n/extra-messages";
 import { messages } from "@/i18n/messages";
 
-type MessageTree = Record<string, string | MessageTree>;
+interface MessageTree {
+  [key: string]: string | MessageTree;
+}
 
 type MissingKeyFinding = {
   key: string;
