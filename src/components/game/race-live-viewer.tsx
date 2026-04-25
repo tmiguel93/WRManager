@@ -15,6 +15,7 @@ import {
   buildRaceBroadcastScenario,
   snapshotRaceBroadcast,
   type RaceBroadcastInput,
+  type RaceBroadcastScenario,
 } from "@/domain/rules/race-broadcast";
 import { formatRaceTime, stableUnitSeed } from "@/domain/rules/race-control-sim";
 import type { RaceControlCenterView } from "@/features/race-control/types";
@@ -115,30 +116,47 @@ function buildInputFromView(
 
 export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
   const { t } = useI18n();
+  const scenario = useMemo(() => {
+    const input = buildInputFromView(view, t);
+    return input ? buildRaceBroadcastScenario(input) : null;
+  }, [t, view]);
+
+  if (!scenario) {
+    return (
+      <Card className="premium-card">
+        <CardHeader>
+          <CardTitle className="font-heading text-xl">{t("raceViewer.title", "Live Race Viewer")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+            {t("raceViewer.empty", "Generate weekend context and race data to unlock the live broadcast panel.")}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const scenarioKey = [
+    scenario.sessionLabel,
+    scenario.durationMs,
+    scenario.participants.map((participant) => participant.id).join("|"),
+  ].join(":");
+
+  return <RaceLiveViewerPlayer key={scenarioKey} scenario={scenario} />;
+}
+
+function RaceLiveViewerPlayer({ scenario }: { scenario: RaceBroadcastScenario }) {
+  const { t } = useI18n();
   const [elapsedMs, setElapsedMs] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState<(typeof speedOptions)[number]>(1);
   const frameRef = useRef<number | null>(null);
   const lastTickRef = useRef<number | null>(null);
 
-  const scenario = useMemo(() => {
-    const input = buildInputFromView(view, t);
-    return input ? buildRaceBroadcastScenario(input) : null;
-  }, [t, view]);
-
-  const snapshot = useMemo(() => {
-    if (!scenario) return null;
-    return snapshotRaceBroadcast(scenario, elapsedMs);
-  }, [scenario, elapsedMs]);
+  const snapshot = useMemo(() => snapshotRaceBroadcast(scenario, elapsedMs), [scenario, elapsedMs]);
 
   useEffect(() => {
-    setElapsedMs(0);
-    setIsPlaying(false);
-    setSpeed(1);
-  }, [scenario?.durationMs, scenario?.sessionLabel]);
-
-  useEffect(() => {
-    if (!scenario || !isPlaying) return;
+    if (!isPlaying) return;
 
     const loop = (timestamp: number) => {
       const previous = lastTickRef.current ?? timestamp;
@@ -167,21 +185,6 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
       lastTickRef.current = null;
     };
   }, [isPlaying, scenario, speed]);
-
-  if (!scenario || !snapshot) {
-    return (
-      <Card className="premium-card">
-        <CardHeader>
-          <CardTitle className="font-heading text-xl">{t("raceViewer.title", "Live Race Viewer")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
-            {t("raceViewer.empty", "Generate weekend context and race data to unlock the live broadcast panel.")}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   const visibleEvents = scenario.events
     .filter((event) => event.timeMs <= elapsedMs)
