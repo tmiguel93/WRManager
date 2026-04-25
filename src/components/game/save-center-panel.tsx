@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCompactMoney, formatDate } from "@/lib/format";
 import type { SaveCenterView } from "@/features/save-system/types";
+import { useI18n } from "@/i18n/client";
 import {
   createManualSaveAction,
   deleteSaveSlotAction,
@@ -23,9 +24,9 @@ interface SaveCenterPanelProps {
   view: SaveCenterView;
 }
 
-function formatDateTime(iso: string) {
+function formatDateTime(iso: string, locale: string) {
   const date = new Date(iso);
-  return date.toLocaleString("en-US", {
+  return date.toLocaleString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -35,6 +36,7 @@ function formatDateTime(iso: string) {
 }
 
 export function SaveCenterPanel({ view }: SaveCenterPanelProps) {
+  const { locale, t } = useI18n();
   const [isPending, startTransition] = useTransition();
   const [manualName, setManualName] = useState("");
 
@@ -91,26 +93,26 @@ export function SaveCenterPanel({ view }: SaveCenterPanelProps) {
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Manual Saves"
+          label={t("saveCenter.manualSaves")}
           value={`${manualCount}`}
           delta={manualCount * 6 - 12}
           icon={<Save className="size-4" />}
         />
         <KpiCard
-          label="Autosave Slots"
+          label={t("saveCenter.autosaveSlots")}
           value={`${autoCount}`}
           delta={autoCount * 5 - 8}
           icon={<Clock3 className="size-4" />}
         />
         <KpiCard
-          label="Career Cash"
+          label={t("saveCenter.careerCash")}
           value={formatCompactMoney(view.cashBalance)}
           delta={(view.cashBalance - 20_000_000) / 1_200_000}
           icon={<HardDrive className="size-4" />}
         />
         <KpiCard
-          label="Latest Save"
-          value={latestSlot ? formatDate(latestSlot.updatedAtIso.slice(0, 10)) : "None"}
+          label={t("saveCenter.latestSave")}
+          value={latestSlot ? formatDate(latestSlot.updatedAtIso.slice(0, 10)) : t("common.none")}
           delta={latestSlot ? 8 : -10}
           icon={<Download className="size-4" />}
         />
@@ -119,21 +121,21 @@ export function SaveCenterPanel({ view }: SaveCenterPanelProps) {
       <section className="grid gap-5 xl:grid-cols-[1fr_1fr]">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Create Save</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("saveCenter.createSave")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Manual save name</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("saveCenter.manualSaveName")}</p>
               <Input
                 value={manualName}
                 onChange={(event) => setManualName(event.target.value)}
-                placeholder="Manual Save - Strategy checkpoint"
+                placeholder={t("saveCenter.placeholder")}
                 maxLength={80}
                 className="border-white/20 bg-background/40"
                 disabled={!view.canSave || isPending}
               />
               <p className="text-xs text-muted-foreground">
-                Empty name uses a timestamped default.
+                {t("saveCenter.emptyNameHint")}
               </p>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
@@ -143,7 +145,7 @@ export function SaveCenterPanel({ view }: SaveCenterPanelProps) {
                 onClick={handleManualSave}
                 disabled={!view.canSave || isPending}
               >
-                Create Manual Save
+                {t("saveCenter.createManual")}
               </Button>
               <Button
                 variant="secondary"
@@ -151,31 +153,31 @@ export function SaveCenterPanel({ view }: SaveCenterPanelProps) {
                 onClick={handleQuickAutosave}
                 disabled={!view.canSave || isPending}
               >
-                Force Autosave
+                {t("saveCenter.forceAutosave")}
               </Button>
             </div>
             <div className="rounded-2xl border border-cyan-300/25 bg-cyan-500/10 p-3 text-xs text-cyan-100">
-              Autosave also runs after key management actions such as weekend simulation and major deals.
+              {t("saveCenter.autosaveHint")}
             </div>
           </CardContent>
         </Card>
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Restore Policy</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("saveCenter.restorePolicy")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>
-              Loading a slot restores the stored snapshot for career economy, session progression, results and standings.
+              {t("saveCenter.restoreP1")}
             </p>
             <p>
-              This allows rollback to a previous strategic state for testing decisions.
+              {t("saveCenter.restoreP2")}
             </p>
             <p>
-              Manual slots are kept up to 12 per career and autosaves up to 5.
+              {t("saveCenter.restoreP3")}
             </p>
             <div className="rounded-2xl border border-amber-300/25 bg-amber-500/10 p-3 text-xs text-amber-100">
-              Loading a save replaces current progress in the same career timeline.
+              {t("saveCenter.restoreWarning")}
             </div>
           </CardContent>
         </Card>
@@ -184,19 +186,19 @@ export function SaveCenterPanel({ view }: SaveCenterPanelProps) {
       <section>
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Save Slots</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("saveCenter.saveSlots")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Type</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Name</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Updated</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Season</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Cash</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Actions</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("saveCenter.type")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("saveCenter.name")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("saveCenter.updated")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.season")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("hq.cashBalance")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("common.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -210,21 +212,21 @@ export function SaveCenterPanel({ view }: SaveCenterPanelProps) {
                               : "rounded-full border border-emerald-300/35 bg-emerald-500/10 text-emerald-100"
                           }
                         >
-                          {slot.manual ? "MANUAL" : "AUTO"}
+                          {slot.manual ? t("common.manual").toUpperCase() : t("common.auto").toUpperCase()}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <p className="text-sm font-medium">{slot.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          v{slot.snapshotVersion} - {slot.snapshotLabel}
+                          {t("saveCenter.versionLabel", undefined, { version: slot.snapshotVersion, label: slot.snapshotLabel })}
                         </p>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{formatDateTime(slot.updatedAtIso)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatDateTime(slot.updatedAtIso, locale)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {slot.seasonYear ? `${slot.seasonYear} · R${slot.currentRound ?? "-"}` : "N/A"}
+                        {slot.seasonYear ? `${slot.seasonYear} - R${slot.currentRound ?? "-"}` : t("common.notAvailable")}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {typeof slot.cashBalance === "number" ? formatCompactMoney(slot.cashBalance) : "N/A"}
+                        {typeof slot.cashBalance === "number" ? formatCompactMoney(slot.cashBalance) : t("common.notAvailable")}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-2">
@@ -235,7 +237,7 @@ export function SaveCenterPanel({ view }: SaveCenterPanelProps) {
                             onClick={() => handleLoad(slot.id)}
                             disabled={isPending || !view.canSave}
                           >
-                            Load
+                            {t("common.load")}
                           </Button>
                           <Button
                             variant="danger"
@@ -245,7 +247,7 @@ export function SaveCenterPanel({ view }: SaveCenterPanelProps) {
                             disabled={isPending || !view.canSave}
                           >
                             <Trash2 className="size-3.5" />
-                            Delete
+                            {t("common.delete")}
                           </Button>
                         </div>
                       </TableCell>
@@ -256,7 +258,7 @@ export function SaveCenterPanel({ view }: SaveCenterPanelProps) {
             </div>
             {view.slots.length === 0 ? (
               <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-muted-foreground">
-                No save slots yet for this career.
+                {t("saveCenter.empty")}
               </div>
             ) : null}
           </CardContent>

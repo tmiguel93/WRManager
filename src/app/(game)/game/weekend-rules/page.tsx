@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { PageHeader } from "@/components/common/page-header";
 import { WeekendRulesCenter } from "@/components/game/weekend-rules-center";
+import { getServerTranslator } from "@/i18n/server";
 import { getWeekendRulesCenterView } from "@/server/queries/weekend-rules";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +11,7 @@ interface WeekendRulesPageProps {
 }
 
 export default async function WeekendRulesPage({ searchParams }: WeekendRulesPageProps) {
+  const { t } = await getServerTranslator();
   const { category } = await searchParams;
   const view = await getWeekendRulesCenterView(category);
 
@@ -17,9 +19,9 @@ export default async function WeekendRulesPage({ searchParams }: WeekendRulesPag
     return (
       <div className="space-y-8">
         <PageHeader
-          eyebrow="Weekend Engine"
-          title="Weekend Rules"
-          description="No ruleset data available for the current save context."
+          eyebrow={t("weekendRules.eyebrow")}
+          title={t("weekendRules.title")}
+          description={t("common.noData")}
         />
       </div>
     );
@@ -28,9 +30,9 @@ export default async function WeekendRulesPage({ searchParams }: WeekendRulesPag
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Weekend Engine"
-        title="Weekend Rules"
-        description="Category-specific rulesets, session formats and race weekend generation layer for multi-series simulation."
+        eyebrow={t("weekendRules.eyebrow")}
+        title={t("weekendRules.title")}
+        description={t("weekendRules.description")}
         badge={`${view.selectedCategory.code} · ${view.seasonYear}`}
       />
 

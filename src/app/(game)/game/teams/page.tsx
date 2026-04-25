@@ -5,18 +5,20 @@ import { EntityAvatar } from "@/components/common/entity-avatar";
 import { PageHeader } from "@/components/common/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getServerTranslator } from "@/i18n/server";
 import { formatCompactMoney } from "@/lib/format";
 import { getTeamsDirectory } from "@/server/queries/roster";
 
 export default async function TeamsPage() {
+  const { t } = await getServerTranslator();
   const teams = await getTeamsDirectory().catch(() => []);
 
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Constructors"
-        title="Teams Registry"
-        description="Real multi-series teams with linked drivers, staff leads, financial profile and direct detail access."
+        eyebrow={t("teams.eyebrow")}
+        title={t("teams.title")}
+        description={t("teams.description")}
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -35,17 +37,17 @@ export default async function TeamsPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-xl border border-white/10 bg-white/5 p-2">
-                  <p className="text-muted-foreground">Budget</p>
+                  <p className="text-muted-foreground">{t("common.budget")}</p>
                   <p className="font-semibold text-cyan-100">{formatCompactMoney(team.budget)}</p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 p-2">
-                  <p className="text-muted-foreground">Reputation</p>
+                  <p className="text-muted-foreground">{t("common.reputation")}</p>
                   <p className="font-semibold">{team.reputation}</p>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Drivers</p>
+                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("common.drivers")}</p>
                 <div className="flex flex-wrap gap-2">
                   {team.drivers.slice(0, 3).map((driver) => (
                     <EntityAvatar
@@ -60,14 +62,14 @@ export default async function TeamsPage() {
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Staff Leads</p>
+                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("teams.staffLeads")}</p>
                 <div className="space-y-1 text-xs text-muted-foreground">
                   {team.staff.map((member) => (
                     <p key={member.id}>
                       {member.role}: <span className="text-foreground">{member.name}</span>
                     </p>
                   ))}
-                  {team.staff.length === 0 ? <p>Staff roster pending.</p> : null}
+                  {team.staff.length === 0 ? <p>{t("teams.staffPending")}</p> : null}
                 </div>
               </div>
 
@@ -75,7 +77,7 @@ export default async function TeamsPage() {
                 href={`/game/teams/${team.id}`}
                 className="inline-flex w-full items-center justify-center rounded-xl border border-cyan-300/35 bg-cyan-500/10 px-3 py-2 text-sm font-medium text-cyan-100 transition hover:bg-cyan-500/20"
               >
-                Open Team Detail
+                {t("teams.openDetail")}
               </Link>
             </CardContent>
           </Card>

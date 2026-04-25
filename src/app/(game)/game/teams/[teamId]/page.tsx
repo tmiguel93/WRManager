@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { getServerTranslator } from "@/i18n/server";
 import { formatCompactMoney, formatMoney } from "@/lib/format";
 import { getTeamDetail } from "@/server/queries/roster";
 
@@ -17,6 +18,7 @@ interface TeamDetailPageProps {
 }
 
 export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
+  const { t } = await getServerTranslator();
   const { teamId } = await params;
   const team = await getTeamDetail(teamId);
 
@@ -35,14 +37,14 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
           render={<Link href="/game/teams" className="border border-white/10 bg-white/5 hover:bg-white/10" />}
         >
           <ArrowLeft className="mr-1 size-3.5" />
-          Back to Teams
+          {t("teams.back")}
         </Button>
       </div>
 
       <PageHeader
-        eyebrow="Team Detail"
+        eyebrow={t("teams.detailEyebrow")}
         title={team.name}
-        description="Complete team dossier with active lineup, staff hierarchy, suppliers, sponsors and facilities."
+        description={t("teams.detailDescription")}
         badge={`${team.category.code} - REP ${team.reputation}`}
       />
 
@@ -54,15 +56,15 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
           <CardContent className="space-y-4 pt-5">
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-muted-foreground">Budget</p>
+                <p className="text-xs text-muted-foreground">{t("common.budget")}</p>
                 <p className="text-lg font-semibold">{formatCompactMoney(team.budget)}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-muted-foreground">Fanbase</p>
+                <p className="text-xs text-muted-foreground">{t("common.fanbase")}</p>
                 <p className="text-lg font-semibold">{team.fanbase}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-muted-foreground">Headquarters</p>
+                <p className="text-xs text-muted-foreground">{t("common.headquarters")}</p>
                 <p className="text-sm font-semibold">{team.headquarters}</p>
               </div>
             </div>
@@ -72,7 +74,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Lineup Overview</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("teams.lineupOverview")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {team.drivers.map((driver) => (
@@ -91,7 +93,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                   <div>
                     <p className="text-sm font-medium">{driver.displayName}</p>
                     <p className="text-xs text-muted-foreground">
-                      {driver.contracts[0]?.role ?? "No active role"} - OVR {driver.overall}
+                      {driver.contracts[0]?.role ?? t("teams.noActiveRole")} - OVR {driver.overall}
                     </p>
                   </div>
                 </div>
@@ -102,7 +104,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
             ))}
             {team.drivers.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-muted-foreground">
-                No registered driver lineup.
+                {t("teams.noDriverLineup")}
               </div>
             ) : null}
           </CardContent>
@@ -112,7 +114,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
       <section className="grid gap-5 xl:grid-cols-2">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Staff Hierarchy</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("teams.staffHierarchy")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {team.staff.map((member) => (
@@ -141,7 +143,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Active Contracts</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("teams.activeContracts")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {team.supplierContracts.map((contract) => (
@@ -151,7 +153,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                   <Badge className="rounded-full border border-white/15 bg-white/10 text-xs">{contract.supplier.type}</Badge>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Annual cost {formatCompactMoney(contract.annualCost)} - PERF {contract.supplier.performance}
+                  {t("teams.annualCost")} {formatCompactMoney(contract.annualCost)} - PERF {contract.supplier.performance}
                 </p>
               </div>
             ))}
@@ -164,7 +166,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                   </Badge>
                 </div>
                 <p className="mt-1 text-xs text-emerald-100/80">
-                  Fixed value {formatCompactMoney(contract.fixedValue)} - confidence {contract.confidence}
+                  {t("teams.fixedValue")} {formatCompactMoney(contract.fixedValue)} - {t("teams.confidence")} {contract.confidence}
                 </p>
               </div>
             ))}
@@ -175,7 +177,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
       <section className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Facilities Snapshot</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("teams.facilitiesSnapshot")}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
             {team.facilities.map((facility) => (
@@ -193,20 +195,20 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Current Car</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("teams.currentCar")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {latestCar ? (
               <>
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
                   <p className="text-sm font-semibold">{latestCar.modelName}</p>
-                  <p className="text-xs text-muted-foreground">Season {latestCar.seasonYear}</p>
+                  <p className="text-xs text-muted-foreground">{t("teams.season")} {latestCar.seasonYear}</p>
                 </div>
                 <div className="grid gap-2 text-xs">
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-2">Base performance: {latestCar.basePerformance}</div>
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-2">Reliability: {latestCar.reliability}</div>
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-2">Weight: {latestCar.weight}kg</div>
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-2">Downforce: {latestCar.downforce}</div>
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-2">{t("teams.basePerformance")}: {latestCar.basePerformance}</div>
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-2">{t("teams.reliability")}: {latestCar.reliability}</div>
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-2">{t("teams.weight")}: {latestCar.weight}kg</div>
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-2">{t("teams.downforce")}: {latestCar.downforce}</div>
                 </div>
                 <div className="space-y-2">
                   {latestCar.specs.map((spec) => (
@@ -218,22 +220,26 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
               </>
             ) : (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-muted-foreground">
-                No car specification data yet.
+                {t("teams.noCarData")}
               </div>
             )}
 
             {team.teamHistories[0] ? (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-muted-foreground">
-                Last season ({team.teamHistories[0].seasonYear}): {team.teamHistories[0].wins} wins,{" "}
-                {team.teamHistories[0].podiums} podiums, {team.teamHistories[0].points} points.
+                {t("teams.lastSeason", undefined, {
+                  year: team.teamHistories[0].seasonYear,
+                  wins: team.teamHistories[0].wins,
+                  podiums: team.teamHistories[0].podiums,
+                  points: team.teamHistories[0].points,
+                })}
               </div>
             ) : null}
 
             <div className="rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-3 text-xs text-cyan-100">
-              Program philosophy: {team.philosophy}
+              {t("teams.programPhilosophy")}: {team.philosophy}
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-muted-foreground">
-              Annual payroll baseline: {formatMoney(team.drivers.reduce((total, driver) => total + driver.salary, 0))}
+              {t("teams.annualPayroll")}: {formatMoney(team.drivers.reduce((total, driver) => total + driver.salary, 0))}
             </div>
           </CardContent>
         </Card>

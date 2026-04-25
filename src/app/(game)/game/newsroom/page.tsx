@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { PageHeader } from "@/components/common/page-header";
 import { NewsroomCenter } from "@/components/game/newsroom-center";
+import { getServerTranslator } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import { getNewsroomHubView } from "@/server/queries/motorsport-world";
 
@@ -10,6 +11,7 @@ interface NewsroomPageProps {
 }
 
 export default async function NewsroomPage({ searchParams }: NewsroomPageProps) {
+  const { t } = await getServerTranslator();
   const { category } = await searchParams;
   const view = await getNewsroomHubView(category);
 
@@ -17,9 +19,9 @@ export default async function NewsroomPage({ searchParams }: NewsroomPageProps) 
     return (
       <div className="space-y-8">
         <PageHeader
-          eyebrow="Media and Inbox"
-          title="Newsroom"
-          description="No newsroom context available for the current save."
+          eyebrow={t("newsroom.eyebrow")}
+          title={t("newsroom.title")}
+          description={t("common.noData")}
         />
       </div>
     );
@@ -28,9 +30,9 @@ export default async function NewsroomPage({ searchParams }: NewsroomPageProps) 
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Media and Inbox"
-        title="Newsroom"
-        description="Monitor inbox priorities, global headlines, transfer rumors and paddock intelligence."
+        eyebrow={t("newsroom.eyebrow")}
+        title={t("newsroom.title")}
+        description={t("newsroom.description")}
         badge={`${view.selectedCategory.code} - ${view.seasonYear}`}
       />
 

@@ -9,6 +9,7 @@ import { TeamLogoMark } from "@/components/common/team-logo-mark";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getServerTranslator } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import { getChampionshipStandingsView } from "@/server/queries/championship";
 
@@ -17,6 +18,7 @@ interface StandingsPageProps {
 }
 
 export default async function StandingsPage({ searchParams }: StandingsPageProps) {
+  const { t } = await getServerTranslator();
   const { category } = await searchParams;
   const view = await getChampionshipStandingsView(category);
 
@@ -24,9 +26,9 @@ export default async function StandingsPage({ searchParams }: StandingsPageProps
     return (
       <div className="space-y-8">
         <PageHeader
-          eyebrow="Competitive Map"
-          title="Championship Standings"
-          description="No standings data available for the current save context."
+          eyebrow={t("standings.eyebrow")}
+          title={t("standings.title")}
+          description={t("standings.noData")}
         />
       </div>
     );
@@ -39,9 +41,9 @@ export default async function StandingsPage({ searchParams }: StandingsPageProps
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Competitive Map"
-        title="Championship Standings"
-        description="Live tables for drivers, teams and manufacturers with previous-season historical champions."
+        eyebrow={t("standings.eyebrow")}
+        title={t("standings.title")}
+        description={t("standings.description")}
         badge={`${view.selectedCategory.code} · ${view.seasonYear}`}
       />
 
@@ -67,25 +69,25 @@ export default async function StandingsPage({ searchParams }: StandingsPageProps
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Season"
+          label={t("standings.season")}
           value={`${view.seasonYear}`}
           delta={0}
           icon={<Trophy className="size-4" />}
         />
         <KpiCard
-          label="Leader Points"
+          label={t("standings.leaderPoints")}
           value={`${leaderDriver?.points ?? 0}`}
           delta={(leaderDriver?.points ?? 0) - (view.drivers[1]?.points ?? 0)}
           icon={<Medal className="size-4" />}
         />
         <KpiCard
-          label="Team Leader"
+          label={t("standings.teamLeader")}
           value={leaderTeam ? `${leaderTeam.points} pts` : "N/A"}
           delta={(leaderTeam?.points ?? 0) - (view.teams[1]?.points ?? 0)}
           icon={<Shield className="size-4" />}
         />
         <KpiCard
-          label="Manufacturer Leader"
+          label={t("standings.manufacturerLeader")}
           value={leaderManufacturer ? `${leaderManufacturer.points} pts` : "N/A"}
           delta={(leaderManufacturer?.points ?? 0) - (view.manufacturers[1]?.points ?? 0)}
           icon={<Trophy className="size-4" />}
@@ -95,20 +97,20 @@ export default async function StandingsPage({ searchParams }: StandingsPageProps
       <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Driver Championship</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("standings.driverChampionship")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Pos</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Driver</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Team</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Pts</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">W</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Pod</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Poles</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.position")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("raceCenter.driver")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("raceCenter.team")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.points")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.wins")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.podiums")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.poles")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -141,7 +143,7 @@ export default async function StandingsPage({ searchParams }: StandingsPageProps
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Season History</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("standings.seasonHistory")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {view.history ? (
@@ -150,22 +152,22 @@ export default async function StandingsPage({ searchParams }: StandingsPageProps
                   <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
                     {view.history.seasonYear} · {view.history.status}
                   </p>
-                  <p className="mt-2 text-sm text-muted-foreground">Previous season champions</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{t("standings.previousChampions")}</p>
                 </div>
                 <div className="rounded-2xl border border-amber-300/25 bg-amber-500/10 p-3">
-                  <p className="text-xs text-amber-100/90">Driver Champion</p>
+                  <p className="text-xs text-amber-100/90">{t("standings.driverChampion")}</p>
                   <p className="mt-1 text-sm font-semibold text-amber-100">
                     {view.history.topDriver ? `${view.history.topDriver.name} · ${view.history.topDriver.points} pts` : "N/A"}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-cyan-300/25 bg-cyan-500/10 p-3">
-                  <p className="text-xs text-cyan-100/90">Team Champion</p>
+                  <p className="text-xs text-cyan-100/90">{t("standings.teamChampion")}</p>
                   <p className="mt-1 text-sm font-semibold text-cyan-100">
                     {view.history.topTeam ? `${view.history.topTeam.name} · ${view.history.topTeam.points} pts` : "N/A"}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-emerald-300/25 bg-emerald-500/10 p-3">
-                  <p className="text-xs text-emerald-100/90">Manufacturer Champion</p>
+                  <p className="text-xs text-emerald-100/90">{t("standings.manufacturerChampion")}</p>
                   <p className="mt-1 text-sm font-semibold text-emerald-100">
                     {view.history.topManufacturer
                       ? `${view.history.topManufacturer.manufacturerName} · ${view.history.topManufacturer.points} pts`
@@ -175,7 +177,7 @@ export default async function StandingsPage({ searchParams }: StandingsPageProps
               </>
             ) : (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-muted-foreground">
-                Historical standings are not available yet for this category.
+                {t("standings.noHistory")}
               </div>
             )}
           </CardContent>
@@ -185,18 +187,18 @@ export default async function StandingsPage({ searchParams }: StandingsPageProps
       <section className="grid gap-5 xl:grid-cols-2">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Team Championship</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("standings.teamChampionship")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Pos</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Team</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Pts</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">W</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Pod</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.position")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("raceCenter.team")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.points")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.wins")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.podiums")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -231,7 +233,7 @@ export default async function StandingsPage({ searchParams }: StandingsPageProps
                           <span>{row.podiums}</span>
                           {row.isManagedTeam ? (
                             <Badge className="team-outline team-accent-text rounded-full border bg-white/10 text-[10px]">
-                              Managed
+                              {t("standings.managed")}
                             </Badge>
                           ) : null}
                         </div>
@@ -246,17 +248,17 @@ export default async function StandingsPage({ searchParams }: StandingsPageProps
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Manufacturer Championship</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("standings.manufacturerChampionship")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Pos</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Manufacturer</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Pts</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">W</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.position")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.manufacturerLeader")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.points")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("standings.wins")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -6,6 +6,7 @@ import { EntityAvatar } from "@/components/common/entity-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useI18n } from "@/i18n/client";
 
 interface CompareDriver {
   id: string;
@@ -20,6 +21,8 @@ interface CompareDriver {
 }
 
 function CompareCard({ label, driver }: { label: string; driver: CompareDriver | null }) {
+  const { t } = useI18n();
+
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
       <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
@@ -42,21 +45,21 @@ function CompareCard({ label, driver }: { label: string; driver: CompareDriver |
           <div className="space-y-2">
             <div>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span>Overall</span>
+                <span>{t("drivers.overall")}</span>
                 <span>{driver.overall}</span>
               </div>
               <Progress value={driver.overall} />
             </div>
             <div>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span>Potential</span>
+                <span>{t("common.potential")}</span>
                 <span>{driver.potential}</span>
               </div>
               <Progress value={driver.potential} />
             </div>
             <div>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span>Reputation</span>
+                <span>{t("common.reputation")}</span>
                 <span>{driver.reputation}</span>
               </div>
               <Progress value={driver.reputation} />
@@ -64,13 +67,14 @@ function CompareCard({ label, driver }: { label: string; driver: CompareDriver |
           </div>
         </div>
       ) : (
-        <p className="mt-2 text-sm text-muted-foreground">Select a driver.</p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("drivers.selectDriver")}</p>
       )}
     </div>
   );
 }
 
 export function DriverComparePanel({ drivers }: { drivers: CompareDriver[] }) {
+  const { t } = useI18n();
   const [leftId, setLeftId] = React.useState(drivers[0]?.id ?? "");
   const [rightId, setRightId] = React.useState(drivers[1]?.id ?? "");
 
@@ -90,10 +94,10 @@ export function DriverComparePanel({ drivers }: { drivers: CompareDriver[] }) {
     <Card className="premium-card">
       <CardHeader className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className="font-heading text-xl">Quick Compare</CardTitle>
+          <CardTitle className="font-heading text-xl">{t("drivers.compareTitle")}</CardTitle>
           {leftDriver && rightDriver ? (
             <Badge className="rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
-              Delta {leftAdvantage > 0 ? "+" : ""}
+              {t("drivers.compareDelta")} {leftAdvantage > 0 ? "+" : ""}
               {leftAdvantage}
             </Badge>
           ) : null}
@@ -124,8 +128,8 @@ export function DriverComparePanel({ drivers }: { drivers: CompareDriver[] }) {
         </div>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
-        <CompareCard label="Driver A" driver={leftDriver} />
-        <CompareCard label="Driver B" driver={rightDriver} />
+        <CompareCard label={t("drivers.driverA")} driver={leftDriver} />
+        <CompareCard label={t("drivers.driverB")} driver={rightDriver} />
       </CardContent>
     </Card>
   );

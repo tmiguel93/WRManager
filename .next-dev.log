@@ -1,0 +1,21 @@
+
+> world-motorsport-manager@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.124:3000
+- Environments: .env
+✓ Ready in 735ms
+
+ GET / 200 in 1345ms (next.js: 500ms, application-code: 845ms)
+ GET / 200 in 173ms (next.js: 8ms, application-code: 165ms)
+ GET / 200 in 201ms (next.js: 23ms, application-code: 178ms)
+ GET / 200 in 154ms (next.js: 11ms, application-code: 143ms)
+✓ Compiled in 1396ms
+✓ Compiled in 298ms
+ GET / 200 in 559ms (next.js: 197ms, application-code: 363ms)
+ GET / 200 in 175ms (next.js: 4ms, application-code: 171ms)
+ GET /game/hq 200 in 334ms (next.js: 106ms, application-code: 228ms)
+✓ Compiled in 1551ms
+✓ Compiled in 284ms

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { getServerTranslator } from "@/i18n/server";
 import { formatAge, formatCompactMoney, formatMoney } from "@/lib/format";
 import { getDriverDetail } from "@/server/queries/roster";
 
@@ -33,6 +34,7 @@ function toAttributeRows(attributes: unknown) {
 }
 
 export default async function DriverDetailPage({ params }: DriverDetailPageProps) {
+  const { t } = await getServerTranslator();
   const { driverId } = await params;
   const driver = await getDriverDetail(driverId);
 
@@ -52,14 +54,14 @@ export default async function DriverDetailPage({ params }: DriverDetailPageProps
           render={<Link href="/game/drivers" className="border border-white/10 bg-white/5 hover:bg-white/10" />}
         >
           <ArrowLeft className="mr-1 size-3.5" />
-          Back to Drivers
+          {t("drivers.back")}
         </Button>
       </div>
 
       <PageHeader
-        eyebrow="Driver Detail"
+        eyebrow={t("drivers.detailEyebrow")}
         title={driver.displayName}
-        description="Comprehensive profile with real-world identity, trait stack and active contract history."
+        description={t("drivers.detailDescription")}
         badge={`${driver.currentCategory?.code ?? "FREE AGENT"} - OVR ${driver.overall}`}
       />
 
@@ -77,17 +79,17 @@ export default async function DriverDetailPage({ params }: DriverDetailPageProps
               <div className="space-y-2">
                 <p className="text-lg font-semibold">{driver.displayName}</p>
                 <p className="text-sm text-muted-foreground">
-                  {driver.currentTeam?.name ?? "Free Agent"} - {driver.currentCategory?.name ?? "Open Market"}
+                  {driver.currentTeam?.name ?? t("common.freeAgent")} - {driver.currentCategory?.name ?? t("common.openMarket")}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Badge className="rounded-full border border-white/15 bg-white/10 text-xs">
-                    Age {formatAge(driver.birthDate)}
+                    {t("common.age")} {formatAge(driver.birthDate)}
                   </Badge>
                   <Badge className="rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100 text-xs">
-                    Potential {driver.potential}
+                    {t("common.potential")} {driver.potential}
                   </Badge>
                   <Badge className="rounded-full border border-emerald-300/35 bg-emerald-500/10 text-emerald-100 text-xs">
-                    Morale {driver.morale}
+                    {t("common.morale")} {driver.morale}
                   </Badge>
                 </div>
               </div>
@@ -95,15 +97,15 @@ export default async function DriverDetailPage({ params }: DriverDetailPageProps
 
             <div className="mt-5 grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-muted-foreground">Market Value</p>
+                <p className="text-xs text-muted-foreground">{t("drivers.marketValue")}</p>
                 <p className="text-lg font-semibold">{formatCompactMoney(driver.marketValue)}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-muted-foreground">Base Salary</p>
+                <p className="text-xs text-muted-foreground">{t("drivers.baseSalary")}</p>
                 <p className="text-lg font-semibold">{formatCompactMoney(driver.salary)}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-muted-foreground">Global Reputation</p>
+                <p className="text-xs text-muted-foreground">{t("drivers.globalReputation")}</p>
                 <p className="text-lg font-semibold">{driver.reputation}</p>
               </div>
             </div>
@@ -112,12 +114,12 @@ export default async function DriverDetailPage({ params }: DriverDetailPageProps
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Trait & Identity</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("drivers.traitIdentity")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-4">
-              <p className="text-xs uppercase tracking-[0.14em] text-cyan-100/80">Primary Trait</p>
-              <p className="mt-1 text-sm font-semibold text-cyan-50">{primaryTrait?.name ?? "No primary trait"}</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-cyan-100/80">{t("drivers.primaryTrait")}</p>
+              <p className="mt-1 text-sm font-semibold text-cyan-50">{primaryTrait?.name ?? t("drivers.noPrimaryTrait")}</p>
               <p className="mt-1 text-xs text-cyan-100/70">{driver.personality}</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -131,12 +133,12 @@ export default async function DriverDetailPage({ params }: DriverDetailPageProps
               ))}
               {driver.traits.length === 0 ? (
                 <Badge className="rounded-full border border-white/15 bg-white/10 text-xs text-muted-foreground">
-                  No registered traits
+                  {t("drivers.noRegisteredTraits")}
                 </Badge>
               ) : null}
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-muted-foreground">
-              Preferred disciplines: {Array.isArray(driver.preferredDisciplines) ? driver.preferredDisciplines.join(", ") : "N/A"}
+              {t("drivers.preferredDisciplines")}: {Array.isArray(driver.preferredDisciplines) ? driver.preferredDisciplines.join(", ") : t("common.notAvailable")}
             </div>
           </CardContent>
         </Card>
@@ -145,7 +147,7 @@ export default async function DriverDetailPage({ params }: DriverDetailPageProps
       <section className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Attribute Matrix</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("drivers.attributeMatrix")}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
             {attributeRows.map((attribute) => (
@@ -162,7 +164,7 @@ export default async function DriverDetailPage({ params }: DriverDetailPageProps
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Contract Ledger</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("drivers.contractLedger")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {driver.contracts.map((contract) => (
@@ -177,16 +179,16 @@ export default async function DriverDetailPage({ params }: DriverDetailPageProps
                   <Badge className="rounded-full border border-white/15 bg-white/10 text-xs">{contract.status}</Badge>
                 </div>
                 <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                  <p>Salary: {formatMoney(contract.annualSalary)}</p>
+                  <p>{t("common.salary")}: {formatMoney(contract.annualSalary)}</p>
                   <p>
-                    Term: {contract.startDate.toISOString().slice(0, 10)} to {contract.endDate.toISOString().slice(0, 10)}
+                    {t("common.term")}: {contract.startDate.toISOString().slice(0, 10)} to {contract.endDate.toISOString().slice(0, 10)}
                   </p>
                 </div>
               </div>
             ))}
             {driver.contracts.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
-                No active contract registered.
+                {t("drivers.noActiveContract")}
               </div>
             ) : null}
           </CardContent>
@@ -195,22 +197,22 @@ export default async function DriverDetailPage({ params }: DriverDetailPageProps
 
       <Card className="premium-card">
         <CardHeader>
-          <CardTitle className="font-heading text-xl">Scouting Summary</CardTitle>
+          <CardTitle className="font-heading text-xl">{t("drivers.scoutingSummary")}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-3">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-            <p className="text-xs text-muted-foreground">Short-term impact</p>
-            <p className="mt-1 text-lg font-semibold">{driver.overall >= 86 ? "Title-level" : "Development candidate"}</p>
+            <p className="text-xs text-muted-foreground">{t("drivers.shortTermImpact")}</p>
+            <p className="mt-1 text-lg font-semibold">{driver.overall >= 86 ? t("drivers.titleLevel") : t("drivers.developmentCandidate")}</p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-            <p className="text-xs text-muted-foreground">Long-term ceiling</p>
-            <p className="mt-1 text-lg font-semibold">{driver.potential >= 92 ? "Elite potential" : "Solid growth profile"}</p>
+            <p className="text-xs text-muted-foreground">{t("drivers.longTermCeiling")}</p>
+            <p className="mt-1 text-lg font-semibold">{driver.potential >= 92 ? t("drivers.elitePotential") : t("drivers.solidGrowth")}</p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-            <p className="text-xs text-muted-foreground">Commercial value</p>
+            <p className="text-xs text-muted-foreground">{t("drivers.commercialValue")}</p>
             <p className="mt-1 flex items-center gap-2 text-lg font-semibold">
               <Trophy className="size-4 text-amber-300" />
-              Reputation {driver.reputation}
+              {t("common.reputation")} {driver.reputation}
             </p>
           </div>
         </CardContent>

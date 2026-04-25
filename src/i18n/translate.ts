@@ -1,4 +1,5 @@
 import type { AppLocale } from "@/i18n/config";
+import { extraMessages } from "@/i18n/extra-messages";
 import { messages } from "@/i18n/messages";
 
 function readPath(source: Record<string, unknown>, path: string): unknown {
@@ -25,15 +26,20 @@ export function translate(
 ): string {
   const localeDict = messages[locale] as Record<string, unknown>;
   const defaultDict = messages["en"] as Record<string, unknown>;
+  const extraLocaleDict = extraMessages[locale] as Record<string, unknown>;
+  const extraDefaultDict = extraMessages["en"] as Record<string, unknown>;
 
   const localized = readPath(localeDict, key);
+  const extraLocalized = readPath(extraLocaleDict, key);
   const english = readPath(defaultDict, key);
+  const extraEnglish = readPath(extraDefaultDict, key);
   const picked =
     (typeof localized === "string" ? localized : undefined) ??
+    (typeof extraLocalized === "string" ? extraLocalized : undefined) ??
     (typeof english === "string" ? english : undefined) ??
+    (typeof extraEnglish === "string" ? extraEnglish : undefined) ??
     fallback ??
     key;
 
   return interpolate(picked, values);
 }
-

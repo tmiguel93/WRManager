@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { formatCompactMoney, formatDate, formatMoney } from "@/lib/format";
+import { getServerTranslator } from "@/i18n/server";
 import { getActiveCareerContext } from "@/server/queries/career";
 import { getDashboardSnapshot } from "@/server/queries/dashboard";
 
@@ -20,6 +21,7 @@ function toPercentDelta(current: number, previous: number) {
 }
 
 export default async function HqPage() {
+  const { t } = await getServerTranslator();
   const activeCareer = await getActiveCareerContext();
   const snapshot = await getDashboardSnapshot({
     careerId: activeCareer.careerId,
@@ -52,9 +54,9 @@ export default async function HqPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Race Command"
-        title="Dashboard HQ"
-        description={`Active career ${activeCareer.careerName} with finance, morale and competition pulse in real time.`}
+        eyebrow={t("hq.eyebrow")}
+        title={t("hq.title")}
+        description={t("hq.description", undefined, { careerName: activeCareer.careerName })}
         badge={`${activeCareer.categoryCode} - ${activeCareer.teamName}`}
       />
 
@@ -67,10 +69,10 @@ export default async function HqPage() {
             priority
           />
           <div>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Team Identity</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("hq.teamIdentity")}</p>
             <p className="mt-1 font-heading text-2xl">{activeCareer.teamName}</p>
             <p className="text-sm text-muted-foreground">
-              {activeCareer.teamIsCustom ? "Custom team program" : "Existing team operation"} · {activeCareer.categoryCode}
+              {activeCareer.teamIsCustom ? t("hq.customProgram") : t("hq.existingOperation")} · {activeCareer.categoryCode}
             </p>
           </div>
           <div className="flex gap-2">
@@ -85,26 +87,29 @@ export default async function HqPage() {
         <Card className="premium-card team-outline team-gradient">
           <CardHeader>
             <CardTitle className="font-heading text-xl">
-              {activeCareer.teamIsCustom ? "Your Team Was Founded" : "Program Snapshot"}
+              {activeCareer.teamIsCustom ? t("hq.foundedTitle") : t("hq.programSnapshot")}
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl border border-white/15 bg-black/20 p-3">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Initial Cost</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("hq.initialCost")}</p>
               <p className="mt-2 text-base font-semibold">{formatCompactMoney(snapshot.foundationSummary.initialCost)}</p>
             </div>
             <div className="rounded-2xl border border-white/15 bg-black/20 p-3">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Contracts Closed</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("hq.contractsClosed")}</p>
               <p className="mt-2 text-base font-semibold">
-                {snapshot.foundationSummary.contractsClosed.drivers} drivers / {snapshot.foundationSummary.contractsClosed.staff} staff
+                {t("hq.contractsClosedValue", undefined, {
+                  drivers: snapshot.foundationSummary.contractsClosed.drivers,
+                  staff: snapshot.foundationSummary.contractsClosed.staff,
+                })}
               </p>
             </div>
             <div className="rounded-2xl border border-white/15 bg-black/20 p-3">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Starting Morale</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("hq.startingMorale")}</p>
               <p className="mt-2 text-base font-semibold">{snapshot.foundationSummary.morale}/100</p>
             </div>
             <div className="rounded-2xl border border-white/15 bg-black/20 p-3">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Media Expectation</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("hq.mediaExpectation")}</p>
               <p className="mt-2 text-sm font-medium">{snapshot.foundationSummary.mediaExpectation}</p>
             </div>
           </CardContent>
@@ -113,25 +118,25 @@ export default async function HqPage() {
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Cash Balance"
+          label={t("hq.cashBalance")}
           value={formatCompactMoney(snapshot.kpis.cashBalance)}
           delta={cashDelta}
           icon={<Coins className="size-4" />}
         />
         <KpiCard
-          label="Monthly Burn"
+          label={t("hq.monthlyBurn")}
           value={formatCompactMoney(Math.abs(snapshot.kpis.monthlyBurnRate))}
           delta={-Math.abs(snapshot.kpis.monthlyBurnRate) / 500_000}
           icon={<ShieldAlert className="size-4" />}
         />
         <KpiCard
-          label="Team Morale"
+          label={t("hq.teamMorale")}
           value={`${snapshot.kpis.morale}/100`}
           delta={moraleDelta}
           icon={<Sparkles className="size-4" />}
         />
         <KpiCard
-          label="Competitive Index"
+          label={t("hq.competitiveIndex")}
           value={`${snapshot.kpis.competitiveIndex}/100`}
           delta={competitiveDelta}
           icon={<TrendingUp className="size-4" />}
@@ -141,7 +146,7 @@ export default async function HqPage() {
       <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Alert Center</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("hq.alertCenter")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {snapshot.alerts.map((alert) => (
@@ -168,13 +173,13 @@ export default async function HqPage() {
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Race Weekend Radar</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("hq.weekendRadar")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {nextAgenda ? (
               <div className="space-y-3 rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-4">
                 <Badge className="rounded-full border border-cyan-300/40 bg-cyan-300/10 text-cyan-100">
-                  Round {nextAgenda.round}
+                  {t("common.round")} {nextAgenda.round}
                 </Badge>
                 <p className="font-heading text-lg">{nextAgenda.name}</p>
                 <p className="text-sm text-muted-foreground">{nextAgenda.circuitName}</p>
@@ -184,15 +189,15 @@ export default async function HqPage() {
                 </div>
                 <div className="inline-flex items-center rounded-full border border-amber-300/40 bg-amber-400/10 px-3 py-1 text-xs text-amber-100">
                   <CalendarClock className="mr-1 size-3" />
-                  {nextAgenda.daysUntil} day(s) remaining
+                  {t("common.daysRemaining", undefined, { count: nextAgenda.daysUntil })}
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No upcoming event scheduled in this category.</p>
+              <p className="text-sm text-muted-foreground">{t("hq.noUpcomingEvent")}</p>
             )}
 
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Immediate priorities</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("hq.immediatePriorities")}</p>
               {snapshot.priorities.map((priority) => (
                 <div key={priority} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm">
                   {priority}
@@ -206,17 +211,17 @@ export default async function HqPage() {
       <section className="grid gap-5 xl:grid-cols-2">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Cash Flow Trend</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("hq.cashFlowTrend")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <HqCashflowChart data={snapshot.cashFlow} />
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-muted-foreground">Current cash</p>
+                <p className="text-xs text-muted-foreground">{t("hq.currentCash")}</p>
                 <p className="text-lg font-semibold">{formatMoney(snapshot.kpis.cashBalance)}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-muted-foreground">Monthly burn projection</p>
+                <p className="text-xs text-muted-foreground">{t("hq.monthlyBurnProjection")}</p>
                 <p className="text-lg font-semibold text-amber-100">{formatMoney(Math.abs(snapshot.kpis.monthlyBurnRate))}</p>
               </div>
             </div>
@@ -225,17 +230,17 @@ export default async function HqPage() {
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Team Evolution</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("hq.teamEvolution")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <HqEvolutionChart data={snapshot.evolution} />
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-muted-foreground">Development pace</p>
+                <p className="text-xs text-muted-foreground">{t("hq.developmentPace")}</p>
                 <p className="text-lg font-semibold">{snapshot.kpis.developmentPace}/100</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <p className="text-xs text-muted-foreground">Facilities momentum</p>
+                <p className="text-xs text-muted-foreground">{t("hq.facilitiesMomentum")}</p>
                 <p className="text-lg font-semibold">{developmentDelta.toFixed(1)}%</p>
               </div>
             </div>
@@ -245,7 +250,7 @@ export default async function HqPage() {
 
       <Card className="premium-card">
         <CardHeader>
-          <CardTitle className="font-heading text-xl">Driver Morale Pulse</CardTitle>
+          <CardTitle className="font-heading text-xl">{t("hq.driverMoralePulse")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {snapshot.driverPulse.map((driver) => (
@@ -276,7 +281,7 @@ export default async function HqPage() {
           {snapshot.driverPulse.length === 0 ? (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
               <AlertTriangle className="mb-2 size-4 text-amber-300" />
-              No active roster linked to this career yet.
+              {t("hq.noRoster")}
             </div>
           ) : null}
         </CardContent>

@@ -3,23 +3,25 @@
 import { PageHeader } from "@/components/common/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getServerTranslator } from "@/i18n/server";
 import { getAssetRegistryView } from "@/server/queries/world";
 
 export default async function AssetsPage() {
+  const { t } = await getServerTranslator();
   const entries = await getAssetRegistryView().catch(() => []);
 
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Licensing Pipeline"
-        title="Asset Registry"
-        description="Track visual assets with premium fallbacks and a safe path for authorized media packs."
+        eyebrow={t("assets.eyebrow")}
+        title={t("assets.title")}
+        description={t("assets.description")}
       />
 
       <Card className="premium-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-heading text-xl">
-            <ShieldCheck className="size-5 text-emerald-300" /> Compliance-first asset flow
+            <ShieldCheck className="size-5 text-emerald-300" /> {t("assets.complianceFlow")}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3">
@@ -30,18 +32,18 @@ export default async function AssetsPage() {
             >
               <div>
                 <p className="text-sm font-medium">
-                  {entry.entityType} - {entry.assetType}
+                  {t("assets.entityAsset", undefined, { entityType: entry.entityType, assetType: entry.assetType })}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {entry.entityName} - source pack: {entry.packSource}
+                  {t("assets.sourcePack", undefined, { entityName: entry.entityName, packSource: entry.packSource })}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge className={entry.approved ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-200"}>
-                  {entry.approved ? "Approved" : "Pending"}
+                  {entry.approved ? t("common.approved") : t("common.pending")}
                 </Badge>
                 <Badge className={entry.isPlaceholder ? "bg-white/10 text-white" : "bg-cyan-500/20 text-cyan-100"}>
-                  {entry.isPlaceholder ? "Placeholder" : "Licensed"}
+                  {entry.isPlaceholder ? t("common.placeholder") : t("common.licensed")}
                 </Badge>
               </div>
             </div>
@@ -49,7 +51,7 @@ export default async function AssetsPage() {
 
           {entries.length === 0 ? (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
-              No assets registered yet.
+              {t("assets.empty")}
             </div>
           ) : null}
         </CardContent>

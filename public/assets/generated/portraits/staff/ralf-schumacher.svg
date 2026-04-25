@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Ralf Schumacher placeholder portrait">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#082f49"/>
+      <stop offset="1" stop-color="#020617"/>
+    </linearGradient>
+    <radialGradient id="flare" cx="70%" cy="20%" r="70%">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="56" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="56" fill="url(#flare)"/>
+  <path d="M48 390c72-46 144-70 216-70 70 0 136 22 200 66v78H48z" fill="#22d3ee" opacity="0.18"/>
+  <circle cx="256" cy="200" r="86" fill="#f8fafc" opacity="0.12"/>
+  <circle cx="256" cy="188" r="70" fill="#22d3ee" opacity="0.2"/>
+  <text x="256" y="220" text-anchor="middle" font-family="Verdana, Geneva, sans-serif" font-size="92" font-weight="700" fill="#ecfeff">RS</text>
+  <path d="M72 88h368" stroke="#22d3ee" stroke-width="8" stroke-linecap="round" opacity="0.85"/>
+  <path d="M72 424h368" stroke="#22d3ee" stroke-width="8" stroke-linecap="round" opacity="0.45"/>
+  <text x="256" y="374" text-anchor="middle" font-family="Verdana, Geneva, sans-serif" font-size="27" font-weight="700" fill="#ecfeff">Ralf Schumacher</text>
+  <text x="256" y="408" text-anchor="middle" font-family="Verdana, Geneva, sans-serif" font-size="18" letter-spacing="4" fill="#ecfeff" opacity="0.75">ACADEMY DIRECTOR - DE</text>
+</svg>

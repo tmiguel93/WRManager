@@ -1,8 +1,10 @@
 import { PageHeader } from "@/components/common/page-header";
 import { StaffDataTable } from "@/components/game/staff-data-table";
+import { getServerTranslator } from "@/i18n/server";
 import { getStaffDirectory } from "@/server/queries/roster";
 
 export default async function StaffPage() {
+  const { t } = await getServerTranslator();
   const staff = await getStaffDirectory().catch(() => []);
 
   const rows = staff.map((member) => ({
@@ -12,7 +14,7 @@ export default async function StaffPage() {
     specialty: member.specialty,
     countryCode: member.countryCode,
     category: member.currentCategory?.code ?? "N/A",
-    team: member.currentTeam?.name ?? "Free Agent",
+    team: member.currentTeam?.name ?? t("common.freeAgent"),
     reputation: member.reputation,
     salary: member.salary,
     imageUrl: member.imageUrl,
@@ -21,9 +23,9 @@ export default async function StaffPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Operations Personnel"
-        title="Global Staff Network"
-        description="Track technical leaders, strategists and program heads with active contracts across categories."
+        eyebrow={t("staff.pageEyebrow")}
+        title={t("staff.pageTitle")}
+        description={t("staff.pageDescription")}
       />
       <StaffDataTable data={rows} />
     </div>
