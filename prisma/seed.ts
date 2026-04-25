@@ -10,6 +10,11 @@ import {
   type RealDriverSeed,
   type RealStaffSeed,
 } from "./seed-data/real-world";
+import {
+  supplementalDriverSeeds,
+  supplementalStaffSeeds,
+  supplementalTeamsSeed,
+} from "./seed-data/global-expansion";
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
@@ -96,9 +101,12 @@ const expansionStaffSeeds: RealStaffSeed[] = [
   { name: "Dario Franchitti", role: "Sporting Director", countryCode: "GB", specialty: "Leadership", teamName: "Acura MSR GTP", categoryCode: "IMSA_GTP", reputation: 86, salary: 5_200_000, personality: "Leader", portraitSlug: "dario-franchitti", wikipediaTitle: "Dario Franchitti" },
 ];
 
-const teamsSeed = [...realTeamsSeed, ...expansionTeamsSeed] as const;
-const driverSeeds: RealDriverSeed[] = [...realDriverSeeds, ...expansionDriverSeeds];
-const staffSeeds: RealStaffSeed[] = [...realStaffSeeds, ...expansionStaffSeeds];
+const teamsSeed = [...realTeamsSeed, ...expansionTeamsSeed, ...supplementalTeamsSeed] as const;
+const driverSeeds: RealDriverSeed[] = [...realDriverSeeds, ...expansionDriverSeeds, ...supplementalDriverSeeds];
+const staffSeeds: RealStaffSeed[] = [...realStaffSeeds, ...expansionStaffSeeds, ...supplementalStaffSeeds];
+const uniqueTeamsSeed = dedupeTeams(teamsSeed);
+const uniqueDriverSeeds = dedupeDrivers(driverSeeds);
+const uniqueStaffSeeds = dedupeStaff(staffSeeds);
 
 function clamp(value: number, min = 45, max = 99) {
   return Math.max(min, Math.min(max, Math.round(value)));
@@ -205,6 +213,55 @@ function staffTraitCodeFromProfile(staff: RealStaffSeed) {
   if (staff.role === "Head of Strategy") return "DATA_STRATEGIST";
   if (staff.specialty.includes("Finance") || staff.specialty.includes("Program")) return "COST_CONTROLLER";
   return "LOCKER_ROOM_LEADER";
+}
+
+function canonicalName(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function dedupeTeams<T extends readonly [string, string, ...unknown[]]>(rows: readonly T[]) {
+  const seen = new Set<string>();
+  const result: T[] = [];
+  for (const row of rows) {
+    const key = `${row[0]}::${canonicalName(row[1])}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(row);
+  }
+  return result;
+}
+
+function dedupeDrivers(rows: readonly RealDriverSeed[]) {
+  const seen = new Set<string>();
+  const result: RealDriverSeed[] = [];
+  for (const row of rows) {
+    const key = `${canonicalName(row.displayName)}::${row.birthDateIso}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(row);
+  }
+  return result;
+}
+
+function dedupeStaff(rows: readonly RealStaffSeed[]) {
+  const seen = new Set<string>();
+  const result: RealStaffSeed[] = [];
+  for (const row of rows) {
+    const key = `${canonicalName(row.name)}::${canonicalName(row.role)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(row);
+  }
+  return result;
+}
+
+function wikipediaUrl(title: string) {
+  return `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replaceAll(" ", "_"))}`;
 }
 
 function teamSlug(name: string) {
@@ -786,8 +843,8 @@ async function seed() {
   }
 
   const teamMap = new Map<string, string>();
-  const teamNames = teamsSeed.map((team) => team[1]);
-  for (const [categoryCode, name, shortName, countryCode, headquarters, budget, reputation, primaryColor, secondaryColor] of teamsSeed) {
+  const teamNames = uniqueTeamsSeed.map((team) => team[1]);
+  for (const [categoryCode, name, shortName, countryCode, headquarters, budget, reputation, primaryColor, secondaryColor] of uniqueTeamsSeed) {
     const categoryId = categoryMap.get(categoryCode)?.id;
     if (!categoryId) continue;
 
@@ -802,12 +859,15 @@ async function seed() {
         budget,
         reputation,
         fanbase: clamp(44 + Math.round(reputation / 1.25), 30, 99),
-        history: `${name} enters 2026 with real-world operations baseline and long-term ambitions.`,
-        primaryColor,
-        secondaryColor,
-        philosophy: "Performance-first program with sustainable growth and elite talent development.",
-      },
-    });
+          history: `${name} enters 2026 with real-world operations baseline and long-term ambitions.`,
+          primaryColor,
+          secondaryColor,
+          philosophy: "Performance-first program with sustainable growth and elite talent development.",
+          sourceUrl: wikipediaUrl(name),
+          sourceConfidence: 78,
+          lastVerifiedAt: new Date(Date.UTC(2026, 3, 24)),
+        },
+      });
     teamMap.set(name, created.id);
 
     await prisma.teamHistory.create({
@@ -850,7 +910,7 @@ async function seed() {
   const driversByTeam = new Map<string, { id: string; overall: number; salary: number }[]>();
   const staffByTeam = new Map<string, { id: string; salary: number; reputation: number; role: string }[]>();
 
-  for (const driverSeed of driverSeeds) {
+  for (const driverSeed of uniqueDriverSeeds) {
     const categoryId = categoryMap.get(driverSeed.categoryCode)?.id;
     if (!categoryId) continue;
 
@@ -873,12 +933,15 @@ async function seed() {
         morale: driverSeed.morale,
         personality: driverSeed.personality,
         primaryTraitCode: driverSeed.primaryTraitCode,
-        preferredDisciplines: [driverSeed.categoryCode],
-        attributes: buildDriverAttributes(driverSeed),
-        currentCategoryId: categoryId,
-        currentTeamId: teamId,
-      },
-    });
+          preferredDisciplines: [driverSeed.categoryCode],
+          attributes: buildDriverAttributes(driverSeed),
+          sourceUrl: wikipediaUrl(driverSeed.wikipediaTitle),
+          sourceConfidence: 80,
+          lastVerifiedAt: new Date(Date.UTC(2026, 3, 24)),
+          currentCategoryId: categoryId,
+          currentTeamId: teamId,
+        },
+      });
 
     const primaryTraitId = driverTraitMap.get(driverSeed.primaryTraitCode);
     if (primaryTraitId) {
@@ -898,7 +961,7 @@ async function seed() {
     }
   }
 
-  for (const staffSeed of staffSeeds) {
+  for (const staffSeed of uniqueStaffSeeds) {
     const categoryId = categoryMap.get(staffSeed.categoryCode)?.id;
     if (!categoryId) continue;
 
@@ -914,13 +977,16 @@ async function seed() {
         reputation: staffSeed.reputation,
         salary: staffSeed.salary,
         specialty: staffSeed.specialty,
-        compatibility: { categories: [staffSeed.categoryCode] },
-        personality: staffSeed.personality,
-        attributes: buildStaffAttributes(staffSeed),
-        currentTeamId: teamId,
-        currentCategoryId: categoryId,
-      },
-    });
+          compatibility: { categories: [staffSeed.categoryCode] },
+          personality: staffSeed.personality,
+          attributes: buildStaffAttributes(staffSeed),
+          sourceUrl: wikipediaUrl(staffSeed.wikipediaTitle),
+          sourceConfidence: 78,
+          lastVerifiedAt: new Date(Date.UTC(2026, 3, 24)),
+          currentTeamId: teamId,
+          currentCategoryId: categoryId,
+        },
+      });
 
     const traitCode = staffTraitCodeFromProfile(staffSeed);
     const traitId = staffTraitMap.get(traitCode);
@@ -953,12 +1019,15 @@ async function seed() {
         efficiency,
         drivability,
         developmentCeiling,
-        maintenanceCost,
-        prestigeImpact,
-        sponsorSynergy,
-        tags: { seeded: true },
-      },
-    });
+          maintenanceCost,
+          prestigeImpact,
+          sponsorSynergy,
+          tags: { seeded: true },
+          sourceUrl: wikipediaUrl(name),
+          sourceConfidence: 74,
+          lastVerifiedAt: new Date(Date.UTC(2026, 3, 24)),
+        },
+      });
     supplierMap.set(name, created.id);
 
     if (type === "ENGINE") {
@@ -1155,7 +1224,7 @@ async function seed() {
     }
   }
 
-  for (const [index, team] of teamsSeed.entries()) {
+  for (const [index, team] of uniqueTeamsSeed.entries()) {
     const teamId = teamMap.get(team[1]);
     const categoryId = categoryMap.get(team[0])?.id;
     if (!teamId || !categoryId) continue;
@@ -1286,7 +1355,7 @@ async function seed() {
     IMSA_GTP: ["Michelin"],
   };
 
-  for (const [index, team] of teamsSeed.entries()) {
+  for (const [index, team] of uniqueTeamsSeed.entries()) {
     const categoryCode = team[0];
     const teamId = teamMap.get(team[1]);
     if (!teamId) continue;

@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "source": {
+    "label": "Wikipedia 2026 Roster Pack",
+    "url": "https://en.wikipedia.org/wiki/List_of_motorsport_drivers",
+    "confidence": 72,
+    "lastVerifiedAt": "2026-04-24T00:00:00.000Z"
+  },
+  "teams": [
+    {
+      "categoryCode": "F3",
+      "name": "Campos Racing F3",
+      "shortName": "CMP",
+      "countryCode": "ES",
+      "headquarters": "Valencia",
+      "budget": 16800000,
+      "reputation": 62,
+      "fanbase": 54,
+      "primaryColor": "#1d4ed8",
+      "secondaryColor": "#f8fafc",
+      "accentColor": "#ef4444",
+      "philosophy": "Aggressive junior development with fast progression."
+    }
+  ],
+  "drivers": [
+    {
+      "firstName": "Mari",
+      "lastName": "Boya",
+      "displayName": "Mari Boya",
+      "countryCode": "ES",
+      "birthDateIso": "2004-04-29",
+      "categoryCode": "F3",
+      "teamName": "Campos Racing F3",
+      "overall": 77,
+      "potential": 87,
+      "reputation": 70,
+      "marketValue": 7600000,
+      "salary": 1700000,
+      "morale": 76,
+      "personality": "Aggressive",
+      "primaryTraitCode": "AGGRESSIVE_CLOSER",
+      "imageUrl": null
+    }
+  ],
+  "staff": [
+    {
+      "name": "Pedro Matos Chaves",
+      "role": "Driver Coach",
+      "countryCode": "PT",
+      "specialty": "Driver Development",
+      "teamName": "Campos Racing F3",
+      "categoryCode": "F3",
+      "reputation": 74,
+      "salary": 1700000,
+      "personality": "Calm",
+      "imageUrl": null
+    }
+  ],
+  "suppliers": [
+    {
+      "type": "TIRE",
+      "name": "Nexen Motorsport",
+      "countryCode": "KR",
+      "baseCost": 5900000,
+      "performance": 74,
+      "reliability": 79,
+      "efficiency": 72,
+      "drivability": 70,
+      "developmentCeiling": 76,
+      "maintenanceCost": 1600000,
+      "prestigeImpact": 58,
+      "sponsorSynergy": 52,
+      "categoryCodes": ["F3", "F4"]
+    }
+  ]
+}

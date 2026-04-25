@@ -273,6 +273,9 @@ model Team {
   philosophy        String
   manufacturerName  String?
   isCustom          Boolean            @default(false)
+  sourceUrl         String?
+  sourceConfidence  Int                @default(60)
+  lastVerifiedAt    DateTime?
   category          Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   teamHistories     TeamHistory[]
   drivers           Driver[]           @relation("TeamDrivers")
@@ -323,6 +326,9 @@ model Driver {
   primaryTraitCode     String?
   preferredDisciplines Json?
   attributes           Json
+  sourceUrl            String?
+  sourceConfidence     Int              @default(60)
+  lastVerifiedAt       DateTime?
   currentCategoryId    String?
   currentTeamId        String?
   createdAt            DateTime           @default(now())
@@ -369,6 +375,9 @@ model Staff {
   compatibility        Json?
   personality          String
   attributes           Json
+  sourceUrl            String?
+  sourceConfidence     Int              @default(60)
+  lastVerifiedAt       DateTime?
   currentTeamId        String?
   currentCategoryId    String?
   createdAt            DateTime          @default(now())
@@ -489,6 +498,9 @@ model Supplier {
   prestigeImpact      Int
   sponsorSynergy      Int
   tags                Json?
+  sourceUrl           String?
+  sourceConfidence    Int               @default(60)
+  lastVerifiedAt      DateTime?
   categories          SupplierCategory[]
   contracts           SupplierContract[]
   engineProfile       EngineSupplier?

@@ -13,9 +13,11 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
+    "db:audit-roster": "tsx scripts/audit-roster-coverage.ts",
     "db:backfill:sponsor-active-key": "tsx scripts/backfill-sponsor-active-key.ts",
     "assets:import": "tsx scripts/import-asset-pack.ts",
-    "assets:sync-portraits": "tsx scripts/sync-real-portraits.ts"
+    "assets:sync-portraits": "tsx scripts/sync-real-portraits.ts",
+    "data:import-roster": "tsx scripts/import-roster-manifest.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",

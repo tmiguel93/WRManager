@@ -24,23 +24,54 @@ export async function importAssetPack(manifestPath: string) {
   const parsed = assetPackSchema.parse(JSON.parse(raw));
   const rootDir = path.dirname(manifestPath);
 
-  const created = await Promise.all(
-    parsed.entries.map(async (entry) => {
-      const resolvedPath = path.resolve(rootDir, entry.sourcePath);
-      return prisma.assetRegistry.create({
+  const uniqueEntries = new Map<string, (typeof parsed.entries)[number]>();
+  for (const entry of parsed.entries) {
+    const key = `${entry.entityType}:${entry.entityId}:${entry.assetType}:${parsed.packSource}`;
+    uniqueEntries.set(key, entry);
+  }
+
+  let imported = 0;
+  for (const entry of uniqueEntries.values()) {
+    const resolvedPath = path.resolve(rootDir, entry.sourcePath);
+    const existing = await prisma.assetRegistry.findFirst({
+      where: {
+        entityType: entry.entityType,
+        entityId: entry.entityId,
+        assetType: entry.assetType,
+        packSource: parsed.packSource,
+      },
+      select: { id: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (existing) {
+      await prisma.assetRegistry.update({
+        where: { id: existing.id },
         data: {
-          entityType: entry.entityType,
-          entityId: entry.entityId,
-          assetType: entry.assetType,
-          packSource: parsed.packSource,
           sourcePath: entry.sourcePath,
           resolvedPath,
           isPlaceholder: false,
           approved: entry.approved,
         },
       });
-    }),
-  );
+      imported += 1;
+      continue;
+    }
 
-  return { imported: created.length };
+    await prisma.assetRegistry.create({
+      data: {
+        entityType: entry.entityType,
+        entityId: entry.entityId,
+        assetType: entry.assetType,
+        packSource: parsed.packSource,
+        sourcePath: entry.sourcePath,
+        resolvedPath,
+        isPlaceholder: false,
+        approved: entry.approved,
+      },
+    });
+    imported += 1;
+  }
+
+  return { imported };
 }

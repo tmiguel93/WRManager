@@ -2,6 +2,7 @@
 import path from "node:path";
 
 import { realDriverSeeds, realStaffSeeds } from "../prisma/seed-data/real-world";
+import { supplementalDriverSeeds, supplementalStaffSeeds } from "../prisma/seed-data/global-expansion";
 
 interface PortraitManifest {
   generatedAt: string;
@@ -133,8 +134,10 @@ async function main() {
   await mkdir(staffDir, { recursive: true });
 
   const existing = await loadExistingManifest(manifestPath);
-  const allowedDriverSlugs = new Set(realDriverSeeds.map((driver) => driver.portraitSlug));
-  const allowedStaffSlugs = new Set(realStaffSeeds.map((staff) => staff.portraitSlug));
+  const allDrivers = [...realDriverSeeds, ...supplementalDriverSeeds];
+  const allStaff = [...realStaffSeeds, ...supplementalStaffSeeds];
+  const allowedDriverSlugs = new Set(allDrivers.map((driver) => driver.portraitSlug));
+  const allowedStaffSlugs = new Set(allStaff.map((staff) => staff.portraitSlug));
   const existingDrivers = Object.fromEntries(
     Object.entries(existing?.drivers ?? {}).filter(([slug]) => allowedDriverSlugs.has(slug)),
   );
@@ -150,7 +153,7 @@ async function main() {
     skipped: [],
   };
 
-  for (const driver of realDriverSeeds) {
+  for (const driver of allDrivers) {
     if (manifest.drivers[driver.portraitSlug]) continue;
 
     try {
@@ -173,7 +176,7 @@ async function main() {
     await sleep(260);
   }
 
-  for (const staff of realStaffSeeds) {
+  for (const staff of allStaff) {
     if (manifest.staff[staff.portraitSlug]) continue;
 
     try {
@@ -199,8 +202,8 @@ async function main() {
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 
   console.log(`portrait manifest written: ${manifestPath}`);
-  console.log(`driver portraits: ${Object.keys(manifest.drivers).length}/${realDriverSeeds.length}`);
-  console.log(`staff portraits: ${Object.keys(manifest.staff).length}/${realStaffSeeds.length}`);
+  console.log(`driver portraits: ${Object.keys(manifest.drivers).length}/${allDrivers.length}`);
+  console.log(`staff portraits: ${Object.keys(manifest.staff).length}/${allStaff.length}`);
   console.log(`skipped in run: ${manifest.skipped.length}`);
 }
 
