@@ -27,6 +27,32 @@ export const messages: Record<AppLocale, MessageTree> = {
       noData: "Sem dados disponiveis.",
       status: "Status",
     },
+    landing: {
+      continueCareer: "Continuar carreira",
+      heroTitle: "Construa um imperio global nas pistas entre Formula, Indy, NASCAR e Endurance.",
+      heroDescription:
+        "Gerencie pilotos, staff, fornecedores, patrocinadores, fins de semana de corrida e progressao de longo prazo em um ecossistema vivo do automobilismo.",
+      startNewCareer: "Iniciar nova carreira",
+      enterCommandCenter: "Entrar no command center",
+      worldSnapshot: "Visao do mundo",
+      worldSnapshotDescription: "Resumo atual do banco do jogo para o universo do seu save.",
+      categories: "Categorias",
+      teams: "Equipes",
+      drivers: "Pilotos",
+      suppliers: "Fornecedores",
+      sponsors: "Patrocinadores",
+      featureMultiCategoryTitle: "Carreira multicategoria",
+      featureMultiCategory:
+        "Varias disciplinas do automobilismo com formatos de weekend e tiers de progressao por categoria.",
+      featureLiveSimulationTitle: "Simulacao ao vivo",
+      featureLiveSimulation:
+        "Simulacao sessao a sessao com estrategia, confiabilidade e impacto nas classificacoes.",
+      featureLivingEcosystemTitle: "Ecossistema vivo",
+      featureLivingEcosystem:
+        "Pilotos, staff, fornecedores e patrocinadores evoluem com contratos, reputacao e movimento de mercado.",
+      featurePremiumUiTitle: "Experiencia premium",
+      featurePremiumUi: "Visual refinado, temas de equipe e fluxos responsivos para campanhas longas.",
+    },
     nav: {
       dashboard: "Dashboard HQ",
       calendar: "Calendario",
@@ -380,6 +406,32 @@ export const messages: Record<AppLocale, MessageTree> = {
       noData: "No data available.",
       status: "Status",
     },
+    landing: {
+      continueCareer: "Continue Career",
+      heroTitle: "Build a global racing empire across Formula, Indy, NASCAR, and Endurance.",
+      heroDescription:
+        "Manage drivers, staff, suppliers, sponsors, race weekends, and long-term progression inside a living motorsport ecosystem.",
+      startNewCareer: "Start New Career",
+      enterCommandCenter: "Enter Command Center",
+      worldSnapshot: "World Snapshot",
+      worldSnapshotDescription: "Current database overview for your save universe.",
+      categories: "Categories",
+      teams: "Teams",
+      drivers: "Drivers",
+      suppliers: "Suppliers",
+      sponsors: "Sponsors",
+      featureMultiCategoryTitle: "Multi-category career",
+      featureMultiCategory:
+        "Multiple motorsport disciplines with weekend formats and progression tiers per category.",
+      featureLiveSimulationTitle: "Live simulation",
+      featureLiveSimulation:
+        "Session-by-session simulation with strategy, reliability, and standings impact.",
+      featureLivingEcosystemTitle: "Living ecosystem",
+      featureLivingEcosystem:
+        "Drivers, staff, suppliers, and sponsors evolve through contracts, reputation, and market movement.",
+      featurePremiumUiTitle: "Premium experience",
+      featurePremiumUi: "Refined visuals, team themes, and responsive flows for long campaigns.",
+    },
     nav: {
       dashboard: "Dashboard HQ",
       calendar: "Calendar",
@@ -732,6 +784,32 @@ export const messages: Record<AppLocale, MessageTree> = {
       search: "Buscar",
       noData: "Sin datos disponibles.",
       status: "Estado",
+    },
+    landing: {
+      continueCareer: "Continuar carrera",
+      heroTitle: "Construye un imperio global en las pistas entre Formula, Indy, NASCAR y Endurance.",
+      heroDescription:
+        "Gestiona pilotos, staff, proveedores, patrocinadores, fines de semana de carrera y progresion de largo plazo en un ecosistema vivo del automovilismo.",
+      startNewCareer: "Iniciar nueva carrera",
+      enterCommandCenter: "Entrar al command center",
+      worldSnapshot: "Vision del mundo",
+      worldSnapshotDescription: "Resumen actual de la base del juego para el universo de tu guardado.",
+      categories: "Categorias",
+      teams: "Equipos",
+      drivers: "Pilotos",
+      suppliers: "Proveedores",
+      sponsors: "Patrocinadores",
+      featureMultiCategoryTitle: "Carrera multicategoria",
+      featureMultiCategory:
+        "Varias disciplinas del automovilismo con formatos de weekend y tiers de progresion por categoria.",
+      featureLiveSimulationTitle: "Simulacion en vivo",
+      featureLiveSimulation:
+        "Simulacion sesion a sesion con estrategia, confiabilidad e impacto en las clasificaciones.",
+      featureLivingEcosystemTitle: "Ecosistema vivo",
+      featureLivingEcosystem:
+        "Pilotos, staff, proveedores y patrocinadores evolucionan con contratos, reputacion y mercado.",
+      featurePremiumUiTitle: "Experiencia premium",
+      featurePremiumUi: "Visual refinado, temas de equipo y flujos responsivos para campanas largas.",
     },
     nav: {
       dashboard: "Dashboard HQ",

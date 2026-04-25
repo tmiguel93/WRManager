@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 import { AnimatedNumber } from "@/components/motion/animated-number";
+import { LanguageSelector } from "@/components/common/language-selector";
 import { TeamLogoMark } from "@/components/common/team-logo-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,6 @@ import { PRIMARY_NAV } from "@/config/navigation";
 import { formatDate } from "@/lib/format";
 import { quickAutoSaveAction } from "@/app/(game)/game/save-center/actions";
 import { useI18n } from "@/i18n/client";
-import { SUPPORTED_LOCALES, localeLabel, type AppLocale } from "@/i18n/config";
-import { setLocalePreferenceAction } from "@/app/(game)/game/settings/actions";
 
 interface TopBarProps {
   teamName: string;
@@ -40,7 +39,7 @@ export function TopBar({
 }: TopBarProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const { t, locale, setLocale } = useI18n();
+  const { t } = useI18n();
 
   function handleQuickSave() {
     startTransition(async () => {
@@ -50,20 +49,6 @@ export function TopBar({
         return;
       }
       toast.success(t("topbar.quickSaveSuccess", result.message));
-      router.refresh();
-    });
-  }
-
-  function handleLocaleChange(nextLocale: string) {
-    const normalized = nextLocale as AppLocale;
-    startTransition(async () => {
-      setLocale(normalized);
-      const result = await setLocalePreferenceAction({ locale: normalized });
-      if (!result.ok) {
-        toast.error(result.message);
-        return;
-      }
-      toast.success(t("language.updated", result.message));
       router.refresh();
     });
   }
@@ -130,21 +115,7 @@ export function TopBar({
             <Save className="mr-1 size-3.5" />
             {t("common.save")}
           </Button>
-          <Badge className="rounded-full border border-white/15 bg-white/5 text-white">
-            {t("language.badge")}: {localeLabel(locale)}
-          </Badge>
-          <select
-            value={locale}
-            onChange={(event) => handleLocaleChange(event.target.value)}
-            className="h-8 rounded-full border border-white/20 bg-[#070b16] px-2 text-xs text-foreground"
-            aria-label={t("language.title")}
-          >
-            {SUPPORTED_LOCALES.map((code) => (
-              <option key={code} value={code}>
-                {localeLabel(code)}
-              </option>
-            ))}
-          </select>
+          <LanguageSelector />
           <Badge className="team-outline team-accent-text rounded-full border bg-white/10">
             <Flag className="mr-1 size-3" />
             {categoryCode}

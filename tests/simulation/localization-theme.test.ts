@@ -17,6 +17,12 @@ describe("localization and team theme", () => {
     expect(translate("es", "nav.drivers")).toBeTruthy();
   });
 
+  it("returns translated labels for the landing page language switcher flow", () => {
+    expect(translate("pt-BR", "landing.startNewCareer")).toBe("Iniciar nova carreira");
+    expect(translate("en", "landing.startNewCareer")).toBe("Start New Career");
+    expect(translate("es", "landing.startNewCareer")).toBe("Iniciar nueva carrera");
+  });
+
   it("creates readable team palette and normalizes colors", () => {
     const palette = createTeamTheme({
       primary: "#09f",
