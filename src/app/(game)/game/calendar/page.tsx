@@ -6,6 +6,7 @@ import { KpiCard } from "@/components/common/kpi-card";
 import { PageHeader } from "@/components/common/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getServerTranslator } from "@/i18n/server";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { getChampionshipCalendarView } from "@/server/queries/championship";
@@ -14,7 +15,16 @@ interface CalendarPageProps {
   searchParams: Promise<{ category?: string }>;
 }
 
+function trackTypeLabel(trackType: string) {
+  return trackType
+    .toLowerCase()
+    .split("_")
+    .map((token) => token.slice(0, 1).toUpperCase() + token.slice(1))
+    .join(" ");
+}
+
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
+  const { t } = await getServerTranslator();
   const { category } = await searchParams;
   const view = await getChampionshipCalendarView(category);
 
@@ -22,9 +32,9 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     return (
       <div className="space-y-8">
         <PageHeader
-          eyebrow="Season Flow"
-          title="Global Calendar"
-          description="No championship calendar data available for the current save context."
+          eyebrow={t("calendar.eyebrow", "Season Flow")}
+          title={t("calendar.titleGlobal", "Global Calendar")}
+          description={t("calendar.noData", "No championship calendar data available for the current save context.")}
         />
       </div>
     );
@@ -41,9 +51,12 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Season Flow"
-        title="Championship Calendar"
-        description="Track full-season progression with category-specific rounds, track types and global motorsport schedule context."
+        eyebrow={t("calendar.eyebrow", "Season Flow")}
+        title={t("calendar.title", "Championship Calendar")}
+        description={t(
+          "calendar.description",
+          "Track full-season progression with category-specific rounds, track types and global motorsport schedule context.",
+        )}
         badge={`${view.selectedCategory.code} · ${view.seasonYear}`}
       />
 
@@ -69,25 +82,25 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Season Progress"
+          label={t("calendar.kpiProgress", "Season Progress")}
           value={`${seasonProgress.toFixed(0)}%`}
           delta={seasonProgress - 50}
           icon={<Route className="size-4" />}
         />
         <KpiCard
-          label="Total Rounds"
+          label={t("calendar.kpiRounds", "Total Rounds")}
           value={`${view.totalRounds}`}
           delta={0}
           icon={<CalendarClock className="size-4" />}
         />
         <KpiCard
-          label="Upcoming Events"
+          label={t("calendar.kpiUpcoming", "Upcoming Events")}
           value={`${upcoming.length}`}
           delta={upcoming.length - completed.length}
           icon={<Flag className="size-4" />}
         />
         <KpiCard
-          label="Completed"
+          label={t("calendar.kpiCompleted", "Completed")}
           value={`${completed.length}`}
           delta={completed.length - upcoming.length}
           icon={<Globe2 className="size-4" />}
@@ -97,7 +110,9 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Season Timeline · {view.selectedCategory.name}</CardTitle>
+            <CardTitle className="font-heading text-xl">
+              {t("calendar.timeline", "Season Timeline")} · {view.selectedCategory.name}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {view.events.map((event) => (
@@ -108,7 +123,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                      Round {event.round} · {event.trackType}
+                      {t("calendar.round", "Round")} {event.round} · {trackTypeLabel(event.trackType)}
                     </p>
                     <p className="text-base font-semibold">{event.name}</p>
                   </div>
@@ -119,7 +134,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                         : "rounded-full border border-amber-300/30 bg-amber-500/10 text-amber-100"
                     }
                   >
-                    {event.daysUntil < 0 ? "Completed" : `${event.daysUntil}d`}
+                    {event.daysUntil < 0 ? t("calendar.completed", "Completed") : `${event.daysUntil}d`}
                   </Badge>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
@@ -137,7 +152,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Global Category Radar</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("calendar.radar", "Global Category Radar")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {view.globalOverview.map((row) => (
@@ -147,12 +162,12 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                   <Badge className="rounded-full border border-white/15 bg-white/10 text-xs">{row.categoryCode}</Badge>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {row.currentRound}/{Math.max(1, row.totalRounds)} rounds · {row.status}
+                  {row.currentRound}/{Math.max(1, row.totalRounds)} {t("calendar.rounds", "rounds")} · {row.status}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Next:{" "}
+                  {t("calendar.next", "Next")}: {" "}
                   <span className="text-foreground">
-                    {row.nextEvent ? `${row.nextEvent.name} (${formatDate(row.nextEvent.startDateIso)})` : "TBA"}
+                    {row.nextEvent ? `${row.nextEvent.name} (${formatDate(row.nextEvent.startDateIso)})` : t("calendar.tba", "TBA")}
                   </span>
                 </p>
               </div>
@@ -160,7 +175,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
             {nextEvent ? (
               <div className="rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-3 text-sm text-cyan-100">
-                Next in focus: {nextEvent.name} at {nextEvent.circuitName} on {formatDate(nextEvent.startDateIso)}.
+                {t("calendar.nextFocus", "Next in focus")}: {nextEvent.name} {t("calendar.at", "at")} {nextEvent.circuitName} {t("calendar.on", "on")} {formatDate(nextEvent.startDateIso)}.
               </div>
             ) : null}
           </CardContent>

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { QualifyingCenterView } from "@/features/weekend-sessions/types";
+import { useI18n } from "@/i18n/client";
 import { formatDate } from "@/lib/format";
 import {
   generateWeekendForQualifyingAction,
@@ -31,12 +32,21 @@ function formatLap(milliseconds: number) {
 }
 
 export function QualifyingCenter({ view }: QualifyingCenterProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [mode, setMode] = useState<"QUICK" | "DETAILED">("QUICK");
   const [riskLevel, setRiskLevel] = useState(62);
   const [releaseTiming, setReleaseTiming] = useState<"EARLY" | "MID" | "LATE">("MID");
   const [tyreCompound, setTyreCompound] = useState<"SOFT" | "MEDIUM" | "HARD">("SOFT");
+
+  function trackTypeLabel(trackType: string) {
+    return trackType
+      .toLowerCase()
+      .split("_")
+      .map((token) => token.slice(0, 1).toUpperCase() + token.slice(1))
+      .join(" ");
+  }
 
   function generateWeekend() {
     if (!view.event) return;
@@ -77,25 +87,25 @@ export function QualifyingCenter({ view }: QualifyingCenterProps) {
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Qualifying Sessions"
+          label={t("qualifying.kpiSessions", "Qualifying Sessions")}
           value={`${view.qualifyingSessions.length}`}
           delta={view.qualifyingSessions.length - 1}
           icon={<Timer className="size-4" />}
         />
         <KpiCard
-          label="Setup Baseline"
+          label={t("qualifying.kpiSetup", "Setup Baseline")}
           value={`${view.teamLearning?.setupConfidence ?? 52}/100`}
           delta={(view.teamLearning?.setupConfidence ?? 52) - 58}
           icon={<Gauge className="size-4" />}
         />
         <KpiCard
-          label="Track Learning"
+          label={t("qualifying.kpiTrack", "Track Learning")}
           value={`${view.teamLearning?.trackKnowledge ?? 46}/100`}
           delta={(view.teamLearning?.trackKnowledge ?? 46) - 54}
           icon={<Zap className="size-4" />}
         />
         <KpiCard
-          label="Current Pole"
+          label={t("qualifying.kpiPole", "Current Pole")}
           value={poleLap ? formatLap(poleLap) : "--"}
           delta={0}
           icon={<Timer className="size-4" />}
@@ -105,13 +115,13 @@ export function QualifyingCenter({ view }: QualifyingCenterProps) {
       <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Qualifying Control</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("qualifying.controlTitle", "Qualifying Control")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {view.event ? (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                  Round {view.event.round} · {view.event.trackType}
+                  {t("qualifying.round", "Round")} {view.event.round} · {trackTypeLabel(view.event.trackType)}
                 </p>
                 <p className="mt-1 text-base font-semibold">{view.event.name}</p>
                 <p className="text-xs text-muted-foreground">{view.event.circuitName}</p>
@@ -122,54 +132,54 @@ export function QualifyingCenter({ view }: QualifyingCenterProps) {
               </div>
             ) : (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
-                No event available for qualifying simulation.
+                {t("qualifying.noEvent", "No event available for qualifying simulation.")}
               </div>
             )}
 
             {!view.event?.hasWeekend ? (
               <Button variant="premium" className="w-full" onClick={generateWeekend} disabled={isPending || !view.event}>
-                Generate Weekend Skeleton
+                {t("qualifying.generateWeekend", "Generate Weekend Skeleton")}
               </Button>
             ) : null}
 
             {view.targetSession ? (
               <div className="rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-3 text-sm text-cyan-100">
-                Target session: {view.targetSession.label} {view.targetSession.completed ? "(completed)" : "(pending)"}
+                {t("qualifying.targetSession", "Target session")}: {view.targetSession.label} {view.targetSession.completed ? `(${t("qualifying.completed", "completed")})` : `(${t("qualifying.pending", "pending")})`}
               </div>
             ) : (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-muted-foreground">
-                No qualifying session available in this weekend.
+                {t("qualifying.noSession", "No qualifying session available in this weekend.")}
               </div>
             )}
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Mode</p>
+                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("qualifying.mode", "Mode")}</p>
                 <select
                   value={mode}
                   onChange={(event) => setMode(event.target.value as "QUICK" | "DETAILED")}
                   className="h-10 w-full rounded-xl border border-white/20 bg-background/40 px-3 text-sm"
                 >
-                  <option value="QUICK">Quick Simulation</option>
-                  <option value="DETAILED">Detailed Mode</option>
+                  <option value="QUICK">{t("qualifying.quick", "Quick Simulation")}</option>
+                  <option value="DETAILED">{t("qualifying.detailed", "Detailed Mode")}</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Tyre Compound</p>
+                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("qualifying.tyreCompound", "Tyre Compound")}</p>
                 <select
                   value={tyreCompound}
                   onChange={(event) => setTyreCompound(event.target.value as "SOFT" | "MEDIUM" | "HARD")}
                   className="h-10 w-full rounded-xl border border-white/20 bg-background/40 px-3 text-sm"
                 >
-                  <option value="SOFT">Soft</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HARD">Hard</option>
+                  <option value="SOFT">{t("qualifying.soft", "Soft")}</option>
+                  <option value="MEDIUM">{t("qualifying.medium", "Medium")}</option>
+                  <option value="HARD">{t("qualifying.hard", "Hard")}</option>
                 </select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Risk Level ({riskLevel})</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("qualifying.risk", "Risk Level")} ({riskLevel})</p>
               <input
                 type="range"
                 min={20}
@@ -179,20 +189,22 @@ export function QualifyingCenter({ view }: QualifyingCenterProps) {
                 className="w-full accent-cyan-300"
                 disabled={mode === "QUICK"}
               />
-              <p className="text-xs text-muted-foreground">Higher risk can gain lap time but increases error probability.</p>
+              <p className="text-xs text-muted-foreground">
+                {t("qualifying.riskHint", "Higher risk can gain lap time but increases error probability.")}
+              </p>
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Release Timing</p>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("qualifying.releaseTiming", "Release Timing")}</p>
               <select
                 value={releaseTiming}
                 onChange={(event) => setReleaseTiming(event.target.value as "EARLY" | "MID" | "LATE")}
                 className="h-10 w-full rounded-xl border border-white/20 bg-background/40 px-3 text-sm"
                 disabled={mode === "QUICK"}
               >
-                <option value="EARLY">Early</option>
-                <option value="MID">Mid Session</option>
-                <option value="LATE">Late</option>
+                <option value="EARLY">{t("qualifying.early", "Early")}</option>
+                <option value="MID">{t("qualifying.mid", "Mid Session")}</option>
+                <option value="LATE">{t("qualifying.late", "Late")}</option>
               </select>
             </div>
 
@@ -202,14 +214,16 @@ export function QualifyingCenter({ view }: QualifyingCenterProps) {
               onClick={runQualifying}
               disabled={isPending || !view.targetSession || view.targetSession.completed || !view.event?.hasWeekend}
             >
-              {view.targetSession?.completed ? "Session Completed" : "Run Qualifying Session"}
+              {view.targetSession?.completed
+                ? t("qualifying.sessionCompleted", "Session Completed")
+                : t("qualifying.runSession", "Run Qualifying Session")}
             </Button>
           </CardContent>
         </Card>
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Session Progress</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("qualifying.progressTitle", "Session Progress")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {view.qualifyingSessions.map((session) => (
@@ -225,7 +239,7 @@ export function QualifyingCenter({ view }: QualifyingCenterProps) {
                         : "rounded-full border border-amber-300/35 bg-amber-500/10 text-amber-100"
                     }
                   >
-                    {session.completed ? "Completed" : "Pending"}
+                    {session.completed ? t("qualifying.completed", "Completed") : t("qualifying.pending", "Pending")}
                   </Badge>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">{session.weatherState}</p>
@@ -233,13 +247,13 @@ export function QualifyingCenter({ view }: QualifyingCenterProps) {
             ))}
             {view.qualifyingSessions.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-muted-foreground">
-                No qualifying sessions available yet.
+                {t("qualifying.noSessions", "No qualifying sessions available yet.")}
               </div>
             ) : null}
 
             {myBest ? (
               <div className="rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-3 text-sm text-cyan-100">
-                Managed team best: P{myBest.position} · {myBest.name} · {formatLap(myBest.bestLapMs)}
+                {t("qualifying.managedBest", "Managed team best")}: P{myBest.position} · {myBest.name} · {formatLap(myBest.bestLapMs)}
               </div>
             ) : null}
           </CardContent>
@@ -249,7 +263,7 @@ export function QualifyingCenter({ view }: QualifyingCenterProps) {
       <section>
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Qualifying Leaderboard</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("qualifying.leaderboardTitle", "Qualifying Leaderboard")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
@@ -257,11 +271,11 @@ export function QualifyingCenter({ view }: QualifyingCenterProps) {
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Pos</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Driver</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Team</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Lap</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Gap</TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Tyre</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("qualifying.driver", "Driver")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("qualifying.team", "Team")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("qualifying.lap", "Lap")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("qualifying.gap", "Gap")}</TableHead>
+                    <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t("qualifying.tyre", "Tyre")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -296,7 +310,7 @@ export function QualifyingCenter({ view }: QualifyingCenterProps) {
 
             {view.leaderboard.length === 0 ? (
               <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-muted-foreground">
-                No qualifying result yet. Run the target session to populate the grid.
+                {t("qualifying.noResult", "No qualifying result yet. Run the target session to populate the grid.")}
               </div>
             ) : null}
           </CardContent>

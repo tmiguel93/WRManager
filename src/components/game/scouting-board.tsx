@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { submitScoutingProposalAction } from "@/app/(game)/game/scouting/actions";
+import { useI18n } from "@/i18n/client";
 import { formatCompactMoney } from "@/lib/format";
 
 interface DriverRow {
@@ -60,6 +61,7 @@ type TargetState = {
 };
 
 export function ScoutingBoard({ freeAgents, breakoutTargets, staffMarket }: ScoutingBoardProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -123,7 +125,7 @@ export function ScoutingBoard({ freeAgents, breakoutTargets, staffMarket }: Scou
       <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Top Free Agents</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("scouting.freeAgents", "Top Free Agents")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {freeAgents.slice(0, 12).map((driver) => (
@@ -148,10 +150,10 @@ export function ScoutingBoard({ freeAgents, breakoutTargets, staffMarket }: Scou
                 </Link>
                 <div className="flex items-center gap-2">
                   <Badge className="rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100 text-xs">
-                    Score {driver.scoutingScore}
+                    {t("scouting.score", "Score")} {driver.scoutingScore}
                   </Badge>
                   <Button size="sm" variant="primary" disabled={isPending} onClick={() => openDriverDialog(driver)}>
-                    Offer
+                    {t("contracts.sendProposal", "Send proposal")}
                   </Button>
                 </div>
               </div>
@@ -161,7 +163,7 @@ export function ScoutingBoard({ freeAgents, breakoutTargets, staffMarket }: Scou
 
         <Card className="premium-card">
           <CardHeader>
-            <CardTitle className="font-heading text-xl">Staff Opportunities</CardTitle>
+            <CardTitle className="font-heading text-xl">{t("scouting.staffOps", "Staff Opportunities")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {staffMarket.slice(0, 12).map((member) => (
@@ -181,7 +183,7 @@ export function ScoutingBoard({ freeAgents, breakoutTargets, staffMarket }: Scou
                 <div className="flex items-center gap-2">
                   <Badge className="rounded-full border border-white/15 bg-white/10 text-xs">REP {member.reputation}</Badge>
                   <Button size="sm" variant="primary" disabled={isPending} onClick={() => openStaffDialog(member)}>
-                    Offer
+                    {t("contracts.sendProposal", "Send proposal")}
                   </Button>
                 </div>
               </div>
@@ -192,7 +194,7 @@ export function ScoutingBoard({ freeAgents, breakoutTargets, staffMarket }: Scou
 
       <Card className="premium-card">
         <CardHeader>
-          <CardTitle className="font-heading text-xl">Breakout Targets</CardTitle>
+          <CardTitle className="font-heading text-xl">{t("scouting.breakout", "Breakout Targets")}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {breakoutTargets.slice(0, 12).map((driver) => (
@@ -210,12 +212,12 @@ export function ScoutingBoard({ freeAgents, breakoutTargets, staffMarket }: Scou
                 </div>
               </Link>
               <div className="mt-3 flex items-center justify-between text-xs">
-                <span>Score {driver.scoutingScore}</span>
+                <span>{t("scouting.score", "Score")} {driver.scoutingScore}</span>
                 <span>{formatCompactMoney(driver.marketValue)}</span>
               </div>
               <div className="mt-3">
                 <Button size="sm" variant="secondary" className="w-full" onClick={() => openDriverDialog(driver)}>
-                  Send Proposal
+                  {t("contracts.sendProposal", "Send proposal")}
                 </Button>
               </div>
             </div>
@@ -226,19 +228,22 @@ export function ScoutingBoard({ freeAgents, breakoutTargets, staffMarket }: Scou
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="border-white/20 bg-[#070d1c] text-foreground">
           <DialogHeader>
-            <DialogTitle>Negotiation Proposal</DialogTitle>
+            <DialogTitle>{t("scouting.negotiationTitle", "Negotiation Proposal")}</DialogTitle>
             <DialogDescription>
-              Offer a contract to {target?.targetName}. Responses may be accepted, rejected or counter-offered.
+              {t(
+                "scouting.negotiationDesc",
+                `Offer a contract to ${target?.targetName ?? "target"}. Responses may be accepted, rejected or counter-offered.`,
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="grid gap-2">
-              <label className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Role</label>
+              <label className="text-xs uppercase tracking-[0.12em] text-muted-foreground">{t("scouting.role", "Role")}</label>
               <Input value={role} onChange={(event) => setRole(event.target.value)} className="h-10 border-white/20" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <label className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Annual Salary</label>
+                <label className="text-xs uppercase tracking-[0.12em] text-muted-foreground">{t("scouting.annualSalary", "Annual Salary")}</label>
                 <Input
                   type="number"
                   value={annualSalary}
@@ -247,7 +252,7 @@ export function ScoutingBoard({ freeAgents, breakoutTargets, staffMarket }: Scou
                 />
               </div>
               <div className="grid gap-2">
-                <label className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Signing Bonus</label>
+                <label className="text-xs uppercase tracking-[0.12em] text-muted-foreground">{t("scouting.signingBonus", "Signing Bonus")}</label>
                 <Input
                   type="number"
                   value={bonus}
@@ -257,7 +262,7 @@ export function ScoutingBoard({ freeAgents, breakoutTargets, staffMarket }: Scou
               </div>
             </div>
             <div className="grid gap-2">
-              <label className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Duration (years)</label>
+              <label className="text-xs uppercase tracking-[0.12em] text-muted-foreground">{t("scouting.duration", "Duration (years)")}</label>
               <Input
                 type="number"
                 min={1}
@@ -268,15 +273,15 @@ export function ScoutingBoard({ freeAgents, breakoutTargets, staffMarket }: Scou
               />
             </div>
             <div className="rounded-xl border border-cyan-300/25 bg-cyan-500/10 p-3 text-xs text-cyan-100">
-              Estimated immediate cost: {formatCompactMoney(Math.round(annualSalary * 0.12 + bonus))}
+              {t("scouting.estimatedCost", "Estimated immediate cost")}: {formatCompactMoney(Math.round(annualSalary * 0.12 + bonus))}
             </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setDialogOpen(false)} disabled={isPending}>
-              Cancel
+              {t("scouting.cancel", "Cancel")}
             </Button>
             <Button variant="premium" onClick={submitProposal} disabled={isPending || !target}>
-              {isPending ? "Sending..." : "Send Proposal"}
+              {isPending ? t("scouting.sending", "Sending...") : t("contracts.sendProposal", "Send proposal")}
             </Button>
           </DialogFooter>
         </DialogContent>
