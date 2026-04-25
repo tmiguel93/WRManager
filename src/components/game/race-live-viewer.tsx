@@ -18,6 +18,7 @@ import {
 } from "@/domain/rules/race-broadcast";
 import { formatRaceTime, stableUnitSeed } from "@/domain/rules/race-control-sim";
 import type { RaceControlCenterView } from "@/features/race-control/types";
+import { useI18n } from "@/i18n/client";
 
 interface RaceLiveViewerProps {
   view: RaceControlCenterView;
@@ -29,8 +30,11 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function buildInputFromView(view: RaceControlCenterView): RaceBroadcastInput | null {
-  const sessionLabel = view.targetSession?.label ?? "Race Session";
+function buildInputFromView(
+  view: RaceControlCenterView,
+  t: (key: string, fallback?: string, values?: Record<string, string | number>) => string,
+): RaceBroadcastInput | null {
+  const sessionLabel = view.targetSession?.label ?? t("raceViewer.sessionFallback", "Race Session");
   const trackType = view.event?.trackType ?? "ROAD";
   const gridByDriver = new Map(view.startingGrid.map((row) => [row.driverId, row.startPosition]));
 
@@ -92,24 +96,25 @@ function buildInputFromView(view: RaceControlCenterView): RaceBroadcastInput | n
         status: dnf ? ("DNF" as const) : ("FINISHED" as const),
         finalTimeMs: dnf ? null : 5_500_000 + row.startPosition * 3_200 + performanceShift * 7_500,
         pitStops: 1 + Math.round(stableUnitSeed(`${row.driverId}:preview:pits`) * 2),
-        incidents: dnf ? ["Mechanical issue under race conditions."] : [],
+        incidents: dnf ? [t("raceViewer.previewDnf", "Mechanical issue under race conditions.")] : [],
         isManagedTeam: row.isManagedTeam,
       };
     });
 
   return {
-    sessionLabel: `${sessionLabel} · Preview`,
+    sessionLabel: `${sessionLabel} · ${t("raceViewer.previewBadge", "Preview")}`,
     trackType,
     weatherSensitivity: view.weatherSensitivity,
     feed:
       view.eventFeed.length > 0
         ? view.eventFeed
-        : ["Broadcast preview based on current grid and strategy context."],
+        : [t("raceViewer.previewFeed", "Broadcast preview based on current grid and strategy context.")],
     participants,
   };
 }
 
 export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
+  const { t } = useI18n();
   const [elapsedMs, setElapsedMs] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState<(typeof speedOptions)[number]>(1);
@@ -117,9 +122,9 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
   const lastTickRef = useRef<number | null>(null);
 
   const scenario = useMemo(() => {
-    const input = buildInputFromView(view);
+    const input = buildInputFromView(view, t);
     return input ? buildRaceBroadcastScenario(input) : null;
-  }, [view]);
+  }, [t, view]);
 
   const snapshot = useMemo(() => {
     if (!scenario) return null;
@@ -167,11 +172,11 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
     return (
       <Card className="premium-card">
         <CardHeader>
-          <CardTitle className="font-heading text-xl">Live Race Viewer</CardTitle>
+          <CardTitle className="font-heading text-xl">{t("raceViewer.title", "Live Race Viewer")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
-            Generate weekend context and race data to unlock the live broadcast panel.
+            {t("raceViewer.empty", "Generate weekend context and race data to unlock the live broadcast panel.")}
           </div>
         </CardContent>
       </Card>
@@ -195,7 +200,7 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
     <Card className="premium-card overflow-hidden">
       <CardHeader className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle className="font-heading text-xl">Live Race Viewer</CardTitle>
+          <CardTitle className="font-heading text-xl">{t("raceViewer.title", "Live Race Viewer")}</CardTitle>
           <Badge className="rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
             {scenario.sessionLabel}
           </Badge>
@@ -208,7 +213,9 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
                 <Timer className="size-4 text-cyan-200" />
                 {formatRaceTime(snapshot.elapsedMs)} / {formatRaceTime(snapshot.durationMs)}
               </span>
-              <span>Lap {snapshot.rows[0]?.lap ?? 1} / {snapshot.totalLaps}</span>
+              <span>
+                {t("raceViewer.lap", "Lap")} {snapshot.rows[0]?.lap ?? 1} / {snapshot.totalLaps}
+              </span>
             </div>
             <input
               type="range"
@@ -229,7 +236,7 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
                 setElapsedMs(0);
                 setIsPlaying(false);
               }}
-              aria-label="Restart viewer"
+              aria-label={t("raceViewer.restart", "Restart viewer")}
             >
               <RotateCcw className="size-4" />
             </Button>
@@ -239,7 +246,7 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
               className="min-w-24"
             >
               {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
-              <span>{isPlaying ? "Pause" : "Play"}</span>
+              <span>{isPlaying ? t("raceViewer.pause", "Pause") : t("raceViewer.play", "Play")}</span>
             </Button>
           </div>
 
@@ -264,7 +271,7 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="mb-3 inline-flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-cyan-100">
               <Gauge className="size-4" />
-              Track Map
+              {t("raceViewer.trackMap", "Track Map")}
             </p>
             <div className="relative mx-auto aspect-square w-full max-w-[360px] rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_center,rgba(15,23,42,0.9),rgba(2,6,23,0.95))] p-4">
               <div className="absolute inset-6 rounded-full border-2 border-cyan-300/30" />
@@ -299,7 +306,7 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
           <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-cyan-100">
               <FastForward className="size-4" />
-              Live Event Ticker
+              {t("raceViewer.ticker", "Live Event Ticker")}
             </p>
             <div className="space-y-2">
               <AnimatePresence mode="popLayout">
@@ -309,9 +316,23 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
-                    className="rounded-xl border border-white/10 bg-background/40 p-3"
+                    className={
+                      event.severity === "critical"
+                        ? "rounded-xl border border-rose-300/35 bg-rose-500/10 p-3"
+                        : event.severity === "warning"
+                          ? "rounded-xl border border-amber-300/35 bg-amber-500/10 p-3"
+                          : "rounded-xl border border-white/10 bg-background/40 p-3"
+                    }
                   >
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100">
+                    <p
+                      className={
+                        event.severity === "critical"
+                          ? "text-xs font-semibold uppercase tracking-[0.12em] text-rose-100"
+                          : event.severity === "warning"
+                            ? "text-xs font-semibold uppercase tracking-[0.12em] text-amber-100"
+                            : "text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100"
+                      }
+                    >
                       {event.title}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">{event.detail}</p>
@@ -321,7 +342,7 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
 
               {visibleEvents.length === 0 ? (
                 <div className="rounded-xl border border-white/10 bg-background/40 p-3 text-sm text-muted-foreground">
-                  Awaiting race start events.
+                  {t("raceViewer.awaitingEvents", "Awaiting race start events.")}
                 </div>
               ) : null}
             </div>
@@ -333,13 +354,27 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
             <TableHeader>
               <TableRow className="border-white/10 hover:bg-transparent">
                 <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Pos</TableHead>
-                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Driver</TableHead>
-                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Team</TableHead>
-                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Gap</TableHead>
-                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Lap</TableHead>
-                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Tyre</TableHead>
-                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Fuel</TableHead>
-                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">State</TableHead>
+                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                  {t("raceViewer.driver", "Driver")}
+                </TableHead>
+                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                  {t("raceViewer.team", "Team")}
+                </TableHead>
+                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                  {t("raceViewer.gap", "Gap")}
+                </TableHead>
+                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                  {t("raceViewer.lap", "Lap")}
+                </TableHead>
+                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                  {t("raceViewer.tyre", "Tyre")}
+                </TableHead>
+                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                  {t("raceViewer.fuel", "Fuel")}
+                </TableHead>
+                <TableHead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                  {t("raceViewer.state", "State")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -380,7 +415,7 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
                     </div>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {row.position === 1 ? "Leader" : `+${(row.gapMs / 1000).toFixed(3)}s`}
+                    {row.position === 1 ? t("raceViewer.leader", "Leader") : `+${(row.gapMs / 1000).toFixed(3)}s`}
                   </TableCell>
                   <TableCell className="font-semibold">{row.lap}</TableCell>
                   <TableCell className="text-xs">{row.tyrePct}%</TableCell>
@@ -388,19 +423,19 @@ export function RaceLiveViewer({ view }: RaceLiveViewerProps) {
                   <TableCell>
                     {row.pitNow ? (
                       <Badge className="rounded-full border border-amber-300/35 bg-amber-500/10 text-amber-100">
-                        PIT
+                        {t("raceViewer.pit", "PIT")}
                       </Badge>
                     ) : row.status === "RUNNING" ? (
                       <Badge className="rounded-full border border-cyan-300/35 bg-cyan-500/10 text-cyan-100">
-                        RUN
+                        {t("raceViewer.running", "RUN")}
                       </Badge>
                     ) : row.status === "FINISHED" ? (
                       <Badge className="rounded-full border border-emerald-300/35 bg-emerald-500/10 text-emerald-100">
-                        FIN
+                        {t("raceViewer.finished", "FIN")}
                       </Badge>
                     ) : (
                       <Badge className="rounded-full border border-rose-300/35 bg-rose-500/10 text-rose-100">
-                        DNF
+                        {t("raceViewer.dnf", "DNF")}
                       </Badge>
                     )}
                   </TableCell>
