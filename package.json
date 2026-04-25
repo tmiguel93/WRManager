@@ -14,6 +14,8 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:audit-roster": "tsx scripts/audit-roster-coverage.ts",
+    "i18n:audit": "tsx scripts/audit-i18n.ts",
+    "i18n:audit:strict": "tsx scripts/audit-i18n.ts --strict-hardcoded",
     "db:backfill:sponsor-active-key": "tsx scripts/backfill-sponsor-active-key.ts",
     "assets:import": "tsx scripts/import-asset-pack.ts",
     "assets:sync-portraits": "tsx scripts/sync-real-portraits.ts",
