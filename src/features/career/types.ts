@@ -9,6 +9,8 @@ export interface CareerSetupCategory {
   region: string;
   fantasyModeAllowed: boolean;
   teamsCount: number;
+  readinessStatus: string;
+  readinessIssues: string[];
   isStartEligible: boolean;
   lockReason: string | null;
 }

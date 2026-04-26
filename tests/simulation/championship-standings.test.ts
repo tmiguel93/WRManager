@@ -54,11 +54,20 @@ describe("rankDriverStandings", () => {
 
 describe("rankTeamStandings", () => {
   it("uses points and wins as tie-breakers", () => {
-    const ranked = rankTeamStandings([
-      { teamId: "t1", name: "Team One", countryCode: "US", points: 210, wins: 6, podiums: 11 },
-      { teamId: "t2", name: "Team Two", countryCode: "DE", points: 210, wins: 7, podiums: 9 },
-      { teamId: "t3", name: "Team Three", countryCode: "FR", points: 184, wins: 4, podiums: 10 },
-    ]);
+    const ranked = rankTeamStandings(
+      [
+        { teamId: "t1", name: "Team One", countryCode: "US", points: 210, wins: 6, podiums: 11 },
+        { teamId: "t2", name: "Team Two", countryCode: "DE", points: 210, wins: 7, podiums: 9 },
+        { teamId: "t3", name: "Team Three", countryCode: "FR", points: 184, wins: 4, podiums: 10 },
+      ].map((team, index) => ({
+        ...team,
+        logoUrl: null,
+        primaryColor: index === 0 ? "#ef4444" : "#38bdf8",
+        secondaryColor: "#0f172a",
+        accentColor: null,
+        isManagedTeam: false,
+      })),
+    );
 
     expect(ranked[0].teamId).toBe("t2");
     expect(ranked[1].teamId).toBe("t1");

@@ -1,5 +1,6 @@
 import { prisma } from "@/persistence/prisma";
 import { cookies } from "next/headers";
+import { getChampionshipCompletenessThresholds } from "@/domain/rules/championship-completeness";
 import { deriveCareerPhaseFromSeason } from "@/domain/rules/season-progress";
 import type {
   CareerSetupCategory,
@@ -13,7 +14,7 @@ export async function getCareerSetupData() {
       orderBy: [{ tier: "asc" }, { name: "asc" }],
       include: {
         _count: {
-          select: { teams: true },
+          select: { teams: true, drivers: true, staff: true, calendarEvents: true },
         },
       },
     }),
@@ -42,18 +43,39 @@ export async function getCareerSetupData() {
     }),
   ]);
 
-  const mappedCategories: CareerSetupCategory[] = categories.map((category) => ({
-    id: category.id,
-    code: category.code,
-    name: category.name,
-    discipline: category.discipline,
-    tier: category.tier,
-    region: category.region,
-    fantasyModeAllowed: category.fantasyModeAllowed,
-    teamsCount: category._count.teams,
-    isStartEligible: category.tier <= 2,
-    lockReason: category.tier <= 2 ? null : "Progress in lower tiers to unlock elite categories.",
-  }));
+  const mappedCategories: CareerSetupCategory[] = categories.map((category) => {
+    const thresholds = getChampionshipCompletenessThresholds(category.tier);
+    const hasMinimumContent =
+      category._count.teams >= thresholds.minTeams &&
+      category._count.drivers >= thresholds.minDrivers &&
+      category._count.staff >= thresholds.minStaff &&
+      category._count.calendarEvents >= thresholds.minRounds;
+    const readinessIssues = Array.isArray(category.readinessIssues)
+      ? category.readinessIssues.filter((issue): issue is string => typeof issue === "string")
+      : [];
+    const readinessStatus = hasMinimumContent ? category.readinessStatus : "blocked";
+    const progressionLocked = category.tier > 2;
+    const contentLocked = readinessStatus !== "complete";
+
+    return {
+      id: category.id,
+      code: category.code,
+      name: category.name,
+      discipline: category.discipline,
+      tier: category.tier,
+      region: category.region,
+      fantasyModeAllowed: category.fantasyModeAllowed,
+      teamsCount: category._count.teams,
+      readinessStatus,
+      readinessIssues,
+      isStartEligible: !progressionLocked && !contentLocked,
+      lockReason: progressionLocked
+        ? "Progress in lower tiers to unlock elite categories."
+        : contentLocked
+          ? "Championship content is being completed before career start."
+          : null,
+    };
+  });
 
   const mappedTeams: CareerSetupTeam[] = teams.map((team) => ({
     id: team.id,
