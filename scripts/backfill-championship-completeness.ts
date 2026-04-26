@@ -788,6 +788,46 @@ async function ensureCalendar(
     where: { seasonId: currentSeason.id },
     orderBy: { round: "asc" },
   });
+  for (const event of existing) {
+    const normalizedStartDate = normalizedEventStartDate(event.round);
+    const normalizedEndDate = new Date(normalizedStartDate);
+    normalizedEndDate.setUTCDate(normalizedStartDate.getUTCDate() + (category.discipline === "ENDURANCE" ? 3 : 2));
+    if (!event.sourceUrl || !event.lastVerifiedAt || event.sourceConfidence < 40 || !event.ruleSetCode) {
+      await prisma.calendarEvent.update({
+        where: { id: event.id },
+        data: {
+          startDate: normalizedStartDate,
+          endDate: normalizedEndDate,
+          sourceUrl: source.url,
+          sourceConfidence: source.confidence,
+          lastVerifiedAt: verifiedAt,
+          ruleSetCode: event.ruleSetCode || category.defaultRuleSetCode,
+          metadata: {
+            ...(typeof event.metadata === "object" && event.metadata !== null && !Array.isArray(event.metadata)
+              ? event.metadata
+              : {}),
+            completionBackfill: true,
+            sourceLabel: "championship-completeness",
+            canonicalCircuitKey: canonicalKey(`${event.circuitName} ${event.countryCode}`),
+          },
+        },
+      });
+    } else if (event.startDate.getTime() !== normalizedStartDate.getTime() || event.endDate.getTime() !== normalizedEndDate.getTime()) {
+      await prisma.calendarEvent.update({
+        where: { id: event.id },
+        data: {
+          startDate: normalizedStartDate,
+          endDate: normalizedEndDate,
+          metadata: {
+            ...(typeof event.metadata === "object" && event.metadata !== null && !Array.isArray(event.metadata)
+              ? event.metadata
+              : {}),
+            calendarSequenceNormalized: true,
+          },
+        },
+      });
+    }
+  }
   const template = calendarTemplates[categoryCalendarFamily[category.code] ?? "OPEN_WHEEL"];
   const fullTemplate = [...template, ...supplementalCircuits];
   const existingRounds = new Set(existing.map((event) => event.round));
@@ -800,7 +840,7 @@ async function ensureCalendar(
     if (existingCircuits.has(canonicalKey(event.circuit))) {
       continue;
     }
-    const startDate = new Date(Date.UTC(2026, Math.min(10, 1 + index), 8 + (index % 18)));
+    const startDate = normalizedEventStartDate(round);
     const endDate = new Date(startDate);
     endDate.setUTCDate(startDate.getUTCDate() + (category.discipline === "ENDURANCE" ? 3 : 2));
 
@@ -827,6 +867,12 @@ async function ensureCalendar(
     existingCircuits.add(canonicalKey(event.circuit));
     round += 1;
   }
+}
+
+function normalizedEventStartDate(round: number) {
+  const month = Math.min(10, 1 + Math.floor((round - 1) / 2));
+  const day = 6 + ((round - 1) % 2) * 14;
+  return new Date(Date.UTC(2026, month, day));
 }
 
 async function ensureStandings(category: CategoryRecord) {

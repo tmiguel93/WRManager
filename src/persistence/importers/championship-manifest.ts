@@ -128,6 +128,25 @@ const calendarEventSchema = sourceRefSchema.extend({
   trackType: circuitSchema.shape.trackType.optional(),
   weatherProfile: z.string().min(2).default("MIXED_SEASONAL"),
   ruleSetCode: z.string().min(2).optional(),
+}).superRefine((event, context) => {
+  const startDate = new Date(`${event.startDateIso}T00:00:00.000Z`);
+  const endDate = new Date(`${event.endDateIso}T00:00:00.000Z`);
+  if (endDate < startDate) {
+    context.addIssue({
+      code: "custom",
+      message: "endDateIso must be on or after startDateIso",
+      path: ["endDateIso"],
+    });
+  }
+
+  const allowedYears = new Set([event.seasonYear - 1, event.seasonYear]);
+  if (!allowedYears.has(startDate.getUTCFullYear()) || !allowedYears.has(endDate.getUTCFullYear())) {
+    context.addIssue({
+      code: "custom",
+      message: "calendar event dates must belong to the season year or the immediately preceding cross-year season",
+      path: ["startDateIso"],
+    });
+  }
 });
 
 const championshipManifestSchema = z.object({

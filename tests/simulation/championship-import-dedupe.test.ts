@@ -94,6 +94,51 @@ describe("championship manifest v2", () => {
 
     expect(() => buildRosterManifestFromChampionship(manifest)).toThrow(/source "missing"/);
   });
+
+  it("rejects calendar events with end date before start date", () => {
+    expect(() =>
+      parseChampionshipManifest({
+        version: 2,
+        defaultSourceId: "official",
+        sources: { official: source },
+        teams: [],
+        drivers: [],
+        staff: [],
+        suppliers: [],
+        circuits: [],
+        calendarEvents: [
+          {
+            ...eventRow(1, "F4", "Broken Date Round"),
+            startDateIso: "2026-05-10",
+            endDateIso: "2026-05-09",
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
+  it("rejects calendar events outside the season window", () => {
+    expect(() =>
+      parseChampionshipManifest({
+        version: 2,
+        defaultSourceId: "official",
+        sources: { official: source },
+        teams: [],
+        drivers: [],
+        staff: [],
+        suppliers: [],
+        circuits: [],
+        calendarEvents: [
+          {
+            ...eventRow(1, "F4", "Wrong Year Round"),
+            seasonYear: 2026,
+            startDateIso: "2027-01-10",
+            endDateIso: "2027-01-12",
+          },
+        ],
+      }),
+    ).toThrow();
+  });
 });
 
 function driverRow(firstName: string, lastName: string, displayName: string) {
