@@ -299,7 +299,6 @@ export async function importRosterManifest(
   const teamByKey = new Map(
     teams.map((item) => [canonicalKey([item.categoryId, item.name]), item]),
   );
-  const teamByName = new Map(teams.map((item) => [canonicalText(item.name), item]));
   const driverByKey = new Map(
     drivers.map((item) => [canonicalKey([item.displayName, item.birthDate.toISOString().slice(0, 10)]), item]),
   );
@@ -406,7 +405,6 @@ export async function importRosterManifest(
         },
       });
       teamByKey.set(key, { ...created, isCustom: false });
-      teamByName.set(canonicalText(created.name), { ...created, isCustom: false });
       teamSlugSet.add(slug);
 
       if (row.logoUrl) {
@@ -431,7 +429,7 @@ export async function importRosterManifest(
       continue;
     }
 
-    const team = row.teamName ? teamByName.get(canonicalText(row.teamName)) ?? null : null;
+    const team = row.teamName ? teamByKey.get(canonicalKey([categoryId, row.teamName])) ?? null : null;
     const key = canonicalKey([row.displayName, row.birthDateIso]);
     const existing = driverByKey.get(key);
     const source = resolveSource(row.source, manifest.source);
@@ -513,7 +511,7 @@ export async function importRosterManifest(
       continue;
     }
 
-    const team = row.teamName ? teamByName.get(canonicalText(row.teamName)) ?? null : null;
+    const team = row.teamName ? teamByKey.get(canonicalKey([categoryId, row.teamName])) ?? null : null;
     const key = canonicalKey([row.name, row.role]);
     const existing = staffByKey.get(key);
     const source = resolveSource(row.source, manifest.source);

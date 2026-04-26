@@ -1,0 +1,87 @@
+{
+  "version": 2,
+  "defaultSourceId": "official-entry-list",
+  "sources": {
+    "official-entry-list": {
+      "label": "Example official F4 entry list",
+      "url": "https://example.com/f4-entry-list",
+      "confidence": 88,
+      "lastVerifiedAt": "2026-04-26T00:00:00.000Z"
+    },
+    "calendar-support": {
+      "label": "Example calendar support page",
+      "url": "https://example.com/f4-calendar",
+      "confidence": 82,
+      "lastVerifiedAt": "2026-04-26T00:00:00.000Z"
+    }
+  },
+  "teams": [
+    {
+      "categoryCode": "F4",
+      "name": "Example Junior Racing",
+      "countryCode": "GB",
+      "shortName": "EJR",
+      "sourceId": "official-entry-list"
+    }
+  ],
+  "drivers": [
+    {
+      "firstName": "Luca",
+      "lastName": "Example",
+      "displayName": "Luca Example",
+      "countryCode": "IT",
+      "birthDateIso": "2007-02-10",
+      "categoryCode": "F4",
+      "teamName": "Example Junior Racing",
+      "overall": 61,
+      "potential": 84,
+      "reputation": 48,
+      "marketValue": 600000,
+      "salary": 120000,
+      "morale": 72,
+      "personality": "Ambitious",
+      "primaryTraitCode": "calm-under-pressure",
+      "sourceId": "official-entry-list"
+    }
+  ],
+  "staff": [
+    {
+      "name": "Maria Example",
+      "role": "Race Engineer",
+      "countryCode": "BR",
+      "specialty": "Setup correlation",
+      "teamName": "Example Junior Racing",
+      "categoryCode": "F4",
+      "reputation": 68,
+      "salary": 220000,
+      "personality": "Methodical",
+      "sourceId": "official-entry-list"
+    }
+  ],
+  "suppliers": [],
+  "circuits": [
+    {
+      "name": "Example Park Circuit",
+      "countryCode": "GB",
+      "trackType": "ROAD",
+      "city": "Exampleton",
+      "lengthKm": 4.18,
+      "sourceId": "calendar-support"
+    }
+  ],
+  "calendarEvents": [
+    {
+      "categoryCode": "F4",
+      "seasonYear": 2026,
+      "round": 1,
+      "name": "Example Park F4 Round",
+      "circuitName": "Example Park Circuit",
+      "countryCode": "GB",
+      "startDateIso": "2026-03-06",
+      "endDateIso": "2026-03-08",
+      "trackType": "ROAD",
+      "weatherProfile": "MIXED_SEASONAL",
+      "sourceId": "calendar-support"
+    }
+  ]
+}
