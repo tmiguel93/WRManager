@@ -15,6 +15,7 @@
     "db:seed": "prisma db seed",
     "db:seed:full": "prisma db seed && npm run db:backfill-championships",
     "db:audit-roster": "tsx scripts/audit-roster-coverage.ts",
+    "db:audit-rosters:strict": "tsx scripts/audit-roster-completeness.ts",
     "db:audit-championships": "tsx scripts/audit-championship-completeness.ts",
     "db:backfill-championships": "tsx scripts/backfill-championship-completeness.ts",
     "i18n:audit": "tsx scripts/audit-i18n.ts",

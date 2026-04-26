@@ -430,6 +430,7 @@ async function main() {
 
     await ensureDrivers(category, teams, thresholds.minDrivers, thresholds.minProspects, source);
     await ensureStaff(category, teams, thresholds.minStaff, source);
+    await ensureContracts(category);
     await ensureCalendar(category, thresholds.minRounds, source);
     await ensureStandings(category);
 
@@ -533,8 +534,9 @@ async function ensureDrivers(
   for (const [teamIndex, team] of teams.entries()) {
     const missing = Math.max(0, 2 - team.drivers.length);
     for (let slot = 0; slot < missing; slot += 1) {
-      await createDriver(category, team.id, teamIndex * 3 + slot + created, source, driverKeys, false);
-      created += 1;
+      if (await createDriver(category, team.id, teamIndex * 3 + slot + created, source, driverKeys, false)) {
+        created += 1;
+      }
     }
   }
 
@@ -567,35 +569,46 @@ async function createDriver(
   source: { url: string; confidence: number },
   driverKeys: Set<string>,
   prospect: boolean,
-) {
-  const firstName = firstNames[(seed + category.code.length) % firstNames.length];
-  const lastName = lastNames[(seed * 3 + category.tier) % lastNames.length];
+) : Promise<boolean> {
+  let attemptSeed = seed;
+  let firstName = firstNames[(attemptSeed + category.code.length) % firstNames.length];
+  let lastName = lastNames[(attemptSeed * 3 + category.tier) % lastNames.length];
   const displayName = `${firstName} ${lastName}`;
-  const year = prospect ? 2005 + (seed % 4) : 1988 + ((seed + category.tier * 3) % 17);
-  const key = `${canonicalKey(displayName)}:${year}`;
-  if (driverKeys.has(key)) return;
+  let year = prospect ? 2005 + (attemptSeed % 4) : 1988 + ((attemptSeed + category.tier * 3) % 17);
+  let key = `${canonicalKey(displayName)}:${year}`;
+  let attempts = 0;
+  while (driverKeys.has(key) && attempts < 50) {
+    attemptSeed += 97;
+    firstName = firstNames[(attemptSeed + category.code.length) % firstNames.length];
+    lastName = lastNames[(attemptSeed * 3 + category.tier) % lastNames.length];
+    year = prospect ? 2005 + (attemptSeed % 4) : 1988 + ((attemptSeed + category.tier * 3) % 17);
+    key = `${canonicalKey(`${firstName} ${lastName}`)}:${year}`;
+    attempts += 1;
+  }
+  if (driverKeys.has(key)) return false;
   driverKeys.add(key);
+  const resolvedDisplayName = `${firstName} ${lastName}`;
 
-  const overall = clamp(54 + category.tier * 7 + (seed % 9), 50, 92);
-  const potential = prospect ? clamp(overall + 17 + (seed % 5), 78, 96) : clamp(overall + 5 + (seed % 8), 58, 95);
+  const overall = clamp(54 + category.tier * 7 + (attemptSeed % 9), 50, 92);
+  const potential = prospect ? clamp(overall + 17 + (attemptSeed % 5), 78, 96) : clamp(overall + 5 + (attemptSeed % 8), 58, 95);
 
   await prisma.driver.create({
     data: {
       firstName,
       lastName,
-      displayName,
-      countryCode: countryPool[(seed + category.tier) % countryPool.length],
-      birthDate: new Date(Date.UTC(year, seed % 12, 5 + (seed % 21))),
+      displayName: resolvedDisplayName,
+      countryCode: countryPool[(attemptSeed + category.tier) % countryPool.length],
+      birthDate: new Date(Date.UTC(year, attemptSeed % 12, 5 + (attemptSeed % 21))),
       overall,
       potential,
       reputation: clamp(overall + category.tier * 2 - (prospect ? 6 : 0), 42, 95),
       marketValue: (overall * 45_000 + category.tier * 380_000) * (prospect ? 1 : 2),
       salary: 95_000 + category.tier * 240_000 + overall * 8_500,
-      morale: 68 + (seed % 18),
-      personality: ["Composed", "Ambitious", "Analytical", "Resilient", "Commercial"][seed % 5],
-      primaryTraitCode: ["calm-under-pressure", "technical-genius", "tire-whisperer", "qualifying-beast", "sponsor-magnet"][seed % 5],
+      morale: 68 + (attemptSeed % 18),
+      personality: ["Composed", "Ambitious", "Analytical", "Resilient", "Commercial"][attemptSeed % 5],
+      primaryTraitCode: ["calm-under-pressure", "technical-genius", "tire-whisperer", "qualifying-beast", "sponsor-magnet"][attemptSeed % 5],
       preferredDisciplines: [category.discipline],
-      attributes: driverAttributes(overall, seed, category.tier),
+      attributes: driverAttributes(overall, attemptSeed, category.tier),
       sourceUrl: source.url,
       sourceConfidence: Math.max(45, source.confidence - (prospect ? 12 : 9)),
       lastVerifiedAt: verifiedAt,
@@ -603,6 +616,7 @@ async function createDriver(
       currentTeamId: teamId,
     },
   });
+  return true;
 }
 
 async function ensureStaff(
@@ -622,16 +636,97 @@ async function ensureStaff(
   for (const [teamIndex, team] of teams.entries()) {
     const missing = Math.max(0, Math.min(4, category.tier + 2) - team.staff.length);
     for (let slot = 0; slot < missing; slot += 1) {
-      await createStaff(category, team.id, teamIndex * 5 + slot, source, staffKeys);
-      currentStaffCount += 1;
+      if (await createStaff(category, team.id, teamIndex * 5 + slot, source, staffKeys)) {
+        currentStaffCount += 1;
+      }
     }
   }
 
   while (currentStaffCount < minStaff) {
     const team = teams[seed % Math.max(teams.length, 1)];
-    await createStaff(category, team?.id ?? null, 900 + seed, source, staffKeys);
+    if (await createStaff(category, team?.id ?? null, 900 + seed, source, staffKeys)) {
+      currentStaffCount += 1;
+    }
     seed += 1;
-    currentStaffCount += 1;
+  }
+}
+
+async function ensureContracts(category: CategoryRecord) {
+  const teams = await prisma.team.findMany({
+    where: { categoryId: category.id },
+    include: {
+      drivers: {
+        where: { currentCategoryId: category.id },
+        orderBy: [{ overall: "desc" }, { potential: "desc" }],
+      },
+      staff: {
+        where: { currentCategoryId: category.id },
+        orderBy: [{ reputation: "desc" }, { role: "asc" }],
+      },
+    },
+  });
+
+  const startDate = new Date(Date.UTC(2026, 0, 1));
+  const endDate = new Date(Date.UTC(2027, 0, 1));
+
+  for (const team of teams) {
+    for (const [index, driver] of team.drivers.entries()) {
+      const existing = await prisma.driverContract.findFirst({
+        where: {
+          driverId: driver.id,
+          teamId: team.id,
+          status: "ACTIVE",
+        },
+        select: { id: true },
+      });
+      if (existing) continue;
+
+      await prisma.driverContract.create({
+        data: {
+          driverId: driver.id,
+          teamId: team.id,
+          role: index < 2 ? "Race Driver" : "Reserve Driver",
+          annualSalary: driver.salary,
+          buyoutClause: Math.max(driver.marketValue * 2, driver.salary * 4),
+          bonusWin: Math.round(driver.salary * 0.22),
+          bonusPodium: Math.round(driver.salary * 0.12),
+          bonusPole: Math.round(driver.salary * 0.08),
+          bonusTopTen: Math.round(driver.salary * 0.04),
+          bonusStageWin: category.discipline === "STOCK_CAR" ? Math.round(driver.salary * 0.03) : null,
+          startDate,
+          endDate,
+          clauses: { completionBackfill: true, source: "championship-roster-completeness" },
+        },
+      });
+    }
+
+    for (const staffMember of team.staff) {
+      const existing = await prisma.staffContract.findFirst({
+        where: {
+          staffId: staffMember.id,
+          teamId: team.id,
+          status: "ACTIVE",
+        },
+        select: { id: true },
+      });
+      if (existing) continue;
+
+      await prisma.staffContract.create({
+        data: {
+          staffId: staffMember.id,
+          teamId: team.id,
+          role: staffMember.role,
+          annualSalary: staffMember.salary,
+          bonusObjectives: {
+            completionBackfill: true,
+            podium: Math.round(staffMember.salary * 0.06),
+            development: Math.round(staffMember.salary * 0.04),
+          },
+          startDate,
+          endDate,
+        },
+      });
+    }
   }
 }
 
@@ -641,25 +736,34 @@ async function createStaff(
   seed: number,
   source: { url: string; confidence: number },
   staffKeys: Set<string>,
-) {
-  const name = `${firstNames[(seed + 5) % firstNames.length]} ${lastNames[(seed * 5 + 7) % lastNames.length]}`;
-  const role = staffRoles[seed % staffRoles.length];
-  const key = `${canonicalKey(name)}:${role}`;
-  if (staffKeys.has(key)) return;
+) : Promise<boolean> {
+  let attemptSeed = seed;
+  let name = `${firstNames[(attemptSeed + 5) % firstNames.length]} ${lastNames[(attemptSeed * 5 + 7) % lastNames.length]}`;
+  let role = staffRoles[attemptSeed % staffRoles.length];
+  let key = `${canonicalKey(name)}:${role}`;
+  let attempts = 0;
+  while (staffKeys.has(key) && attempts < 50) {
+    attemptSeed += 89;
+    name = `${firstNames[(attemptSeed + 5) % firstNames.length]} ${lastNames[(attemptSeed * 5 + 7) % lastNames.length]}`;
+    role = staffRoles[attemptSeed % staffRoles.length];
+    key = `${canonicalKey(name)}:${role}`;
+    attempts += 1;
+  }
+  if (staffKeys.has(key)) return false;
   staffKeys.add(key);
 
-  const reputation = clamp(50 + category.tier * 8 + (seed % 10), 45, 94);
+  const reputation = clamp(50 + category.tier * 8 + (attemptSeed % 10), 45, 94);
   await prisma.staff.create({
     data: {
       name,
       role,
-      countryCode: countryPool[(seed + 4) % countryPool.length],
+      countryCode: countryPool[(attemptSeed + 4) % countryPool.length],
       reputation,
       salary: 120_000 + category.tier * 310_000 + reputation * 6_000,
-      specialty: ["Setup correlation", "Race execution", "Talent systems", "Operations", "Vehicle dynamics"][seed % 5],
+      specialty: ["Setup correlation", "Race execution", "Talent systems", "Operations", "Vehicle dynamics"][attemptSeed % 5],
       compatibility: { categories: [category.code], discipline: category.discipline },
-      personality: ["Methodical", "Demanding", "Collaborative", "Calm", "Innovative"][seed % 5],
-      attributes: staffAttributes(reputation, seed),
+      personality: ["Methodical", "Demanding", "Collaborative", "Calm", "Innovative"][attemptSeed % 5],
+      attributes: staffAttributes(reputation, attemptSeed),
       sourceUrl: source.url,
       sourceConfidence: Math.max(45, source.confidence - 11),
       lastVerifiedAt: verifiedAt,
@@ -667,6 +771,7 @@ async function createStaff(
       currentCategoryId: category.id,
     },
   });
+  return true;
 }
 
 async function ensureCalendar(
@@ -785,8 +890,8 @@ async function auditCategory(category: CategoryRecord) {
       where: { categoryId: category.id, seasonId: currentSeason?.id },
       select: { circuitName: true },
     }),
-    prisma.driver.count({ where: { currentCategoryId: category.id, currentTeamId: { not: null } } }),
-    prisma.staff.count({ where: { currentCategoryId: category.id, currentTeamId: { not: null } } }),
+    prisma.driver.count({ where: { currentCategoryId: category.id, currentTeam: { categoryId: category.id } } }),
+    prisma.staff.count({ where: { currentCategoryId: category.id, currentTeam: { categoryId: category.id } } }),
     prisma.driver.count({
       where: {
         currentCategoryId: category.id,
