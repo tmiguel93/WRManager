@@ -1,6 +1,6 @@
 import { prisma } from "@/persistence/prisma";
 import { cookies } from "next/headers";
-import { getChampionshipCompletenessThresholds } from "@/domain/rules/championship-completeness";
+import { evaluateChampionshipCompleteness } from "@/domain/rules/championship-completeness";
 import { deriveCareerPhaseFromSeason } from "@/domain/rules/season-progress";
 import type {
   CareerSetupCategory,
@@ -14,7 +14,15 @@ export async function getCareerSetupData() {
       orderBy: [{ tier: "asc" }, { name: "asc" }],
       include: {
         _count: {
-          select: { teams: true, drivers: true, staff: true, calendarEvents: true },
+          select: { teams: true, drivers: true, staff: true },
+        },
+        seasons: {
+          where: { year: 2026 },
+          include: {
+            events: {
+              select: { circuitName: true },
+            },
+          },
         },
       },
     }),
@@ -43,17 +51,60 @@ export async function getCareerSetupData() {
     }),
   ]);
 
+  const categoryReadinessEntries = await Promise.all(
+    categories.map(async (category) => {
+      const seasonEvents = category.seasons[0]?.events ?? [];
+      const [linkedDrivers, linkedStaff, prospects] = await Promise.all([
+        prisma.driver.count({
+          where: { currentCategoryId: category.id, currentTeam: { categoryId: category.id } },
+        }),
+        prisma.staff.count({
+          where: { currentCategoryId: category.id, currentTeam: { categoryId: category.id } },
+        }),
+        prisma.driver.count({
+          where: {
+            currentCategoryId: category.id,
+            birthDate: { gte: new Date(Date.UTC(2003, 0, 1)) },
+            potential: { gte: 76 },
+          },
+        }),
+      ]);
+
+      const completeness = evaluateChampionshipCompleteness({
+        tier: category.tier,
+        teams: category._count.teams,
+        drivers: category._count.drivers,
+        staff: category._count.staff,
+        rounds: seasonEvents.length,
+        circuits: new Set(seasonEvents.map((event) => event.circuitName.toLowerCase())).size,
+        prospects,
+        linkedDrivers,
+        linkedStaff,
+      });
+      const engineSupplierCount = suppliers.filter((supplier) =>
+        supplier.categories.some((link) => link.categoryId === category.id),
+      ).length;
+      const issues = [...completeness.issues];
+      if (engineSupplierCount === 0) {
+        issues.push("engine suppliers: 0/1");
+      }
+
+      return [
+        category.id,
+        {
+          status: engineSupplierCount > 0 ? completeness.status : "blocked",
+          issues,
+          engineSupplierCount,
+        },
+      ] as const;
+    }),
+  );
+  const categoryReadiness = new Map(categoryReadinessEntries);
+
   const mappedCategories: CareerSetupCategory[] = categories.map((category) => {
-    const thresholds = getChampionshipCompletenessThresholds(category.tier);
-    const hasMinimumContent =
-      category._count.teams >= thresholds.minTeams &&
-      category._count.drivers >= thresholds.minDrivers &&
-      category._count.staff >= thresholds.minStaff &&
-      category._count.calendarEvents >= thresholds.minRounds;
-    const readinessIssues = Array.isArray(category.readinessIssues)
-      ? category.readinessIssues.filter((issue): issue is string => typeof issue === "string")
-      : [];
-    const readinessStatus = hasMinimumContent ? category.readinessStatus : "blocked";
+    const readiness = categoryReadiness.get(category.id);
+    const readinessIssues = readiness?.issues ?? [];
+    const readinessStatus = readiness?.status ?? "blocked";
     const progressionLocked = category.tier > 2;
     const contentLocked = readinessStatus !== "complete";
 
@@ -72,7 +123,9 @@ export async function getCareerSetupData() {
       lockReason: progressionLocked
         ? "Progress in lower tiers to unlock elite categories."
         : contentLocked
-          ? "Championship content is being completed before career start."
+          ? readiness?.engineSupplierCount === 0
+            ? "No compatible engine supplier is available for this series yet."
+            : "Championship content is being completed before career start."
           : null,
     };
   });

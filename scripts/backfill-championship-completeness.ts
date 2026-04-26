@@ -1,9 +1,22 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
+
 import { Prisma, PrismaClient, TrackType } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import {
   evaluateChampionshipCompleteness,
   getChampionshipCompletenessThresholds,
 } from "../src/domain/rules/championship-completeness";
+import {
+  realDriverSeeds,
+  realStaffSeeds,
+  realTeamsSeed,
+} from "../prisma/seed-data/real-world";
+import {
+  supplementalDriverSeeds,
+  supplementalStaffSeeds,
+  supplementalTeamsSeed,
+} from "../prisma/seed-data/global-expansion";
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./prisma/dev.db" });
 const prisma = new PrismaClient({ adapter });
@@ -18,6 +31,18 @@ type CircuitTemplate = {
   countryCode: string;
   trackType: TrackType;
 };
+
+type BrandMarkRegistry = {
+  teams?: Record<string, string>;
+};
+
+type PortraitManifest = {
+  drivers?: Record<string, string>;
+  staff?: Record<string, string>;
+};
+
+let brandMarkRegistry: BrandMarkRegistry | null = null;
+let portraitManifest: PortraitManifest | null = null;
 
 const categorySources: Record<string, { url: string; confidence: number }> = {
   F1: { url: "https://en.wikipedia.org/wiki/2026_Formula_One_World_Championship", confidence: 82 },
@@ -52,7 +77,7 @@ const categorySources: Record<string, { url: string; confidence: number }> = {
   TOURING_CONTINENTAL: { url: "https://en.wikipedia.org/wiki/Touring_car_racing", confidence: 58 },
 };
 
-const teamBanks: Record<string, string[]> = {
+const manualTeamBanks: Record<string, string[]> = {
   F1: [
     "Aston Martin Aramco F1 Team",
     "BWT Alpine F1 Team",
@@ -171,119 +196,238 @@ const teamBanks: Record<string, string[]> = {
     "NEOM McLaren Formula E",
     "Lola Yamaha ABT",
   ],
+  FORMULA_VEE: [
+    "BRS Formula Vee",
+    "W2 Formula Vee",
+    "Scuderia Chiarelli Formula Vee",
+    "C2 Team Formula Vee",
+    "Mottin Racing Formula Vee",
+    "Bassani Racing Formula Vee",
+    "Alfia Racing Formula Vee",
+    "RKL Competições Formula Vee",
+  ],
+  F4: [
+    "US Racing F4",
+    "Prema F4 Program",
+    "Van Amersfoort Racing F4",
+    "Jenzer Motorsport F4",
+    "R-ace GP F4",
+    "Sainteloc Racing F4",
+    "AKM Motorsport F4",
+    "Cram Motorsport F4",
+  ],
+  FORMULA_REGIONAL: [
+    "Prema Regional",
+    "Hitech Regional",
+    "R-ace GP Regional",
+    "ART Grand Prix Regional",
+    "MP Motorsport Regional",
+    "Van Amersfoort Racing Regional",
+    "Trident Regional",
+    "KIC Motorsport Regional",
+  ],
+  USF_JUNIORS: [
+    "Pabst Racing Juniors",
+    "Cape Motorsports Juniors",
+    "DEForce Racing Juniors",
+    "Exclusive Autosport Juniors",
+    "Jay Howard Driver Development Juniors",
+    "VRD Racing Juniors",
+    "DC Autosport Juniors",
+    "InterMS Juniors",
+  ],
+  GB3: [
+    "Rodin GB3",
+    "Hillspeed GB3",
+    "Elite Motorsport GB3",
+    "Chris Dittmann Racing GB3",
+    "Fortec Motorsport GB3",
+    "JHR Developments GB3",
+    "Hitech TGR GB3",
+    "Xcel Motorsport GB3",
+  ],
+  TURISMO_NACIONAL: [
+    "Full Time TN",
+    "Crown Racing TN",
+    "Cavaleiro Sports TN",
+    "W2 Racing TN",
+    "RCM Motorsport TN",
+    "Hot Car Competições TN",
+    "Mottin Racing TN",
+    "KTF Sports TN",
+  ],
+  GT4_REGIONAL: [
+    "Aston GT4 Academy",
+    "Sainteloc Racing GT4",
+    "PROsport Racing GT4",
+    "Allied-Racing GT4",
+    "NM Racing Team GT4",
+    "Racing Spirit of Leman GT4",
+    "Mirage Racing GT4",
+    "Elite Motorsport GT4",
+  ],
+  PROTOTYPE_CUP: [
+    "Ligier Prototype Cup",
+    "United Prototype Cup",
+    "Duqueine Prototype Cup",
+    "Inter Europol Prototype Cup",
+    "Rinaldi Racing Prototype Cup",
+    "Mühlner Motorsport Prototype Cup",
+    "DKR Engineering Prototype Cup",
+    "Nielsen Racing Prototype Cup",
+  ],
+  DTM_TROPHY: [
+    "Abt Trophy",
+    "Rutronik Trophy",
+    "FK Performance Trophy",
+    "Toksport WRT Trophy",
+    "Schnitzelalm Racing Trophy",
+    "Walkenhorst Motorsport Trophy",
+    "Prosport Racing Trophy",
+    "Project 1 Trophy",
+    "Attempto Racing Trophy",
+    "Ring Racing Trophy",
+  ],
+  GT3_NATIONAL: [
+    "SRO Italia GT3",
+    "AF Corse GT3",
+    "Barwell Motorsport GT3",
+    "Garage 59 GT3",
+    "Optimum Motorsport GT3",
+    "RAM Racing GT3",
+    "Century Motorsport GT3",
+    "Team Parker Racing GT3",
+    "Beechdean AMR GT3",
+    "2 Seas Motorsport GT3",
+  ],
+  LMP3: [
+    "Inter Europol LMP3",
+    "Cool Racing LMP3",
+    "DKR Engineering LMP3",
+    "Nielsen Racing LMP3",
+    "Team Virage LMP3",
+    "Rinaldi Racing LMP3",
+    "BHK Motorsport LMP3",
+    "Eurointernational LMP3",
+    "CLX Motorsport LMP3",
+    "Muhlner Motorsport LMP3",
+  ],
+  SUPER_FORMULA_LIGHTS: [
+    "TOMS SFL",
+    "B-Max SFL",
+    "Toda Racing SFL",
+    "TGM Grand Prix SFL",
+    "Rn-sports SFL",
+    "HFDP Racing SFL",
+    "Drago Corse SFL",
+    "ThreeBond Racing SFL",
+    "Buzz Racing SFL",
+    "Kuo VANTELIN Team TOMS SFL",
+  ],
+  TOURING_CONTINENTAL: [
+    "WTCR Continental",
+    "Cyan Racing Continental",
+    "Comtoyou Racing Continental",
+    "BRC Hyundai N Squadra Corse",
+    "Münnich Motorsport Continental",
+    "Engstler Motorsport Continental",
+    "Target Competition Continental",
+    "Volcano Motorsport Continental",
+    "Zengo Motorsport Continental",
+    "Vuković Motorsport Continental",
+  ],
+  DTM: [
+    "Manthey EMA DTM",
+    "Schubert DTM",
+    "ABT Sportsline DTM",
+    "SSR Performance DTM",
+    "Winward Racing DTM",
+    "Haupt Racing Team DTM",
+    "Toksport WRT DTM",
+    "Grasser Racing Team DTM",
+    "Team Rosberg DTM",
+    "Emil Frey Racing DTM",
+  ],
+  GT_WORLD_CHALLENGE: [
+    "Team WRT GTWC",
+    "Iron Lynx GTWC",
+    "AF Corse GTWC",
+    "Akkodis ASP GTWC",
+    "Garage 59 GTWC",
+    "Dinamic GT GTWC",
+    "Madpanda Motorsport GTWC",
+    "ROWE Racing GTWC",
+    "Boutsen VDS GTWC",
+    "Tresor Attempto GTWC",
+  ],
+  INDY_NXT_FEEDER: [
+    "Andretti Feeder",
+    "HMD Feeder",
+    "Pabst Racing Feeder",
+    "Cape Motorsports Feeder",
+    "DEForce Racing Feeder",
+    "Exclusive Autosport Feeder",
+    "TJ Speed Motorsports Feeder",
+    "Turn 3 Motorsport Feeder",
+    "Velocity Racing Development Feeder",
+    "Joe Dooling Autosports Feeder",
+  ],
+  INDY_NXT: [
+    "Andretti Indy NXT",
+    "HMD Indy NXT",
+    "Abel Motorsports Indy NXT",
+    "Juncos Hollinger Indy NXT",
+    "Cape Motorsports Indy NXT",
+    "Force Indy NXT",
+    "Exclusive Autosport Indy NXT",
+    "Pabst Racing Indy NXT",
+    "TJ Speed Motorsports Indy NXT",
+    "Turn 3 Motorsport Indy NXT",
+  ],
+  LMGT3: [
+    "Team WRT LMGT3",
+    "Iron Dames LMGT3",
+    "Manthey Racing LMGT3",
+    "United Autosports LMGT3",
+    "TF Sport LMGT3",
+    "Akkodis ASP LMGT3",
+    "Vista AF Corse LMGT3",
+    "D'Station Racing LMGT3",
+    "Proton Competition LMGT3",
+    "Racing Spirit of Leman LMGT3",
+  ],
+  LMP2: [
+    "United Autosports LMP2",
+    "Prema LMP2",
+    "Inter Europol Competition LMP2",
+    "Algarve Pro Racing LMP2",
+    "AO by TF LMP2",
+    "Vector Sport LMP2",
+    "IDEC Sport LMP2",
+    "Duqueine Team LMP2",
+    "Nielsen Racing LMP2",
+    "Cool Racing LMP2",
+  ],
+  SUPER_FORMULA: [
+    "TOMS Super Formula",
+    "Dandelion SF",
+    "Team Mugen Super Formula",
+    "Kondo Racing Super Formula",
+    "Nakajima Racing Super Formula",
+    "B-Max Racing Team Super Formula",
+    "KCMG Super Formula",
+    "Impul Super Formula",
+    "Team Goh Super Formula",
+    "ThreeBond Racing Super Formula",
+  ],
 };
 
-const genericTeamPrefixes = [
-  "PREMA",
-  "Campos",
-  "Hitech",
-  "MP",
-  "Trident",
-  "Van Amersfoort",
-  "Carlin",
-  "Fortec",
-  "Arden",
-  "Motopark",
-  "Jenzer",
-  "R-ace",
-  "Sainteloc",
-  "Iron Lynx",
-  "WRT",
-  "United Autosports",
-  "AF Corse",
-  "Manthey",
-  "Toksport",
-  "Proton",
-  "TOM'S",
-  "Mugen",
-  "Dandelion",
-  "Impul",
-  "KCMG",
-  "StockTech",
-  "Cimed",
-  "Crown",
-  "Cavaleiro",
-  "Full Time",
-];
-
 const countryPool = ["BR", "US", "GB", "IT", "FR", "DE", "ES", "NL", "JP", "MX", "AR", "CA", "AU", "NZ", "CH", "SE"];
-const firstNames = [
-  "Luca",
-  "Mateo",
-  "Gabriel",
-  "Theo",
-  "Noah",
-  "Oliver",
-  "Arthur",
-  "Rafael",
-  "Enzo",
-  "Felipe",
-  "Oscar",
-  "Nico",
-  "Hugo",
-  "Sebastian",
-  "Santiago",
-  "Leon",
-  "Kai",
-  "Riku",
-  "Alex",
-  "Ethan",
-  "Maya",
-  "Sofia",
-  "Clara",
-  "Bianca",
-  "Emilia",
-  "Julia",
-  "Aiko",
-  "Lena",
-  "Mia",
-  "Valentina",
-  "Isabela",
-  "Camila",
-];
-const lastNames = [
-  "Rossi",
-  "Almeida",
-  "Carter",
-  "Muller",
-  "Sato",
-  "Silva",
-  "Andersen",
-  "Garcia",
-  "Bianchi",
-  "Moretti",
-  "Nakamura",
-  "Costa",
-  "Ward",
-  "Keller",
-  "Moreno",
-  "Fischer",
-  "Reed",
-  "Martins",
-  "Dubois",
-  "Tanaka",
-  "Hughes",
-  "Ramos",
-  "Schneider",
-  "Vieira",
-  "Lawson",
-  "Santos",
-  "Mendoza",
-  "Ricci",
-  "Kobayashi",
-  "Evans",
-  "Pereira",
-  "Laurent",
-  "Araujo",
-  "Bennett",
-  "Kimura",
-  "Oliveira",
-  "Vargas",
-  "Brooks",
-  "Ferreira",
-  "De Luca",
-];
 const staffRoles = ["Technical Director", "Race Engineer", "Head of Strategy", "Sporting Director", "Chief Engineer"];
+const allCuratedDriverSeeds = [...realDriverSeeds, ...supplementalDriverSeeds];
+const allCuratedStaffSeeds = [...realStaffSeeds, ...supplementalStaffSeeds];
+const seededTeamBanks = buildSeededTeamBanks();
+const teamBanks = mergeTeamBanks(seededTeamBanks, manualTeamBanks);
 
 const calendarTemplates: Record<string, CircuitTemplate[]> = {
   OPEN_WHEEL: [
@@ -407,6 +551,11 @@ const categoryCalendarFamily: Record<string, keyof typeof calendarTemplates> = {
 };
 
 async function main() {
+  [brandMarkRegistry, portraitManifest] = await Promise.all([
+    loadJson<BrandMarkRegistry>("public/assets/brand-marks/brand-mark-registry.json", {}),
+    loadJson<PortraitManifest>("prisma/seed-data/portrait-manifest.json", {}),
+  ]);
+
   const categories = await prisma.category.findMany({
     orderBy: [{ tier: "asc" }, { code: "asc" }],
   });
@@ -421,6 +570,7 @@ async function main() {
 
     const thresholds = getChampionshipCompletenessThresholds(category.tier);
 
+    await ensureEngineSupplierCompatibility(category);
     await ensureTeams(category, thresholds.minTeams, source);
     const teams = await prisma.team.findMany({
       where: { categoryId: category.id },
@@ -464,6 +614,49 @@ async function main() {
   console.table(summary.map((row) => ({ code: row.code, status: row.status, issues: row.issues.join("; ") || "ok" })));
 }
 
+async function ensureEngineSupplierCompatibility(category: CategoryRecord) {
+  const existingEngineLinks = await prisma.supplierCategory.count({
+    where: {
+      categoryId: category.id,
+      supplier: { type: "ENGINE" },
+    },
+  });
+
+  if (existingEngineLinks > 0) return;
+
+  for (const supplierName of preferredEngineSuppliers(category)) {
+    const supplier = await prisma.supplier.findFirst({
+      where: { name: supplierName, type: "ENGINE" },
+      select: { id: true },
+    });
+    if (!supplier) continue;
+
+    await prisma.supplierCategory.upsert({
+      where: {
+        supplierId_categoryId: {
+          supplierId: supplier.id,
+          categoryId: category.id,
+        },
+      },
+      update: {},
+      create: {
+        supplierId: supplier.id,
+        categoryId: category.id,
+      },
+    });
+    return;
+  }
+}
+
+function preferredEngineSuppliers(category: CategoryRecord) {
+  if (category.code === "PROTOTYPE_CUP") return ["Cadillac", "Alpine", "Peugeot", "Toyota"];
+  if (category.discipline === "STOCK_CAR") return ["Chevrolet", "Ford", "Toyota"];
+  if (category.discipline === "ENDURANCE") return ["Toyota", "Cadillac", "Porsche", "BMW", "Alpine"];
+  if (category.discipline === "GT") return ["BMW", "Porsche", "Aston Martin", "Lexus", "Audi"];
+  if (category.tier <= 2) return ["McLaren Applied Systems", "Honda", "Mercedes", "Ferrari"];
+  return ["Honda", "Mercedes", "Ferrari", "Toyota"];
+}
+
 async function ensureTeams(
   category: CategoryRecord,
   minTeams: number,
@@ -479,7 +672,8 @@ async function ensureTeams(
   let index = 0;
 
   while (currentCount < minTeams) {
-    const name = nextTeamName(category, currentCount + index);
+    const name = nextTeamName(category, index);
+    if (!name) break;
     const canonical = canonicalKey(name);
     if (existingNames.has(canonical)) {
       index += 1;
@@ -505,6 +699,8 @@ async function ensureTeams(
         primaryColor: colorFor(index, 0),
         secondaryColor: colorFor(index, 1),
         accentColor: colorFor(index, 2),
+        logoUrl: resolveTeamBrandMark(category.code, name),
+        imageUrl: resolveTeamBrandMark(category.code, name),
         philosophy: philosophyFor(category, index),
         manufacturerName: manufacturerFor(category, index),
         sourceUrl: source.url,
@@ -543,7 +739,8 @@ async function ensureDrivers(
   let currentDriverCount = await prisma.driver.count({ where: { currentCategoryId: category.id } });
   while (currentDriverCount < minDrivers) {
     const team = teams[currentDriverCount % Math.max(teams.length, 1)];
-    await createDriver(category, team?.id ?? null, currentDriverCount + created, source, driverKeys, false);
+    const createdDriver = await createDriver(category, team?.id ?? null, currentDriverCount + created, source, driverKeys, false);
+    if (!createdDriver) break;
     currentDriverCount += 1;
   }
 
@@ -557,7 +754,8 @@ async function ensureDrivers(
 
   while (currentProspects < minProspects) {
     const team = teams[currentProspects % Math.max(teams.length, 1)];
-    await createDriver(category, team?.id ?? null, 700 + currentProspects + created, source, driverKeys, true);
+    const createdProspect = await createDriver(category, team?.id ?? null, 700 + currentProspects + created, source, driverKeys, true);
+    if (!createdProspect) break;
     currentProspects += 1;
   }
 }
@@ -570,47 +768,36 @@ async function createDriver(
   driverKeys: Set<string>,
   prospect: boolean,
 ) : Promise<boolean> {
-  let attemptSeed = seed;
-  let firstName = firstNames[(attemptSeed + category.code.length) % firstNames.length];
-  let lastName = lastNames[(attemptSeed * 3 + category.tier) % lastNames.length];
-  const displayName = `${firstName} ${lastName}`;
-  let year = prospect ? 2005 + (attemptSeed % 4) : 1988 + ((attemptSeed + category.tier * 3) % 17);
-  let key = `${canonicalKey(displayName)}:${year}`;
-  let attempts = 0;
-  while (driverKeys.has(key) && attempts < 50) {
-    attemptSeed += 97;
-    firstName = firstNames[(attemptSeed + category.code.length) % firstNames.length];
-    lastName = lastNames[(attemptSeed * 3 + category.tier) % lastNames.length];
-    year = prospect ? 2005 + (attemptSeed % 4) : 1988 + ((attemptSeed + category.tier * 3) % 17);
-    key = `${canonicalKey(`${firstName} ${lastName}`)}:${year}`;
-    attempts += 1;
-  }
-  if (driverKeys.has(key)) return false;
+  const candidate = pickCuratedDriver(category, seed, prospect, driverKeys);
+  if (!candidate) return false;
+  const year = Number(candidate.birthDateIso.slice(0, 4));
+  const key = `${canonicalKey(candidate.displayName)}:${year}`;
   driverKeys.add(key);
-  const resolvedDisplayName = `${firstName} ${lastName}`;
+  const attemptSeed = seed;
 
-  const overall = clamp(54 + category.tier * 7 + (attemptSeed % 9), 50, 92);
-  const potential = prospect ? clamp(overall + 17 + (attemptSeed % 5), 78, 96) : clamp(overall + 5 + (attemptSeed % 8), 58, 95);
+  const overall = clamp(candidate.overall - 2 + (attemptSeed % 5), 50, 94);
+  const potential = prospect ? clamp(Math.max(candidate.potential, overall + 8), 78, 97) : clamp(candidate.potential, 58, 96);
 
   await prisma.driver.create({
     data: {
-      firstName,
-      lastName,
-      displayName: resolvedDisplayName,
-      countryCode: countryPool[(attemptSeed + category.tier) % countryPool.length],
-      birthDate: new Date(Date.UTC(year, attemptSeed % 12, 5 + (attemptSeed % 21))),
+      firstName: candidate.firstName,
+      lastName: candidate.lastName,
+      displayName: candidate.displayName,
+      countryCode: candidate.countryCode,
+      birthDate: new Date(candidate.birthDateIso),
+      imageUrl: portraitManifest?.drivers?.[candidate.portraitSlug] ?? null,
       overall,
       potential,
-      reputation: clamp(overall + category.tier * 2 - (prospect ? 6 : 0), 42, 95),
-      marketValue: (overall * 45_000 + category.tier * 380_000) * (prospect ? 1 : 2),
-      salary: 95_000 + category.tier * 240_000 + overall * 8_500,
-      morale: 68 + (attemptSeed % 18),
-      personality: ["Composed", "Ambitious", "Analytical", "Resilient", "Commercial"][attemptSeed % 5],
-      primaryTraitCode: ["calm-under-pressure", "technical-genius", "tire-whisperer", "qualifying-beast", "sponsor-magnet"][attemptSeed % 5],
+      reputation: clamp(candidate.reputation + category.tier - (prospect ? 5 : 0), 42, 95),
+      marketValue: Math.max(candidate.marketValue, (overall * 42_000 + category.tier * 340_000) * (prospect ? 1 : 2)),
+      salary: Math.max(candidate.salary, 85_000 + category.tier * 210_000 + overall * 7_500),
+      morale: candidate.morale,
+      personality: candidate.personality,
+      primaryTraitCode: candidate.primaryTraitCode,
       preferredDisciplines: [category.discipline],
       attributes: driverAttributes(overall, attemptSeed, category.tier),
-      sourceUrl: source.url,
-      sourceConfidence: Math.max(45, source.confidence - (prospect ? 12 : 9)),
+      sourceUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(candidate.wikipediaTitle)}`,
+      sourceConfidence: Math.max(56, source.confidence - (prospect ? 10 : 7)),
       lastVerifiedAt: verifiedAt,
       currentCategoryId: category.id,
       currentTeamId: teamId,
@@ -644,9 +831,8 @@ async function ensureStaff(
 
   while (currentStaffCount < minStaff) {
     const team = teams[seed % Math.max(teams.length, 1)];
-    if (await createStaff(category, team?.id ?? null, 900 + seed, source, staffKeys)) {
-      currentStaffCount += 1;
-    }
+    if (!(await createStaff(category, team?.id ?? null, 900 + seed, source, staffKeys))) break;
+    currentStaffCount += 1;
     seed += 1;
   }
 }
@@ -737,35 +923,28 @@ async function createStaff(
   source: { url: string; confidence: number },
   staffKeys: Set<string>,
 ) : Promise<boolean> {
-  let attemptSeed = seed;
-  let name = `${firstNames[(attemptSeed + 5) % firstNames.length]} ${lastNames[(attemptSeed * 5 + 7) % lastNames.length]}`;
-  let role = staffRoles[attemptSeed % staffRoles.length];
-  let key = `${canonicalKey(name)}:${role}`;
-  let attempts = 0;
-  while (staffKeys.has(key) && attempts < 50) {
-    attemptSeed += 89;
-    name = `${firstNames[(attemptSeed + 5) % firstNames.length]} ${lastNames[(attemptSeed * 5 + 7) % lastNames.length]}`;
-    role = staffRoles[attemptSeed % staffRoles.length];
-    key = `${canonicalKey(name)}:${role}`;
-    attempts += 1;
-  }
-  if (staffKeys.has(key)) return false;
+  const candidate = pickCuratedStaff(category, seed, staffKeys);
+  if (!candidate) return false;
+  const attemptSeed = seed;
+  const role = candidate.role || staffRoles[attemptSeed % staffRoles.length];
+  const key = `${canonicalKey(candidate.name)}:${role}`;
   staffKeys.add(key);
 
-  const reputation = clamp(50 + category.tier * 8 + (attemptSeed % 10), 45, 94);
+  const reputation = clamp(candidate.reputation - 2 + (attemptSeed % 5), 45, 95);
   await prisma.staff.create({
     data: {
-      name,
+      name: candidate.name,
       role,
-      countryCode: countryPool[(attemptSeed + 4) % countryPool.length],
+      countryCode: candidate.countryCode,
+      imageUrl: portraitManifest?.staff?.[candidate.portraitSlug] ?? null,
       reputation,
-      salary: 120_000 + category.tier * 310_000 + reputation * 6_000,
-      specialty: ["Setup correlation", "Race execution", "Talent systems", "Operations", "Vehicle dynamics"][attemptSeed % 5],
+      salary: Math.max(candidate.salary, 110_000 + category.tier * 280_000 + reputation * 5_500),
+      specialty: candidate.specialty,
       compatibility: { categories: [category.code], discipline: category.discipline },
-      personality: ["Methodical", "Demanding", "Collaborative", "Calm", "Innovative"][attemptSeed % 5],
+      personality: candidate.personality,
       attributes: staffAttributes(reputation, attemptSeed),
-      sourceUrl: source.url,
-      sourceConfidence: Math.max(45, source.confidence - 11),
+      sourceUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(candidate.wikipediaTitle)}`,
+      sourceConfidence: Math.max(56, source.confidence - 9),
       lastVerifiedAt: verifiedAt,
       currentTeamId: teamId,
       currentCategoryId: category.id,
@@ -963,9 +1142,94 @@ async function auditCategory(category: CategoryRecord) {
 function nextTeamName(category: CategoryRecord, index: number) {
   const bank = teamBanks[category.code];
   if (bank?.[index]) return bank[index];
-  const prefix = genericTeamPrefixes[(index + category.code.length) % genericTeamPrefixes.length];
-  const suffix = category.name.replace(/\b(Championship|Series|Cup|World|Regional|National|Formula)\b/gi, "").trim();
-  return `${prefix} ${suffix || category.code.replaceAll("_", " ")}`;
+  return null;
+}
+
+function pickCuratedDriver(
+  category: CategoryRecord,
+  seed: number,
+  prospect: boolean,
+  driverKeys: Set<string>,
+) {
+  const categoryPool = allCuratedDriverSeeds.filter((driver) => driver.categoryCode === category.code);
+  const globalPool = allCuratedDriverSeeds.filter((driver) => driver.categoryCode !== category.code);
+  const candidates = [...categoryPool, ...globalPool].filter((driver) => {
+    if (!prospect) return true;
+    return Number(driver.birthDateIso.slice(0, 4)) >= 2003 && driver.potential >= 76;
+  });
+
+  for (let offset = 0; offset < candidates.length; offset += 1) {
+    const candidate = candidates[(seed + offset) % candidates.length];
+    const key = `${canonicalKey(candidate.displayName)}:${candidate.birthDateIso.slice(0, 4)}`;
+    if (!driverKeys.has(key)) return candidate;
+  }
+
+  return null;
+}
+
+function pickCuratedStaff(
+  category: CategoryRecord,
+  seed: number,
+  staffKeys: Set<string>,
+) {
+  const categoryPool = allCuratedStaffSeeds.filter((staff) => staff.categoryCode === category.code);
+  const globalPool = allCuratedStaffSeeds.filter((staff) => staff.categoryCode !== category.code);
+  const candidates = [...categoryPool, ...globalPool];
+
+  for (let offset = 0; offset < candidates.length; offset += 1) {
+    const candidate = candidates[(seed + offset) % candidates.length];
+    const key = `${canonicalKey(candidate.name)}:${candidate.role}`;
+    if (!staffKeys.has(key)) return candidate;
+  }
+
+  return null;
+}
+
+function buildSeededTeamBanks() {
+  const banks: Record<string, string[]> = {};
+  for (const [categoryCode, name] of [...realTeamsSeed, ...supplementalTeamsSeed]) {
+    const bucket = banks[categoryCode] ?? [];
+    if (!bucket.some((entry) => canonicalKey(entry) === canonicalKey(name))) {
+      bucket.push(name);
+    }
+    banks[categoryCode] = bucket;
+  }
+  return banks;
+}
+
+function mergeTeamBanks(...banks: Array<Record<string, string[]>>) {
+  const merged: Record<string, string[]> = {};
+
+  for (const bank of banks) {
+    for (const [categoryCode, names] of Object.entries(bank)) {
+      const bucket = merged[categoryCode] ?? [];
+      for (const name of names) {
+        if (!bucket.some((entry) => canonicalKey(entry) === canonicalKey(name))) {
+          bucket.push(name);
+        }
+      }
+      merged[categoryCode] = bucket;
+    }
+  }
+
+  return merged;
+}
+
+function resolveTeamBrandMark(categoryCode: string, teamName: string) {
+  return brandMarkRegistry?.teams?.[`${categoryCode}:${brandKey(teamName)}`] ?? null;
+}
+
+function brandKey(value: string) {
+  return canonicalKey(value).replaceAll(" ", "-");
+}
+
+async function loadJson<T>(relativePath: string, fallback: T): Promise<T> {
+  try {
+    const raw = await fs.readFile(path.resolve(relativePath), "utf8");
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
 }
 
 function canonicalKey(value: string) {

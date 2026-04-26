@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CarFront, CheckCircle2, ChevronLeft, ChevronRight, Crown, Lock, Shield, Sparkles, Unlock } from "lucide-react";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { createCareerAction } from "@/app/career/new/actions";
 import { CountryFlag } from "@/components/common/country-flag";
+import { TeamLogoMark } from "@/components/common/team-logo-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,9 +71,28 @@ export function NewCareerWizard({ categories, teams, suppliers }: NewCareerWizar
   );
 
   const compatibleEngineSuppliers = useMemo(
-    () => suppliers.filter((supplier) => supplier.compatibleCategoryIds.includes(selectedCategoryId)),
+    () =>
+      suppliers.filter(
+        (supplier) =>
+          supplier.type === "ENGINE" && supplier.compatibleCategoryIds.includes(selectedCategoryId),
+      ),
     [suppliers, selectedCategoryId],
   );
+
+  useEffect(() => {
+    if (selectedMode !== "MY_TEAM" || compatibleEngineSuppliers.length === 0) return;
+
+    const selectedSupplierId = form.getValues("startingSupplierId");
+    const selectedSupplierIsCompatible = compatibleEngineSuppliers.some(
+      (supplier) => supplier.id === selectedSupplierId,
+    );
+
+    if (!selectedSupplierIsCompatible) {
+      form.setValue("startingSupplierId", compatibleEngineSuppliers[0].id, {
+        shouldValidate: true,
+      });
+    }
+  }, [compatibleEngineSuppliers, form, selectedMode]);
 
   const teamPalette = useMemo(
     () =>
@@ -327,9 +347,16 @@ export function NewCareerWizard({ categories, teams, suppliers }: NewCareerWizar
                         )}
                         onClick={() => form.setValue("selectedTeamId", team.id, { shouldValidate: true })}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-semibold">{team.name}</p>
-                          <Badge className="border border-white/15 bg-white/10">{team.categoryCode}</Badge>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <TeamLogoMark
+                              name={team.name}
+                              logoUrl={team.logoUrl}
+                              className="h-12 w-16 shrink-0 rounded-xl"
+                            />
+                            <p className="truncate font-semibold">{team.name}</p>
+                          </div>
+                          <Badge className="shrink-0 border border-white/15 bg-white/10">{team.categoryCode}</Badge>
                         </div>
                         <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                           <CountryFlag countryCode={team.countryCode} className="h-4 w-6" />
@@ -446,6 +473,7 @@ export function NewCareerWizard({ categories, teams, suppliers }: NewCareerWizar
                     <label className="text-sm font-medium">Starting Engine Supplier</label>
                     <Select
                       value={form.watch("startingSupplierId")}
+                      disabled={compatibleEngineSuppliers.length === 0}
                       onValueChange={(value) =>
                         form.setValue("startingSupplierId", value ?? undefined, { shouldValidate: true })
                       }
@@ -461,6 +489,11 @@ export function NewCareerWizard({ categories, teams, suppliers }: NewCareerWizar
                         ))}
                       </SelectContent>
                     </Select>
+                    {compatibleEngineSuppliers.length === 0 ? (
+                      <p className="text-xs text-amber-200">
+                        No compatible engine supplier is available for this category yet.
+                      </p>
+                    ) : null}
                     <p className="text-xs text-rose-300">{form.formState.errors.startingSupplierId?.message}</p>
                   </div>
 
